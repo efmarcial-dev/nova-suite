@@ -211,7 +211,7 @@ export default function Home() {
           <h3 className="text-xl font-semibold">
             Advanced analytics
           </h3>
-          <p className="text-gray-600">Track customer behavior, sales trends, & optimize your conversion rates</p>
+          <p className="text-gray-600">Track customer behavior, sales trends & optimize your conversion rates</p>
           {/* Sales Card */}
           <div className="bg-white p-4 rounded lg space-y-4 text-left">
 
@@ -288,7 +288,7 @@ export default function Home() {
 
           {/* Body Text */}
           <p className="text-base text-gray-600">
-          Easily connect Webster with a variety of third-party tools and platforms to enhance your website's functionality. From payment systems to email marketing.
+          Easily connect NovaSuite with a variety of third-party tools and platforms to enhance your website&apos;s functionality. From payment systems to email marketing.
           </p>
 
           {/* Call to action button */}
@@ -389,7 +389,7 @@ export default function Home() {
 
           {/* Body Text */}
           <p className="text-base text-gray-600">
-          Webster seamlessly integrates with popular CRM platforms, allowing you to manage leads, track customer interactions, and improve your startup's growth—all in one place.
+          Webster seamlessly integrates with popular CRM platforms, allowing you to manage leads, track customer interactions, and improve your startup&apos;s growth—all in one place.
           </p>
 
           {/* Call to action button */}
