@@ -53,8 +53,8 @@ export default function Home() {
     },
     {
       icon: faUserShield,
-      title: "User Permissions",
-      description: "Manage access control with role-based permissions to protect sensitive CRM data."
+      title: "Enterprise-Grade Security",
+      description: "Manage access control with role-based permissions to protect sensitive CRM data. GDPR, HIPAA, and SOC2-ready"
     },
     {
       icon: faUsers,
@@ -63,8 +63,8 @@ export default function Home() {
     },
     {
       icon: faCreditCard,
-      title: "Payment Integration",
-      description: "Seamlessly connect with Stripe, PayPal, and other gateways for in-app billing."
+      title: "Flexible Pricing",
+      description: "Usage-based and hybrid plans available"
     },
     {
       icon: faComments,
@@ -115,12 +115,12 @@ export default function Home() {
 
           {/* H1 Title */}
           <h1 className="text-3xl lg:text-6xl font-regular text-gray-900">
-            Boost your CRM with real-time insights
+          NovaSuite - AI-Powered, Modular SaaS Software Built for Your Industry
           </h1>
 
           {/* Body Text */}
           <p className="text-base text-gray-600">
-            Track customer interactions, boost from stats. Improve conversion rates & sales.
+          NovaSuite is a smart SaaS platform with AI features, flexible pricing, and tools tailored to specific industries like healthcare, logistics, and finance.
           </p>
 
           {/* Call to action button */}
@@ -152,7 +152,7 @@ export default function Home() {
             </div>
             {/* Image */}
             <div className="w-full aspect-video rounded-lg overflow-hidden">
-              <Image src='/images/graph.svg' alt="Active Users" layout="responsive" width={300} height={300} />
+              <Image src='/images/graph.svg' alt="NovaSuite dashboard showing modular AI tools for different industries" layout="responsive" width={300} height={300} />
             </div>
             {/* Footer */}
             <div className="flex items-center justify-between ">
