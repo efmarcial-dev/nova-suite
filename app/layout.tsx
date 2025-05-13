@@ -19,6 +19,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
       {/* Structured Data for AEO */}
       <script
           type="application/ld+json"
@@ -43,6 +44,7 @@ export default function RootLayout({
             }),
           }}
         />
+      </head>
       <body >
         <NavBar />
         {children}
