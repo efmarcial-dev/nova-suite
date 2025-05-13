@@ -3,7 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSlack, faFacebook, faStripe, faGoogle } from "@fortawesome/free-brands-svg-icons";
-import { faCalendar, faArrowUp, faPlus, faMinus,
+import { faCalendar, faArrowUp, faPlus, faMinus, faCogs, faCalendarAlt, faFileAlt, faPuzzlePiece,
   faRobot, faChartLine, faUserShield, faUsers, faCreditCard, faComments
  } from "@fortawesome/free-solid-svg-icons";
 import React, { useEffect, useRef, useState } from "react";
@@ -42,14 +42,14 @@ export default function Home() {
 
   const features = [
     {
-      icon: faRobot,
+      icon: faCogs,
       title: "AI Automation",
-      description: "Automate repetitive tasks, schedule follow-ups, and respond faster using AI-powered workflows."
+      description: "Automate repetitive tasks with AI and streamline workflows to free your team for high-value work."
     },
     {
       icon: faChartLine,
-      title: "Real-Time Analytics",
-      description: "Track customer activity and conversion data with instant, actionable dashboards."
+      title: "Real-Time Dashboards",
+      description: "Make smarter decisions with real-time insights tailored to your team and industry. Track customer activity and conversion data with instant, actionable dashboards. "
     },
     {
       icon: faUserShield,
@@ -59,17 +59,17 @@ export default function Home() {
     {
       icon: faUsers,
       title: "Lead & Client Analysis",
-      description: "Segment and score leads to optimize targeting and improve closing rates."
+      description: "Track leads, clients, and contacts effortlessly and close more deals with less effort."
     },
     {
-      icon: faCreditCard,
-      title: "Flexible Pricing",
-      description: "Usage-based and hybrid plans available"
+      icon: faFileAlt,
+      title: "Document Handling",
+      description: "Secure, organized document workflows tailored for industries like legal, healthcare, and finance."
     },
     {
-      icon: faComments,
-      title: "Multi-Channel Communication",
-      description: "Unify conversations across email, chat, and social platforms in one view."
+      icon: faPuzzlePiece,
+      title: "Custom Toolkits by Industry",
+      description: "Use vertical SaaS modules built for your specific industry—from consulting to construction—no clutter, just what you need."
     },
   ];
 
@@ -126,10 +126,7 @@ export default function Home() {
           {/* Call to action button */}
           <div className="flex space-x-4 justify-center md:justify-start lg:justiy-start">
             <button className="px-6 py-2 bg-gradient-to-b from-blue-400 to-blue-600 text-white rounded-full transition-all duration-300 hover:brightness-110 hover:scale-105">
-              See in Action
-            </button>
-            <button className="px-6 py-2 border-2 border-gray-900 text-gray-900 rounded-full transition-all duration-300 hover:bg-black hover:text-white hover:scale-105">
-              View Demo
+              Join Earyl Access - Lifetime Deal
             </button>
           </div>
 
@@ -179,7 +176,7 @@ export default function Home() {
         </h2>
       </div>
 
-    {/* Features Section */}
+    {/* About */}
 
       <div className="container mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mt-10" >
         {/* Column 1 */}
@@ -492,12 +489,15 @@ export default function Home() {
 
         {/* SEO Optimized Heading */}
         <h2 className="text-3xl md:text-6xl font-semibold text-white mt-4 mb-4">
-          Join the waitlist for NovaSuite - the intelligent CRM built for the future of sales.
+        Early Access Offer
         </h2>
+        <p className="max-w-2xl mx-auto mt-4 text-white text-md md:text-lg lg:text-xl">
+        Join NovaSuite early and receive <strong>lifetime access</strong> at a discounted rate. Limited spots available.
+        </p>
 
         {/* CTA Button */}
         <button className="bg-white text-blue-600 font-semibold px-6 py-3 rounded-full hover:bg-blue-50 transition">
-          Get Started
+          Join Waitlist
         </button>
       </div>
 

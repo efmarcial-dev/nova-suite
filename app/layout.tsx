@@ -8,8 +8,8 @@ config.autoAddCss = false;
 
 
 export const metadata: Metadata = {
-  title: "NovaSuite | Modular AI SaaS Industy-Specific Business Automation",
-  description: "NovaSuite is a secure, mobile-optimized SaaS platform powered by AI and built for your industry. Customize tools, pay only for what you use, and scale confidently.",
+  title: "NovaSuite: AI-Powered Smart Business Operating System | Early Access Available",
+  description: "NovaSuite is a modular, AI-driven business platform combining CRM, task automation, analytics, and more. Join the early access program for lifetime access."
 };
 
 export default function RootLayout({
