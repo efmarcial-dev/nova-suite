@@ -3,8 +3,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSlack, faFacebook, faStripe, faGoogle } from "@fortawesome/free-brands-svg-icons";
-import { faCalendar, faArrowUp, faPlus, faMinus, faCogs, faCalendarAlt, faFileAlt, faPuzzlePiece,
-  faRobot, faChartLine, faUserShield, faUsers, faCreditCard, faComments
+import { faCalendar, faArrowUp, faPlus, faMinus, faCogs, faFileAlt, faPuzzlePiece,
+  faChartLine, faUserShield, faUsers
  } from "@fortawesome/free-solid-svg-icons";
 import React, { useEffect, useRef, useState } from "react";
 
