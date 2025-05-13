@@ -20,6 +20,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
+        {/* Google Site Verification */}
+        <meta name="google-site-verification" content="bUwM0nGN1XOLiYGx9iTCNlNYfCCWJofBLwj9_nzKHoY" />
+        
       {/* Structured Data for AEO */}
       <script
           type="application/ld+json"
