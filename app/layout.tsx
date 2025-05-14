@@ -4,7 +4,9 @@ import NavBar from "./components/NavBar";
 import Footer from "./components/Footer";
 import { config } from "@fortawesome/fontawesome-svg-core";
 import '@fortawesome/fontawesome-svg-core/styles.css';
+import Script from "next/script";
 config.autoAddCss = false;
+
 
 
 export const metadata: Metadata = {
@@ -48,6 +50,19 @@ export default function RootLayout({
           }}
         />
       </head>
+      {/* Google tag (gtag.js)  */}
+      <Script src="https://www.googletagmanager.com/gtag/js?id=G-5WN9CP1ND8"
+  strategy="afterInteractive"
+  async />
+      <Script id="google-analytics" strategy="afterInteractive">
+            {`
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+
+          gtag('config', 'G-5WN9CP1ND8');
+        `}
+      </Script>
       <body >
         <NavBar />
         {children}
