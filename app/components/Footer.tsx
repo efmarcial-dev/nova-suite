@@ -12,7 +12,7 @@ export default function Footer() {
 
                 {/* Copyright */}
                 <p className="text-sm text-gray-500 mt-4 sm:mt-0">
-                    &copy;{new Date().getFullYear()} Nova. All rights reserved.
+                    &copy;{new Date().getFullYear()} <a href="http://www.novadev.solutions">Nova.</a> All rights reserved.
                 </p>
 
             </div>
