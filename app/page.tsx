@@ -7,6 +7,7 @@ import { faCalendar, faArrowUp, faPlus, faMinus, faCogs, faFileAlt, faPuzzlePiec
   faChartLine, faUserShield, faUsers
  } from "@fortawesome/free-solid-svg-icons";
 import React, { useEffect, useRef, useState } from "react";
+import JoinWaitlistModal from "./components/JoinWaitlistModal";
 
 
 export default function Home() {
@@ -496,10 +497,9 @@ export default function Home() {
         </p>
 
         {/* CTA Button */}
-        <button className="bg-white text-blue-600 font-semibold px-6 py-3 rounded-full hover:bg-blue-50 transition">
-          Join Waitlist
-        </button>
+        <JoinWaitlistModal/>
       </div>
+      
 
     </section>
   );

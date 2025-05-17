@@ -29,3 +29,51 @@ body {
  font-weight: 400; /* Normal weight, can be any value between 100 and 900 */
  scroll-behavior: smooth;
 }
+
+/* Modal Base Styles */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 50;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  transition: opacity 0.3s ease-in-out;
+}
+
+/* Slide-up for mobile */
+.modal-container {
+  background: #fff;
+  border-radius: 1rem 1rem 0 0;
+  padding: 1.5rem;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: slideUp 0.3s ease-out forwards;
+}
+
+/* Centered for desktop */
+@media (min-width: 768px) {
+  .modal-overlay {
+    align-items: center;
+  }
+
+  .modal-container {
+    border-radius: 1rem;
+    width: 100%;
+    max-width: 480px;
+  }
+}
+
+/* Animation */
+@keyframes slideUp {
+  0% {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
