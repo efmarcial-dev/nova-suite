@@ -40,6 +40,7 @@ export default function JoinWaitlistModal() {
     })
     console.log('First Name:', firstName);
     console.log('Email submitted:', email);
+    console.log(res)
     setSubmitted(true);
     } catch(error){
       // TODO: Add message to post on the front end.
@@ -117,9 +118,9 @@ export default function JoinWaitlistModal() {
               </>
             ) : (
               <div>
-                <h2 className="text-xl font-semibold mb-2">You're in!</h2>
+                <h2 className="text-xl font-semibold mb-2">You&apos;re in!</h2>
                 <p className="text-gray-600 mb-4">
-                  Thanks for signing up, {firstName || 'there'}! You’ll get updates and early access offers before launch.
+                  Thanks for signing up, {firstName || 'there'}! You&apos;ll get updates and early access offers before launch.
                 </p>
                 <button
                   onClick={() => setOpen(false)}
