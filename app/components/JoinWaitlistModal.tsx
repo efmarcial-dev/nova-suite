@@ -83,7 +83,7 @@ export default function JoinWaitlistModal() {
                 <h2 className="text-xl font-semibold mb-2">Join the Waitlist</h2>
                 <p className="text-gray-600 mb-4">
                   Get early access and exclusive lifetime pricing when NovaSuite launches.
-                  We'll keep you updated as we build.
+                  We&apos;ll keep you updated as we build.
                 </p>
                 {/* Benefits List */}
                 <ul className="mb-4 list-disc list-inside text-sm text-gray-600">
