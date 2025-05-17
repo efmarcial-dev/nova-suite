@@ -54,15 +54,7 @@ export default function JoinWaitlistModal() {
       <button data-event='early-access' className="bg-white text-blue-600 font-semibold px-6 py-3 rounded-full hover:bg-blue-50 transition"
            onClick={() => {
             setOpen(true);
-            if(typeof window !== 'undefined' && typeof window.gtag === 'function'){
-              window.gtag('event', 'early_access_signup', {
-                'event_category': 'engagement',
-                'event_lable' : 'NovaSuite Early Access button',
-              });
-              console.log('gtag ready');
-            }else {
-              console.warn('gtag not ready yet')
-            }
+            
           }}
         >
           Join Waitlist
