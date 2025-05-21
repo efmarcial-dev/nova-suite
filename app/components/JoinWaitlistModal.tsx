@@ -51,7 +51,7 @@ export default function JoinWaitlistModal() {
 
   return (
     <>
-      <button data-event='early-access' className="bg-white text-blue-600 font-semibold px-6 py-3 rounded-full hover:bg-blue-50 transition"
+      <button data-event='early-access' className="bg-white text-blue-600 font-semibold px-6 py-3 rounded-full hover:bg-blue-100 transition"
            onClick={() => {
             setOpen(true);
             
@@ -102,7 +102,7 @@ export default function JoinWaitlistModal() {
                   />
                   <button
                     type="submit"
-                    className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition"
+                    className="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-700 transition"
                   >
                     Join Now
                   </button>
