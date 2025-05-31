@@ -7,6 +7,10 @@ export default function JoinWaitlistModal() {
   const [submitted, setSubmitted] = useState(false);
   const [firstName, setFirstName] = useState('');
   const [email, setEmail] = useState('');
+  const [rolo, setRole] = useState('');
+  const [pain_point, setPainPoint] = useState('');
+
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
   if (open) {
@@ -24,6 +28,10 @@ export default function JoinWaitlistModal() {
 }, [open]);
 
   const handleSubmit = async (e: React.FormEvent) => {
+
+    e.preventDefault();
+    setLoading(true);
+
     try {
       e.preventDefault();
     // TODO: integrate with backend or service (e.g. Firebase, Supabase, etc.)
@@ -35,7 +43,9 @@ export default function JoinWaitlistModal() {
       credentials: "include",
       body : JSON.stringify({
         name: firstName,
-        email : email
+        email : email,
+        role: rolo,
+        pain_point: pain_point
       })
     })
     console.log('First Name:', firstName);
@@ -46,6 +56,13 @@ export default function JoinWaitlistModal() {
       // TODO: Add message to post on the front end.
       console.log(`Error: ${error}`);
       setSubmitted(false);
+    } finally {
+      setLoading(false);
+      // Reset form fields
+      setFirstName('');
+      setEmail('');
+      setRole('');
+      setPainPoint('');
     }
   };
 
@@ -83,16 +100,23 @@ export default function JoinWaitlistModal() {
                   <li>Lock in early-bird lifetime access</li>
                   <li>Get regal updates as we build</li>
                 </ul>
-                <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-                  <input
+                <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+
+                  <div>
+                    <label htmlFor="firstName" className="text-left block text-sm font-medium text-gray-700 mb-1">Name:</label>
+                    <input
                     type="text"
                     value={firstName}
                     onChange={e => setFirstName(e.target.value)}
                     required
                     placeholder="Name"
                     className="w-full px-3 py-2 border border-gray-300 rounded"
-                  />
-                  <input
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="email" className="text-left block text-sm font-medium text-gray-700 mb-1">Email:</label>
+                    <input
                     type="email"
                     value={email}
                     onChange={e => setEmail(e.target.value)}
@@ -100,12 +124,68 @@ export default function JoinWaitlistModal() {
                     placeholder="you@example.com"
                     className="w-full px-3 py-2 border border-gray-300 rounded"
                   />
+                  </div>
+                  
+                  <div>
+                    <label htmlFor="role" className="text-left block text-sm font-medium text-gray-700 mb-1">Role:</label>
+                    <input
+                    type="text"
+                    value={rolo}
+                    onChange={e => setRole(e.target.value)}
+                    required
+                    placeholder="Your Role (e.g. Developer, Designer)"
+                    className="w-full px-3 py-2 border border-gray-300 rounded"
+                  />
+                  </div>
+
+                  <div>
+                    <label htmlFor="pain_point" className="text-left block text-sm font-medium text-gray-700 mb-1">Pain Point:</label>
+                    
+                    <textarea
+                      id="painPoint"
+                      value={pain_point}
+                      onChange={e => setPainPoint(e.target.value)}
+                      required
+                      rows={3} // or adjust height as needed
+                      placeholder="Describe your biggest challenge (e.g. organizing client projects)"
+                      className="w-full px-3 py-2 border border-gray-300 rounded resize-none"
+                    />
+                  </div>
+                  
+                  
+                  
                   <button
-                    type="submit"
-                    className="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-700 transition"
-                  >
-                    Join Now
-                  </button>
+                      type="submit"
+                      disabled={loading}
+                      className={`w-full flex items-center justify-center gap-2 bg-blue-500 text-white py-2 rounded transition ${
+                        loading ? 'bg-blue-400 cursor-not-allowed' : 'hover:bg-blue-700'
+                      }`}
+                    >
+                      {loading && (
+                        <svg
+                          className="animate-spin h-5 w-5 text-white"
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                        >
+                          <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                          ></circle>
+                          <path
+                            className="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                          ></path>
+                        </svg>
+                      )}
+                      {loading ? 'Submitting...' : 'Join Now'}
+                    </button>
+
                 </form>
               </>
             ) : (

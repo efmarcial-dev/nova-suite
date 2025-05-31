@@ -81,13 +81,16 @@ export default function NavBar() {
             <Link href="#process" onClick={() => setMenuOpen(false)} className="text-gray-700 text-sm">
                 Process
             </Link>
-            <Link
-                href="#get-started"
-                onClick={() => setMenuOpen(false)}
+            <button
+                onClick={() => {
+                    setMenuOpen(false)
+                    const el = document.getElementById('get-started');
+                    el?.scrollIntoView({ behavior: 'smooth' });
+                }}
                 className="bg-black text-white text-sm font-medium px-4 py-2 rounded-full hover:opacity-90 transition"
             >
                 Get Started
-            </Link>
+            </button>
             </div>
         </div>
     </nav>

@@ -126,7 +126,12 @@ export default function Home() {
 
           {/* Call to action button */}
           <div className="flex space-x-4 justify-center md:justify-start lg:justiy-start">
-            <button className="px-6 py-2 bg-gradient-to-b from-blue-400 to-blue-600 text-white rounded-full transition-all duration-300 hover:brightness-110 hover:scale-105">
+            <button 
+              onClick={() => {
+                const el = document.getElementById('get-started');
+                el?.scrollIntoView({ behavior: 'smooth' });
+              }}
+              className="px-6 py-2 bg-gradient-to-b from-blue-400 to-blue-600 text-white rounded-full transition-all duration-300 hover:brightness-110 hover:scale-105">
               Join Earyl Access - Lifetime Deal
             </button>
           </div>

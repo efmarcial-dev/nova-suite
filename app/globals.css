@@ -24,6 +24,10 @@
   }
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 body {
  font-family: 'Satoshi';
  font-weight: 400; /* Normal weight, can be any value between 100 and 900 */
