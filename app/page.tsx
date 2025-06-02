@@ -121,7 +121,10 @@ export default function Home() {
 
           {/* Body Text */}
           <p className="text-base text-gray-600">
-          NovaSuite is a smart SaaS platform with AI features, flexible pricing, and tools tailored to specific industries like healthcare, logistics, and finance.
+          NovaSuite is a smart SaaS platform with AI features, flexible pricing, and tools tailored for solo entrepreneur and small business.
+          </p>
+          <p className="text-base text-gray-600">
+            Stay organized, boost productivity, and manage tasks effortlessly with a powerful AI tool that works across all your devices. Perfect for individuals and small teams.
           </p>
 
           {/* Call to action button */}
@@ -387,12 +390,12 @@ export default function Home() {
 
           {/* H1 Title */}
           <h2 className="text-3xl lg:text-6xl font-regular text-gray-900">
-          Effortlessly manage customer relationships
+          AI Task Management
           </h2>
 
           {/* Body Text */}
           <p className="text-base text-gray-600">
-          Webster seamlessly integrates with popular CRM platforms, allowing you to manage leads, track customer interactions, and improve your startup&apos;s growth—all in one place.
+          Organize and manage task through natural language input and smart automation., allowing you to manage leads, track customer interactions, and improve your startup&apos;s growth—all in one place.
           </p>
 
           {/* Call to action button */}
