@@ -3,7 +3,6 @@ import { useState, useEffect } from 'react';
 
 export default function NewsLetterModal() {
 
-    const [open, setOpen] = useState(false);
     const [submitted, setSubmitted] = useState(false);
     const [email, setEmail] = useState('');
     const [loading, setLoading] = useState(false);
