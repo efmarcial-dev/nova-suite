@@ -8,6 +8,7 @@ import { faCalendar, faArrowUp, faPlus, faMinus, faCogs, faFileAlt, faPuzzlePiec
  } from "@fortawesome/free-solid-svg-icons";
 import React, { useEffect, useRef, useState } from "react";
 import JoinWaitlistModal from "./components/JoinWaitlistModal";
+import NewsLetterModal from "./components/NewsLetterModal";
 
 
 export default function Home() {
@@ -98,7 +99,8 @@ export default function Home() {
   ];
 
   return (
-  
+    <>
+    <NewsLetterModal/>
     <section className="w-full py-16 px-6">
       <div className="container mx-auto flex flex-col lg:flex-row items-center">
         {/* Left Column */}
@@ -510,5 +512,6 @@ export default function Home() {
       
 
     </section>
+    </>
   );
 }
