@@ -10,6 +10,9 @@ export type Task = {
   tags: string[];
   due_date: string;
   status: TaskStatus;
-  assignee: number;
+  assignee: {
+    avatarUrl: string;
+    name: string;
+  };
   project: number;
 }; 
