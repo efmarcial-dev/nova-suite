@@ -7,8 +7,6 @@ import ReminderCard from '../../components/ReminderCard';
 import TimeTracker from '../../components/TimeTracker';
 
 import { useCachedProjects } from '@/app/hooks/useCachedProjects';
-import { Project } from '@/app/components/project';
-import {  useEffect, useState } from 'react';
 import { useCachedAssigneees } from '@/app/hooks/useCachedAssignees';
 import { useCachedTasks } from '@/app/hooks/useCachedTasks';
 
@@ -17,7 +15,7 @@ import { useCachedTasks } from '@/app/hooks/useCachedTasks';
 export default function DashboardPage() {
 
   const {projects: cacheProjects, isProjectLoading} = useCachedProjects();
-  const {assignees: cachedAssignees, isAssigneeLoading} = useCachedAssigneees();
+  const { isAssigneeLoading} = useCachedAssigneees();
   const {tasks: cachedTasks, isLoading: isTasksLoading} = useCachedTasks();
 
   

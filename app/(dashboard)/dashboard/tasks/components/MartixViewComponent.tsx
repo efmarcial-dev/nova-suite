@@ -2,7 +2,6 @@
 
 import TaskCard from "./TaskCard";
 import {Task} from "./task";
-import { cn } from "@/app/lib/utils";
 
 
 export default function MatrixViewComponent({ tasks }: { tasks: Task[] }) {
@@ -25,7 +24,6 @@ export default function MatrixViewComponent({ tasks }: { tasks: Task[] }) {
 
 function MatrixCell({
   title,
-  color,
   tasks,
 }: {
   title: string

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef} from "react";
+import React, { useState, useRef} from "react";
 import DatePicker from 'react-datepicker';
 import {format} from 'date-fns';
 import TagInput from "./TagInput";
@@ -18,12 +18,15 @@ interface NewTaskFormProps {
     projects: any[];
     assignees: any[];
     onSubmitSuccess?: () => void;
+    setHasPills?: (value: boolean) => void;
 }
 
 export default function NewTaskForm({
     projects,
     assignees,
     onSubmitSuccess,
+    setHasPills
+
 }: NewTaskFormProps) {
     
     const [loading, setLoading] = useState(false);
@@ -43,7 +46,6 @@ export default function NewTaskForm({
     const [errors, setErrors] = useState<{tags?: string}>({});
 
     const [activeView, setActiveView] = useState<'task' | 'add_project'>('task');
-    const [taskData, setTaskData] = useState({title: '', assignee: '', status: '', tags: '', description: '', dueDate: ''});
 
     const datePickerRef = useRef<any>(null);
 
@@ -67,6 +69,7 @@ export default function NewTaskForm({
             });
 
             console.log("Task Created ");
+            console.log(project);
 
             // Add to cache database
             await addTaskToCache(newTask);

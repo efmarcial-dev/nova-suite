@@ -199,7 +199,7 @@ export default function Home() {
         <div className="bg-gray-100 p-6 rounded-xl text-center space-y-6">
           <h3 className="text-xl font-semibold">AI Task automation</h3>
           <p className="text-gray-600">Natural-language task creation, automated reminders, priority suggestions - without rigid scheduling rules.</p>
-          <p className="text-gray-600 text-sm">(Unlike Motion's auto-scheduling limitations, you get smart recommendations with full)</p>
+          <p className="text-gray-600 text-sm">(Unlike Motion&apos;s auto-scheduling limitations, you get smart recommendations with full)</p>
 
                
 

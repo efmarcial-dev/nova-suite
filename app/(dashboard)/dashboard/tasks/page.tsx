@@ -27,6 +27,7 @@ export default function TasksPage() {
   const {projects: cachedProjects} = useCachedProjects();
   const {assignees: cachedAssignees} = useCachedAssigneees();
 
+  
   return (
     <div className="p-1 space-y-2">
       {/* Header row */}
@@ -67,7 +68,7 @@ export default function TasksPage() {
         {/* Here you would include your form or component to create a new task */}
         <NewTaskForm projects={cachedProjects} assignees={cachedAssignees} onSubmitSuccess={() => {
           setShowNewTask(false); // close modal
-          
+          setHasPills(false); // reset pills state
         }}/>
       </ModalPanel>
 
