@@ -14,6 +14,13 @@ export function middleware(request: NextRequest) {
     // extract subdomain 
     const subdomain = getSubdomain(hostname);
 
+    // Debug logging (remove in production after fixing)
+    console.log('=== MIDDLEWARE DEBUG ===')
+    console.log('Hostname:', hostname)
+    console.log('Subdomain:', subdomain)
+    console.log('Path:', currentPath)
+    console.log('Has Token:', !!accessToken)
+
     // Define public paths (accessible without authentication)
     const publicPaths = ["/login", "/register", '/']; 
     const isPublicPath = publicPaths.includes(currentPath);
