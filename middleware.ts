@@ -126,9 +126,23 @@ function getSubdomain(hostname: string) : string | null {
     // for production domains like novadev.solutions
     // if we have tenant.novadev.solutions (3 parts), return tenant
 
-    if (parts.length > 3) {
-        return parts[0];
+    // For Vercel preview URLs (e.g., project-xyz123.vercel.app)
+  // These don't support subdomains, so disable tenant subdomain logic
+  if (host.includes('vercel.app')) {
+    console.log('Detected Vercel preview URL - subdomain routing disabled')
+    return null
+  }
+  
+  // For production (novadev.solutions)
+  // If we have tenant.novadev.solutions (3 parts), return first part
+  if (parts.length >= 3) {
+    const potentialSubdomain = parts[0]
+    // Don't treat 'www' as a tenant subdomain
+    if (potentialSubdomain === 'www') {
+      return null
     }
+    return potentialSubdomain
+  }
 
     return null;
 }
