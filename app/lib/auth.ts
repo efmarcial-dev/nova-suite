@@ -51,7 +51,7 @@ export async function register(
 
 export function setAuthCookies(accessToken: string, refreshToken?: string) {
   const isProduction = process.env.NODE_ENV === 'production'
-  const domain = isProduction ? '.novadev.solutions' : undefined
+  const domain = isProduction ? 'novadev.solutions' : undefined
   
   // Set access token
   document.cookie = `access=${accessToken}; path=/; max-age=86400; SameSite=Lax${
