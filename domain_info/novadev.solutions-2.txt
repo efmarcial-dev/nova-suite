@@ -1,0 +1,59 @@
+The; Domain: novadev.solutions
+; Exported (y-m-d hh:mm:ss): 2025-11-28 15:36:55
+;
+; This file is intended for use for informational and archival
+; purposes ONLY and MUST be edited before use on a production
+; DNS server.
+;
+; In particular, you must update the SOA record with the correct
+; authoritative name server and contact e-mail address information,
+; and add the correct NS records for the name servers which will
+; be authoritative for this domain.
+;
+; For further information, please consult the BIND documentation
+; located on the following website:
+;
+; http://www.isc.org/
+;
+; And RFC 1035:
+;
+; http://www.ietf.org/rfc/rfc1035.txt
+;
+; Please note that we do NOT offer technical support for any use
+; of this zone data, the BIND name server, or any other third-
+; party DNS software.
+;
+; Use at your own risk.
+
+
+$ORIGIN novadev.solutions.
+
+; SOA Record
+@	3600	 IN 	SOA	ns63.domaincontrol.com.	dns.jomax.net. (
+					2025112804
+					28800
+					7200
+					604800
+					3600
+					) 
+
+
+
+; TXT Record
+@	3600	 IN 	TXT	"google-site-verification=YxoSZqXL43GS_Qwzb9He4Ls4iw2JmJYu1WM_-kVRN9M"
+@	3600	 IN 	TXT	"v=DMARC1; p=none; rua=mailto:web@novadev.solutions; ruf=mailto:web@novadev.solutions; sp=none;"
+@	3600	 IN 	TXT	"v=spf1 include:dc-aa8e722993._spfm.novadev.solutions ~all"
+dc-aa8e722993._spfm	3600	 IN 	TXT	"v=spf1 include:_spf.google.com ~all"
+google._domainkey	3600	 IN 	TXT	"v=DKIM1; k=rsa; p=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA1Ka4f0pncSQNp7Kjs6cZfE3Yl+u9zcSxwdDZPg6kjsNIDzf9GHOgIuOISIjcz/iJ3Ew6iYNPC/eVwEcmOf4ZEjYlHC5Hl94RxqU9lhG5qs+NLz7EyMn/+h+hqlzgKho4UJMbMd1xcKsV3oTjNOKR8AKt4SRH3ltCpJUqbWJPOpVbLizHr3LJ7FSYTd4pCLK+e"	"9tJxydnmrodN6ZkFm0re2UbDE5GcCHDnNngDok+cc4/RBm9MVV7OBikNHiY0114AbijNwN07xara7onko4wsMaQ1v9uEpkybBFc2isRGwGfkef4rZ0O63zxwBLrS/OyCrmEex2MfkLTtw4SADOivwIDAQAB"
+
+; CNAME Record
+api	3600	 IN 	CNAME	nova-web-latest.onrender.com.
+eduardo	3600	 IN 	CNAME	cname.vercel-dns.com.
+pay	3600	 IN 	CNAME	paylinks.commerce.godaddy.com.
+www	1800	 IN 	CNAME	1807ebf8995d217e.vercel-dns-017.com.
+
+
+
+; MX Record
+@	1800	 IN 	MX	0	novadev-solutions.mail.protection.outlook.com.
+
