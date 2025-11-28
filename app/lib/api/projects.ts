@@ -14,7 +14,7 @@ export async function fetchProjectsAPI(): Promise<Project[]> {
         });
 
         if(!res.ok){
-            throw new Error(`Internal APII Error: ${res.status}`);
+            throw new Error(`Internal API Error: ${res.status}`);
         }
 
         const data = await res.json();

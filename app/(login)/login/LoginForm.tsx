@@ -1,57 +1,43 @@
 'use client';
-import { useState } from 'react';
-import { useRouter} from 'next/navigation';
+import { useState } from "react";
+import { loginUser, setAuthCookies, redirectToTenant } from "@/app/lib/auth";
 
-export default function LoginPage() {
+export default function LoginForm() {
 
-
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [reserror, setError] = useState('');
-    const router = useRouter();
-    const [loading, setLoading] = useState(false);
-
+    const [email, setEmail] = useState('')
+    const [password, setPassword] = useState('')
+    const [error, setError] = useState('')
+    const [loading, setLoading] = useState(false)
 
     const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setLoading(true);
-        setError('');
+      e.preventDefault()
+      setError('')
+      setLoading(true)
 
-        try {
-            
-            console.log('Submitting login form with:', { email, password });
-            const res = await fetch('/api/login/', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({email, password }),
-            });
-
-            const data = await res.json();
-            console.log('Response data:', data);
-
-            if (res.status === 200) {
-                // If login is successful, redirect to the dashboard
-                console.log('Login successful');
-                router.push('/dashboard');
-            }else {
-                // If login fails, set the error message
-                console.error('Login failed:', data);
-                setError(data.message || 'Login failed');
-            }
-
-        } catch (error) {
-            console.error('Error during login:', reserror);
-            console.error('Unexpected error during login:', error);
-            setError('An unexpected error occurred. Please try again later.');
-        } finally {
-            setLoading(false);
-        }
+      try {
+        const data = await loginUser(email, password)
+        
+        // Set access and refresh token cookies
+        setAuthCookies(data.access, data.refresh)
+        
+        // Redirect to tenant subdomain
+        redirectToTenant(data.user.tenant_slug)
+      } catch (err) {
+        setError('Invalid credentials. Please try again.')
+        setLoading(false)
+      }
     }
 return (
+
     <div className="bg-white p-8 rounded-xl shadow-md">
       <h2 className="text-2xl font-semibold text-center mb-6">Sign in to your account</h2>
+
+      {error && (
+        <div className="bg-red-50 text-red-500 p-3 rounded">
+          {error}
+        </div>
+      )}
+
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label htmlFor="email" className="block text-sm font-medium text-gray-700">

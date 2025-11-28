@@ -2,6 +2,20 @@ import {openDB, DBSchema, IDBPDatabase} from 'idb';
 
 // 1. Define the DB schema
 interface NovaCacheDBD extends DBSchema {
+    user: {
+        key: string; // User ID
+        value: {
+            id: string;
+            first_name: string;
+            last_name: string;
+            email: string;
+            role: string;
+            date_joined: string;
+            last_login: string;
+            avatarUrl?: string;
+            last_updated?: string; // timestamp for cache management
+        }
+    },
     tasks: {
         key: string; // Task ID
         value: {
@@ -54,8 +68,11 @@ let dbPromise: Promise<IDBPDatabase<NovaCacheDBD>>;
 
 export function initNovaCache() {
     if (!dbPromise) {
-        dbPromise = openDB<NovaCacheDBD>('NovaCacheDB', 1, {
+        dbPromise = openDB<NovaCacheDBD>('NovaCacheDB', 2, {
             upgrade(db) {
+                if (!db.objectStoreNames.contains('user')){
+                    db.createObjectStore('user', {keyPath: 'id'});
+                }
                 if (!db.objectStoreNames.contains('tasks')){
                     db.createObjectStore('tasks', {keyPath: 'id'});
                 }

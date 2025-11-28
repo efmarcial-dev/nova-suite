@@ -15,7 +15,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
           width={40}
           height={40}
         />
-        <span className="text-2xl font-medium text-gray-900">Login</span>
+        <span className="text-2xl font-medium text-gray-900">NovaSuite</span>
       </Link>
 
       {/* Main content area */}

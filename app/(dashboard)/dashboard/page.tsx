@@ -9,19 +9,25 @@ import TimeTracker from '../../components/TimeTracker';
 import { useCachedProjects } from '@/app/hooks/useCachedProjects';
 import { useCachedAssigneees } from '@/app/hooks/useCachedAssignees';
 import { useCachedTasks } from '@/app/hooks/useCachedTasks';
+import { useCachedUser } from '@/app/hooks/useCachedUser';
 
 
-
+ 
 export default function DashboardPage() {
 
   const {projects: cacheProjects, isProjectLoading} = useCachedProjects();
   const { isAssigneeLoading} = useCachedAssigneees();
   const {tasks: cachedTasks, isLoading: isTasksLoading} = useCachedTasks();
 
+
   
 
   if (isProjectLoading || isAssigneeLoading || isTasksLoading ){
     console.log('Loading Cached IndexedDB tables.')
+  }else {
+    console.log('Loaded Cached IndexedDB tables.')
+    console.log('Projects from cache:', cacheProjects);
+    console.log('Tasks from cache:', cachedTasks);
   }
 
 

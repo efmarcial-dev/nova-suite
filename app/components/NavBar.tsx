@@ -54,10 +54,16 @@ export default function NavBar() {
                 Process
             </Link>
             <Link
+                href="/login"
+                className="bg-blue-600 text-white text-sm font-medium px-4 py-2 rounded-full transform transition-transform duration-200 hover:scale-100 hover:opacity-50 "
+            >
+                Login
+            </Link>
+            <Link
                 href="#get-started"
                 className="bg-black text-white text-sm font-medium px-4 py-2 rounded-full hover:opacity-90 transition"
             >
-                Get Started
+                Contact Us
             </Link>
             </div>
         </div>

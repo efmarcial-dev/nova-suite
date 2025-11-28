@@ -1,6 +1,26 @@
 import { init } from "next/dist/compiled/webpack/webpack";
 import { initNovaCache } from "./NovaCache";
 
+{/* User */}
+export async function saveUserToCache( user: any[]) {
+    const db = await initNovaCache();
+    const tx = db.transaction('user', 'readwrite');
+    for (const u of user) {
+        await tx.store.put(u);
+    }
+    await tx.done;
+}
+
+export async function getCachedUser() {
+    const db = await initNovaCache();
+    return await db.getAll('user');
+}
+
+export async function clearUserCache() {
+    const db = await initNovaCache();
+    await db.clear('user');
+}
+
 
 {/* Task */}
 export async function saveTasksToCache(tasks: any[]) {

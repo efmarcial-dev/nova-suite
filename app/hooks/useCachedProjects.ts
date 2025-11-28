@@ -32,6 +32,7 @@ export function useCachedProjects() {
                     
                     console.log("Calling Project API and updatiing cahce");
                     const fresh = await fetchProjectsAPI();
+                    console.log('Fetched projects from API:', fresh);
                     const withTimestamps = fresh.map(project => ({
                         ...project,
                         last_updated: Date.now()
