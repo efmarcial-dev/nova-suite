@@ -18,7 +18,7 @@ export async function getTenant() {
 
     // Fetch tenant data from django backend
     const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/auth/tenants/`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/auth/tenants/${tenant}`,
         {
             headers: {
                 'Content-Type' : 'application/json',

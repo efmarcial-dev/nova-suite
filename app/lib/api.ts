@@ -24,5 +24,12 @@ export async function fetchWithAuth(url: string, options: RequestInit = {}){
         return null
     }
 
+    // If token expired, handle refresh or redirect
+    if (response.status === 401) {
+        // Implement token refresh logic here if you have refresh tokens
+        // Or redirect to login
+        return null
+    }
+
     return response
 }

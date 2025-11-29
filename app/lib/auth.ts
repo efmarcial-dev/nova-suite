@@ -34,6 +34,8 @@ export async function register(
         body : JSON.stringify({
             email,
             password,
+            first_name,
+            last_name,
             tenant_name : tenantName
         })
     })
@@ -50,6 +52,8 @@ export async function register(
 
 
 export function setAuthCookies(accessToken: string, refreshToken?: string) {
+
+  const hostname = window.location.hostname  
   const isProduction = process.env.NODE_ENV === 'production'
   const domain = isProduction ? 'novadev.solutions' : undefined
   
@@ -86,9 +90,14 @@ export function redirectToTenant(tenantSlug: string) {
 }
 
 export function redirectToLogin() {
-  const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http'
-  const baseDomain = process.env.NEXT_PUBLIC_BASE_DOMAIN || 'novadev.solutions'
-  const port = process.env.NODE_ENV === 'production' ? '' : ':3000'
+
+  // Get current hostname to determine if we're in local development
+  const currentHost = window.location.hostname
+  const isLocalhost = currentHost.includes('localhost') || currentHost === '127.0.0.1'  
+
+  const protocol = isLocalhost ? 'https' : 'http'
+  const baseDomain = isLocalhost ? 'localhost' : (process.env.NEXT_PUBLIC_BASE_DOMAIN || 'novadev.solutions')
+  const port = isLocalhost ? ':3000' : ''
   
   const loginUrl = `${protocol}://${baseDomain}${port}/login`
   
