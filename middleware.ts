@@ -151,7 +151,13 @@ function getBaseDomain(hostname: string): string {
     const host = hostname.split(':')[0];
     const parts = host.split('.');
 
+
+
     // for localhost development
+    if (host.endsWith('lvh.me')) {
+        return 'lvh.me'
+    }
+
     if (host.includes('localhost')) {
         return 'localhost';
     }
@@ -184,20 +190,7 @@ function getTenantFromToken(token: string): string | null {
     }
 }
 
-function redirectToTenant(request: NextRequest, tenantSlug: string){
-    const hostname = request.headers.get('host') || '';
-    const isLocalhost = hostname.includes('localhost') || hostname.includes('127.0.0.1')
 
-    const protocol = isLocalhost ? 'https' : 'http';
-    const baseDomain = isLocalhost ? 'localhost' : (process.env.NEXT_PUBLIC_BASE_DOMAIN || 'novadev.solutions')
-    // Extract port from current hostname if it exists
-    const portMatch = hostname.match(/:(\d+)/)
-    const port = portMatch ? `:${portMatch[1]}` : ''
-
-    const tenantUrl = `${protocol}://${tenantSlug}.${baseDomain}${port}/dashboard`
-  
-    return NextResponse.redirect(tenantUrl)
-}
 
 function buildTenantUrl(currentHostname: string, tenantSlug: string, path: string): string {
   const baseDomain = getBaseDomain(currentHostname)

@@ -4,7 +4,7 @@ import { NextResponse } from 'next/server'
 export async function POST() {
     // Clear the access and refresh tokens from cookies
 
-    const BASE_URL = process.env.API_URL || 'http://192.168.0.110:8000';
+    const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://192.168.0.110:8000';
     
     if (!BASE_URL.startsWith('http') ) {
         throw new Error('API_URL must start with http:// or https://');

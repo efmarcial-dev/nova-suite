@@ -10,6 +10,9 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const user = await getCurrentUser()
   const tenant = await getTenant()
 
+  console.log("user: ",user);
+  console.log("tenant: ", tenant);
+
 
   return (
 

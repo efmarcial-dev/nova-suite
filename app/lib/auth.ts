@@ -78,10 +78,10 @@ export function clearAuthCookies() {
 export function redirectToTenant(tenantSlug: string) {
   // Get current hostname to determine if we're in local development
   const currentHost = window.location.hostname
-  const isLocalhost = currentHost.includes('localhost') || currentHost === '127.0.0.1'
+  const isLocalhost = currentHost.includes('lvh.me') || currentHost === '127.0.0.1'
   
   const protocol = isLocalhost ? 'http' : 'https'
-  const baseDomain = isLocalhost ? 'localhost' : (process.env.NEXT_PUBLIC_BASE_DOMAIN || 'novadev.solutions')
+  const baseDomain = isLocalhost ? 'lvh.me' : (process.env.NEXT_PUBLIC_BASE_DOMAIN || 'novadev.solutions')
   const port = isLocalhost ? ':3000' : ''
   
   const tenantUrl = `${protocol}://${tenantSlug}.${baseDomain}${port}/dashboard`
@@ -93,10 +93,10 @@ export function redirectToLogin() {
 
   // Get current hostname to determine if we're in local development
   const currentHost = window.location.hostname
-  const isLocalhost = currentHost.includes('localhost') || currentHost === '127.0.0.1'  
+  const isLocalhost = currentHost.includes('lvh.me') || currentHost === '127.0.0.1'  
 
   const protocol = isLocalhost ? 'https' : 'http'
-  const baseDomain = isLocalhost ? 'localhost' : (process.env.NEXT_PUBLIC_BASE_DOMAIN || 'novadev.solutions')
+  const baseDomain = isLocalhost ? 'lvh.me' : (process.env.NEXT_PUBLIC_BASE_DOMAIN || 'novadev.solutions')
   const port = isLocalhost ? ':3000' : ''
   
   const loginUrl = `${protocol}://${baseDomain}${port}/login`

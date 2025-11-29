@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { getCachedUser, saveUserToCache } from "../lib/cache/NovaCacheHelpers";
 import { fetchUserAPI } from "../lib/api/user";
+import { getCurrentUser, getTenant } from "../lib/getTenant";
 
 export function useCachedUser() {
     const [user, setUser] = useState<any[]>([]);
