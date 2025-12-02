@@ -3,9 +3,12 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 
 export default function NavBar() {
     const [menuOpen, setMenuOpen] = useState(false);
+
+    const router = useRouter();
 
     return (
     <nav className="sticky top-0 z-50 bg-white w-full px-6 py-4 relative">
@@ -41,16 +44,16 @@ export default function NavBar() {
 
             {/* Desktop Nav Links */}
             <div className="hidden md:flex items-center space-x-8">
-            <Link href="#about" className="text-sm text-gray-700 hover:text-black transition">
+            <Link href="/about" className="text-sm text-gray-700 hover:text-black transition">
                 About
             </Link>
-            <Link href="#features" className="text-sm text-gray-700 hover:text-black transition">
-                Features
+            <Link href="/services" className="text-sm text-gray-700 hover:text-black transition">
+                Services
             </Link>
-            <Link href="#pricing" className="text-sm text-gray-700 hover:text-black transition">
+            <Link href="/services/#pricing" className="text-sm text-gray-700 hover:text-black transition">
                 Pricing
             </Link>
-            <Link href="#process" className="text-sm text-gray-700 hover:text-black transition">
+            <Link href="/services/#process" className="text-sm text-gray-700 hover:text-black transition">
                 Process
             </Link>
             <Link
@@ -60,7 +63,7 @@ export default function NavBar() {
                 Login
             </Link>
             <Link
-                href="#get-started"
+                href="/contact"
                 className="bg-black text-white text-sm font-medium px-4 py-2 rounded-full hover:opacity-90 transition"
             >
                 Contact Us
@@ -75,11 +78,11 @@ export default function NavBar() {
             }`}
         >
             <div className="flex flex-col items-center space-y-4">
-            <Link href="#about" onClick={() => setMenuOpen(false)} className="text-gray-700 text-sm">
+            <Link href="/about" onClick={() => setMenuOpen(false)} className="text-gray-700 text-sm">
                 About
             </Link>
-            <Link href="#features" onClick={() => setMenuOpen(false)} className="text-gray-700 text-sm">
-                Features
+            <Link href="/services" onClick={() => setMenuOpen(false)} className="text-gray-700 text-sm">
+                Services
             </Link>
             <Link href="#pricing" onClick={() => setMenuOpen(false)} className="text-gray-700 text-sm">
                 Pricing
@@ -90,8 +93,7 @@ export default function NavBar() {
             <button
                 onClick={() => {
                     setMenuOpen(false)
-                    const el = document.getElementById('get-started');
-                    el?.scrollIntoView({ behavior: 'smooth' });
+                    router.push('/contact')
                 }}
                 className="bg-black text-white text-sm font-medium px-4 py-2 rounded-full hover:opacity-90 transition"
             >
