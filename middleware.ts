@@ -22,13 +22,14 @@ export function middleware(request: NextRequest) {
     console.log('Has Token:', !!accessToken)
 
     // Define public paths (accessible without authentication)
-    const publicPaths = ["/login", "/register", '/']; 
+    const publicPaths = ["/login", "/register", '/', '/sitemap.xml', '/sitemap-0.xml']; 
     const isPublicPath = publicPaths.includes(currentPath);
 
     // Skip middleware for static files and API routes
     if (
         currentPath.startsWith('/_next') ||
         currentPath.startsWith('/api') ||
+        currentPath.startsWith('/sitemap') ||
         currentPath.includes('.')
     )
 

@@ -5,28 +5,28 @@ import { loginUser, setAuthCookies, redirectToTenant } from "@/app/lib/auth";
 export default function LoginForm() {
 
     const [email, setEmail] = useState('')
-    const [password, setPassword] = useState('')
-    const [error, setError] = useState('')
-    const [loading, setLoading] = useState(false)
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
 
-    const handleSubmit = async (e: React.FormEvent) => {
-      e.preventDefault()
-      setError('')
-      setLoading(true)
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError('')
+    setLoading(true)
 
-      try {
-        const data = await loginUser(email, password)
-        
-        // Set access and refresh token cookies
-        setAuthCookies(data.access, data.refresh)
-        
-        // Redirect to tenant subdomain
-        redirectToTenant(data.user.tenant_slug)
-      } catch (err) {
-        setError('Invalid credentials. Please try again.')
-        setLoading(false)
-      }
+    try {
+      const data = await loginUser(email, password)
+      
+      // Set access and refresh token cookies
+      setAuthCookies(data.access, data.refresh)
+      
+      // Redirect to tenant subdomain
+      redirectToTenant(data.user.tenant_slug)
+    } catch (err) {
+      setError('Invalid credentials. Please try again.')
+      setLoading(false)
     }
+  }
 return (
 
     <div className="bg-white p-8 rounded-xl shadow-md">
