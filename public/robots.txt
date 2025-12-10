@@ -3,7 +3,7 @@ User-agent: *
 Allow: /
 
 # Host
-Host: https://novasuite.novadev.solutions
+Host: https://novadev.solutions
 
 # Sitemaps
-Sitemap: https://novasuite.novadev.solutions/sitemap.xml
+Sitemap: https://novadev.solutions/sitemap.xml
