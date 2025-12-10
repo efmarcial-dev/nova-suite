@@ -1,7 +1,7 @@
 /** @type {import('next-sitemap').IConfig} */
 
 module.exports = {
-    siteUrl: 'https://novasuite.novadev.solutions',
+    siteUrl: 'https://novadev.solutions',
     generateRobotsTxt: true, 
     changefreq: 'monthly',
     priority: 0.7,
