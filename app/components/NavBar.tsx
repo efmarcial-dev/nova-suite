@@ -16,7 +16,7 @@ export default function NavBar() {
             {/* Logo */}
             <div className="flex items-center space-x-2">
                 <Image src={'/images/nova_logo.png'} alt="Nova Suite" width={34} height={34} />
-                <span className="text-2xl font-medium text-gray-900">NovaSuite</span>
+                <span className="text-2xl font-medium text-gray-900">Nova IT Solutions</span>
             </div>
 
             {/* Burger Icon */}
