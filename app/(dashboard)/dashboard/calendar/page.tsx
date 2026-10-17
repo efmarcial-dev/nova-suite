@@ -21,6 +21,14 @@ import {
 import { useCachedUser } from '@/app/hooks/useCachedUser';
 import { useCachedTasks } from '@/app/hooks/useCachedTasks';
 import ModalPanel from '@/app/components/ModalPanel';
+import {
+  fetchCalendarConnectionAPI,
+  fetchCalendarEventsAPI,
+  connectCalendarProviderAPI,
+  disconnectCalendarProviderAPI,
+  saveCalendarConnectionAPI,
+  saveCalendarEventAPI,
+} from '@/app/lib/api/calendar';
 
 type ProviderId = 'google' | 'outlook' | 'apple';
 
@@ -111,49 +119,107 @@ export default function CalendarPage() {
   const [newEventTime, setNewEventTime] = useState('11:00');
   const [newEventType, setNewEventType] = useState<'meeting' | 'focus'>('meeting');
 
-  // Load connection state from localStorage
+  // Load connection state from backend and fallback to localStorage for demo continuity
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem('nova_calendar_connection');
-      if (saved) {
-        const data = JSON.parse(saved);
-        if (data.isConnected) {
-          setIsConnected(true);
-          setSelectedProvider(data.provider || 'google');
-          setConnectedEmail(data.email || (currentUser?.email ?? 'user@novasuite.io'));
-        }
+    const hydrateCalendar = async () => {
+      const connection = await fetchCalendarConnectionAPI();
+      if (connection?.isConnected) {
+        setIsConnected(true);
+        setSelectedProvider(connection.provider || 'google');
+        setConnectedEmail(connection.email || (currentUser?.email ?? 'user@novasuite.io'));
       }
-    } catch (e) {
-      console.error(e);
-    }
-  }, [currentUser]);
 
-  const handleConnect = () => {
-    setIsConnecting(true);
-    setTimeout(() => {
-      const email = currentUser?.email || 'eduardo@novasuite.io';
-      setIsConnected(true);
-      setConnectedEmail(email);
-      setIsConnecting(false);
+      const backendEvents = await fetchCalendarEventsAPI();
+      if (Array.isArray(backendEvents) && backendEvents.length > 0) {
+        setEvents(backendEvents.map((event) => ({
+          ...event,
+          startHour: Number(event.startHour ?? 9),
+          durationHours: Number(event.durationHours ?? 1),
+          attendees: event.attendees ?? [],
+        })));
+        return;
+      }
 
       try {
-        localStorage.setItem(
-          'nova_calendar_connection',
-          JSON.stringify({
-            isConnected: true,
-            provider: selectedProvider,
-            email,
-            connectedAt: new Date().toISOString(),
-          })
-        );
+        const saved = localStorage.getItem('nova_calendar_connection');
+        if (saved) {
+          const data = JSON.parse(saved);
+          if (data.isConnected) {
+            setIsConnected(true);
+            setSelectedProvider(data.provider || 'google');
+            setConnectedEmail(data.email || (currentUser?.email ?? 'user@novasuite.io'));
+          }
+        }
       } catch (e) {
         console.error(e);
       }
-    }, 1200);
+    };
+
+    hydrateCalendar();
+  }, [currentUser]);
+
+  const handleConnect = async () => {
+    setIsConnecting(true);
+    const email = currentUser?.email || 'eduardo@novasuite.io';
+    const provider = selectedProvider === 'outlook' ? 'outlook' : 'google';
+
+    try {
+      const result = await connectCalendarProviderAPI(provider);
+      const authUrl = result?.authorization_url || result?.auth_url || result?.authorizationUrl || result?.url;
+
+      if (authUrl) {
+        window.location.href = authUrl;
+        return;
+      }
+
+      await saveCalendarConnectionAPI({
+        isConnected: true,
+        provider,
+        email,
+        connectedAt: new Date().toISOString(),
+      });
+    } catch (e) {
+      console.error('Failed to save calendar connection', e);
+    }
+
+    setIsConnected(true);
+    setConnectedEmail(email);
+    setIsConnecting(false);
+
+    try {
+      localStorage.setItem(
+        'nova_calendar_connection',
+        JSON.stringify({
+          isConnected: true,
+          provider: selectedProvider,
+          email,
+          connectedAt: new Date().toISOString(),
+        })
+      );
+    } catch (e) {
+      console.error(e);
+    }
   };
 
-  const handleDisconnect = () => {
+  const handleDisconnect = async () => {
     setIsConnected(false);
+
+    try {
+      await disconnectCalendarProviderAPI(selectedProvider === 'outlook' ? 'outlook' : 'google');
+    } catch (e) {
+      console.error('Failed to disconnect calendar connection', e);
+    }
+
+    try {
+      await saveCalendarConnectionAPI({
+        isConnected: false,
+        provider: selectedProvider === 'outlook' ? 'outlook' : 'google',
+        email: connectedEmail,
+      });
+    } catch (e) {
+      console.error('Failed to disconnect calendar connection', e);
+    }
+
     try {
       localStorage.removeItem('nova_calendar_connection');
     } catch (e) {
@@ -161,14 +227,14 @@ export default function CalendarPage() {
     }
   };
 
-  const handleAddEvent = (e: React.FormEvent) => {
+  const handleAddEvent = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newEventTitle.trim()) return;
 
     const [hours, mins] = newEventTime.split(':').map(Number);
     const startHour = hours + (mins || 0) / 60;
     const endHour = startHour + 1;
-    
+
     const formatH = (h: number) => {
       const hourPart = Math.floor(h);
       const minPart = Math.round((h - hourPart) * 60);
@@ -190,7 +256,13 @@ export default function CalendarPage() {
         : 'Assistant meeting alerts enabled for this event.',
     };
 
-    setEvents([...events, newEvt]);
+    const savedEvent = await saveCalendarEventAPI({
+      ...newEvt,
+      event_type: newEventType,
+      assistantBrief: newEvt.assistantBrief,
+    });
+
+    setEvents((prev) => [...prev, savedEvent ?? newEvt]);
     setShowAddModal(false);
     setNewEventTitle('');
   };

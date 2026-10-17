@@ -4,6 +4,12 @@ import { useState, useEffect } from 'react';
 import { useCachedUser } from '@/app/hooks/useCachedUser';
 import { saveUserToCache } from '@/app/lib/cache/NovaCacheHelpers';
 import {
+  fetchSettingsAPI,
+  saveSettingsAPI,
+  connectEmailProviderAPI,
+  disconnectEmailProviderAPI,
+} from '@/app/lib/api/settings';
+import {
   User,
   Mail,
   Bell,
@@ -107,56 +113,86 @@ export default function SettingsPage() {
       setEmail(currentUser.email || '');
     }
 
-    try {
-      const savedSettings = localStorage.getItem('nova_user_settings');
-      if (savedSettings) {
-        const data = JSON.parse(savedSettings);
-        if (data.timezone) setTimezone(data.timezone);
-        if (data.briefingTime) setBriefingTime(data.briefingTime);
-        if (data.assistantTone) setAssistantTone(data.assistantTone);
-        if (data.urgentEmailAlerts !== undefined) setUrgentEmailAlerts(data.urgentEmailAlerts);
-        if (data.dailyBriefingEmail !== undefined) setDailyBriefingEmail(data.dailyBriefingEmail);
-        if (data.calendarWarnings !== undefined) setCalendarWarnings(data.calendarWarnings);
-        if (data.autoParseTasks !== undefined) setAutoParseTasks(data.autoParseTasks);
-        if (data.draftReplies !== undefined) setDraftReplies(data.draftReplies);
-        if (data.trackDeadlines !== undefined) setTrackDeadlines(data.trackDeadlines);
-      }
-
-      const savedEmailProvider = localStorage.getItem('nova_connected_email_provider');
-      if (savedEmailProvider) {
-        const pData = JSON.parse(savedEmailProvider);
-        setConnectedProvider(pData.provider);
-        setConnectedEmail(pData.email || (currentUser?.email ?? 'eduardo@novasuite.io'));
-      }
-    } catch (e) {
-      console.error(e);
-    }
-  }, [currentUser]);
-
-  const handleConnectProvider = (pid: EmailProviderId) => {
-    setIsConnecting(pid);
-    setTimeout(() => {
-      const syncEmail = email || currentUser?.email || 'eduardo@novasuite.io';
-      setConnectedProvider(pid);
-      setConnectedEmail(syncEmail);
-      setIsConnecting(null);
+    const hydrateSettings = async () => {
+      const savedSettings = await fetchSettingsAPI();
+      if (savedSettings.timezone) setTimezone(savedSettings.timezone);
+      if (savedSettings.briefingTime) setBriefingTime(savedSettings.briefingTime);
+      if (savedSettings.assistantTone) setAssistantTone(savedSettings.assistantTone);
+      if (savedSettings.urgentEmailAlerts !== undefined) setUrgentEmailAlerts(savedSettings.urgentEmailAlerts);
+      if (savedSettings.dailyBriefingEmail !== undefined) setDailyBriefingEmail(savedSettings.dailyBriefingEmail);
+      if (savedSettings.calendarWarnings !== undefined) setCalendarWarnings(savedSettings.calendarWarnings);
+      if (savedSettings.autoParseTasks !== undefined) setAutoParseTasks(savedSettings.autoParseTasks);
+      if (savedSettings.draftReplies !== undefined) setDraftReplies(savedSettings.draftReplies);
+      if (savedSettings.trackDeadlines !== undefined) setTrackDeadlines(savedSettings.trackDeadlines);
+      if (savedSettings.connectedProvider) setConnectedProvider(savedSettings.connectedProvider);
+      if (savedSettings.connectedEmail) setConnectedEmail(savedSettings.connectedEmail);
 
       try {
-        localStorage.setItem(
-          'nova_connected_email_provider',
-          JSON.stringify({
-            provider: pid,
-            email: syncEmail,
-            connectedAt: new Date().toISOString(),
-          })
-        );
+        const savedEmailProvider = localStorage.getItem('nova_connected_email_provider');
+        if (savedEmailProvider) {
+          const pData = JSON.parse(savedEmailProvider);
+          setConnectedProvider(pData.provider);
+          setConnectedEmail(pData.email || (currentUser?.email ?? 'eduardo@novasuite.io'));
+        }
       } catch (e) {
         console.error(e);
       }
-    }, 1000);
+    };
+
+    hydrateSettings();
+  }, [currentUser]);
+
+  const handleConnectProvider = async (pid: EmailProviderId) => {
+    setIsConnecting(pid);
+    const syncEmail = email || currentUser?.email || 'eduardo@novasuite.io';
+    const backendProvider = pid === 'microsoft' ? 'outlook' : 'gmail';
+
+    setConnectedProvider(pid);
+    setConnectedEmail(syncEmail);
+
+    try {
+      const result = await connectEmailProviderAPI(backendProvider, syncEmail);
+      const authUrl = result?.authorization_url || result?.auth_url || result?.authorizationUrl || result?.url;
+
+      if (authUrl) {
+        window.location.href = authUrl;
+        return;
+      }
+
+      await saveSettingsAPI({
+        connectedProvider: pid,
+        connectedEmail: syncEmail,
+        email: syncEmail,
+      });
+    } catch (e) {
+      console.error('Failed to save email provider connection', e);
+    }
+
+    try {
+      localStorage.setItem(
+        'nova_connected_email_provider',
+        JSON.stringify({
+          provider: pid,
+          email: syncEmail,
+          connectedAt: new Date().toISOString(),
+        })
+      );
+    } catch (e) {
+      console.error(e);
+    }
+
+    setIsConnecting(null);
   };
 
-  const handleDisconnectProvider = () => {
+  const handleDisconnectProvider = async () => {
+    const backendProvider = connectedProvider === 'microsoft' ? 'outlook' : 'gmail';
+
+    try {
+      await disconnectEmailProviderAPI(backendProvider);
+    } catch (e) {
+      console.error('Failed to disconnect email provider', e);
+    }
+
     setConnectedProvider(null);
     try {
       localStorage.removeItem('nova_connected_email_provider');
@@ -177,6 +213,25 @@ export default function SettingsPage() {
       last_updated: Date.now(),
     };
     await saveUserToCache([updatedUser]);
+
+    try {
+      await saveSettingsAPI({
+        timezone,
+        briefingTime,
+        assistantTone,
+        urgentEmailAlerts,
+        dailyBriefingEmail,
+        calendarWarnings,
+        taskScoreUpdates,
+        autoParseTasks,
+        draftReplies,
+        trackDeadlines,
+        connectedProvider,
+        connectedEmail,
+      });
+    } catch (e) {
+      console.error('Backend settings save failed', e);
+    }
 
     try {
       localStorage.setItem(

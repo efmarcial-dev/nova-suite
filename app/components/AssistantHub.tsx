@@ -17,6 +17,7 @@ import {
 import { useCachedUser } from '../hooks/useCachedUser';
 import { useCachedTasks } from '../hooks/useCachedTasks';
 import { useCachedProjects } from '../hooks/useCachedProjects';
+import { fetchMessagesAPI, saveMessagesAPI } from '@/app/lib/api/messages';
 
 export type ChannelType = 'all' | 'email' | 'system';
 
@@ -102,20 +103,37 @@ export default function AssistantHub({ className = '' }: { className?: string })
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
   const [isDispatching, setIsDispatching] = useState(false);
 
-  // Load persisted messages from localStorage
+  // Load persisted messages from backend and then local fallback
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem('nova_assistant_email_messages');
-      if (saved) {
-        setMessages(JSON.parse(saved));
+    const hydrateMessages = async () => {
+      const remoteMessages = await fetchMessagesAPI();
+      if (remoteMessages.length > 0) {
+        setMessages(remoteMessages);
+        return;
       }
-    } catch (e) {
-      console.error(e);
-    }
+
+      try {
+        const saved = localStorage.getItem('nova_assistant_email_messages');
+        if (saved) {
+          setMessages(JSON.parse(saved));
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    };
+
+    hydrateMessages();
   }, []);
 
-  const saveMessages = (items: MessageItem[]) => {
+  const saveMessages = async (items: MessageItem[]) => {
     setMessages(items);
+
+    try {
+      await saveMessagesAPI({ messages: items });
+    } catch (e) {
+      console.error('Failed to save assistant messages', e);
+    }
+
     try {
       localStorage.setItem('nova_assistant_email_messages', JSON.stringify(items));
     } catch (e) {
