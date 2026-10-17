@@ -38,8 +38,10 @@ export default function NewsLetterModal() {
 
         try {
 
-            e.preventDefault();
-            const res = await fetch('https://www.novadev.solutions/api/create_newsletter/', {
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL 
+                ? `${process.env.NEXT_PUBLIC_API_URL.replace(/\/+$/, '')}/create_newsletter/`
+                : '/api/create_newsletter/';
+            const res = await fetch(apiUrl, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

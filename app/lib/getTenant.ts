@@ -1,5 +1,6 @@
 import { headers } from "next/headers";
 import { cookies } from "next/headers";
+import { getDjangoApiUrl } from "./api/getDjangoApiUrl";
 
 export async function getTenant() {
     const headerList = await headers();
@@ -18,7 +19,7 @@ export async function getTenant() {
 
     // Fetch tenant data from django backend
     const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/auth/tenants/${tenant}`,
+        getDjangoApiUrl(`auth/tenants/${tenant}`),
         {
             headers: {
                 'Content-Type' : 'application/json',
@@ -45,11 +46,11 @@ export async function getCurrentUser() {
 
     try {
         const response = await fetch(
-            `${process.env.NEXT_PUBLIC_API_URL}/api/auth/user/`,
+            getDjangoApiUrl("auth/user/"),
             {
                 headers: {
                     'Content-Type' : 'application/json',
-                    'Authrization' : `Bearer ${accessToken}`
+                    'Authorization' : `Bearer ${accessToken}`
                 },
                 cache: 'no-store'
             }

@@ -1,10 +1,11 @@
 'use client';
 import { useState } from "react";
-import { loginUser, setAuthCookies, redirectToTenant } from "@/app/lib/auth";
+import { useRouter } from "next/navigation";
+import { loginUser, setAuthCookies } from "@/app/lib/auth";
 
 export default function LoginForm() {
-
-    const [email, setEmail] = useState('')
+  const router = useRouter();
+  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -20,8 +21,8 @@ export default function LoginForm() {
       // Set access and refresh token cookies
       setAuthCookies(data.access, data.refresh)
       
-      // Redirect to tenant subdomain
-      redirectToTenant(data.user.tenant_slug)
+      // Redirect to dashboard
+      router.push('/dashboard')
     } catch (err) {
       setError('Invalid credentials. Please try again.')
       setLoading(false)

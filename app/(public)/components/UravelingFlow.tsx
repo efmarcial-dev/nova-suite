@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import styles from '@/public/css/UnravelingFlow.module.css';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -124,19 +123,19 @@ export default function UnravelingFlow() {
 
 
   return (
-    <section ref={sectionRef} className={styles.section}>
+    <section ref={sectionRef} className="unraveling-section">
       {/* Knot SVG */}
       <div 
         data-aos='zoom-in'
         data-aos-delay='95'
-        className={styles.knotWrapper}>
+        className="unraveling-knotWrapper">
         <svg
           width="372" 
             height="1381" 
             viewBox="0 0 372 1381" 
             fill="none" 
             preserveAspectRatio="xMidYMin meet"
-          className={styles.knot}
+          className="unraveling-knot"
         >
           {/* Placeholder tangled paths */}
           <path
@@ -149,7 +148,7 @@ export default function UnravelingFlow() {
         </svg>
 
         {/* Flow line */}
-        <svg className={styles.flowLine} viewBox="0 0 2 1000" preserveAspectRatio="none">
+        <svg className="unraveling-flowLine" viewBox="0 0 2 1000" preserveAspectRatio="none">
             <path
                 ref={lineRef}
                 // Simplified path data: Starts at (1, 0) and ends at (1, 1000)
@@ -205,25 +204,25 @@ export default function UnravelingFlow() {
         build systems that support that reality.
       </p>
 
-      <div className={styles.flowWrapper}>
+      <div className="unraveling-flowWrapper">
         
 
         {/* Nodes */}
-        <div className={styles.nodes}>
+        <div className="unraveling-nodes">
           <div
             ref={(el) => { if (el) nodesRef.current[0] = el; }}
-            className={`${styles.node} ${styles.right}`}
+            className="unraveling-node unraveling-right"
           >
-            <span className={styles.index}>01</span>
+            <span className="unraveling-index">01</span>
             <h3>CONSOLIDATING SCATTERED TOOLS</h3>
             <p>into a single internal system.</p>
           </div>
 
           <div
             ref={(el) => { if (el) nodesRef.current[1] = el; }}
-            className={`${styles.node} ${styles.left}`}
+            className="unraveling-node unraveling-left"
           >
-            <span className={styles.index}>02</span>
+            <span className="unraveling-index">02</span>
             <h3>ELIMINATING MANUAL STEPS</h3>
             <p>that quietly drain hours every week.</p>
           </div>
@@ -231,9 +230,9 @@ export default function UnravelingFlow() {
           <div
             
             ref={(el) => { if (el) nodesRef.current[2] = el; }}
-            className={`${styles.node} ${styles.right}`}
+            className="unraveling-node unraveling-right"
           >
-            <span className={styles.index}>03</span>
+            <span className="unraveling-index">03</span>
             <h3>HELPING TEAMS DECIDE WHAT NOT TO BUILD</h3>
             <p>before complexity compounds.</p>
           </div>
@@ -241,9 +240,9 @@ export default function UnravelingFlow() {
            <div
             
             ref={(el) => { if (el) nodesRef.current[3] = el; }}
-            className={`${styles.node} ${styles.left}`}
+            className="unraveling-node unraveling-left"
           >
-            <span className={styles.index}>04</span>
+            <span className="unraveling-index">04</span>
             <h3>INTRODUCING AUTOMATION</h3>
             <p>where humans shouldn't be doing repetitive work.</p>
           </div>
@@ -251,9 +250,9 @@ export default function UnravelingFlow() {
           <div
             
             ref={(el) => { if (el) nodesRef.current[4] = el; }}
-            className={`${styles.node} ${styles.right}`}
+            className="unraveling-node unraveling-right"
           >
-            <span className={styles.index}>05</span>
+            <span className="unraveling-index">05</span>
             <h3>CREATING A CLEARER FRONT DOOR</h3>
             <p>so work enters the business cleanly.</p>
           </div>

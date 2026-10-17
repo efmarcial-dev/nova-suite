@@ -64,6 +64,11 @@ export async function updateTaskInCache(updatedTask: any) {
     await db.put('tasks', updatedTask); // 'put' will update by key
 }
 
+export async function deleteTaskInCache(taskId: any) {
+    const db = await initNovaCache();
+    await db.delete('tasks', taskId);
+}
+
 {/* Projects */}
 export async function saveProjectsToCache(projects: any[]) {
   const db = await initNovaCache();
@@ -84,6 +89,11 @@ export async function clearCachedProjects() {
     return await db.clear('projects');
 }
 
+export async function updateProjectInCache(updatedProject: any) {
+    const db = await initNovaCache();
+    await db.put('projects', updatedProject);
+}
+
 export async function getCachedProjectsWithMetadata() {
     const db = await initNovaCache();
     const all = await db.getAll('projects');
@@ -94,39 +104,6 @@ export async function getCachedProjectsWithMetadata() {
 
     return {projects: all, last_updated}
 
-}
-
-{/* Assignees */}
-
-export async function saveAssigneesToCache(assignees: any[]) {
-    const db = await initNovaCache();
-    const tx = db.transaction('assignees', 'readwrite');
-    for (const assignee of assignees){
-        await tx.store.put(assignee);
-    }
-
-    await tx.done;
-}
-
-export async function getCachedAssignees(){
-    const db = await initNovaCache();
-    return await db.getAll('assignees');
-}
-
-export async function clearCachedAssignees(){
-    const db = await initNovaCache();
-    return await db.clear('assignees')
-}
-
-export async function getCachedAssigneesWithMetadata() {
-    const db = await initNovaCache();
-    const all = await db.getAll('assignees');
-
-    const last_updated = all.length > 0
-        ? Math.max(...all.map(assignee => assignee.last_updated || 0))
-        : 0;
-
-    return {assignees: all, last_updated}
 }
 
 {/* Analytis */}

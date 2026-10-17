@@ -1,48 +1,35 @@
 "use client";
 
 import StatsCards from '../../components/StatsCards';
-import ProductivityChart from '../../components/ProductivityChart';
+import AssistantHub from '../../components/AssistantHub';
 import ProjectsList from '../../components/ProjectsList';
-import ReminderCard from '../../components/ReminderCard';
+import QuickActions from '../../components/ReminderCard';
 import TimeTracker from '../../components/TimeTracker';
 
 import { useCachedProjects } from '@/app/hooks/useCachedProjects';
-import { useCachedAssigneees } from '@/app/hooks/useCachedAssignees';
 import { useCachedTasks } from '@/app/hooks/useCachedTasks';
-import { useCachedUser } from '@/app/hooks/useCachedUser';
 
-
- 
 export default function DashboardPage() {
-
-  const {projects: cacheProjects, isProjectLoading} = useCachedProjects();
-  const { isAssigneeLoading} = useCachedAssigneees();
-  const {tasks: cachedTasks, isLoading: isTasksLoading} = useCachedTasks();
-
-
-  
-
-  if (isProjectLoading || isAssigneeLoading || isTasksLoading ){
-    console.log('Loading Cached IndexedDB tables.')
-  }else {
-    console.log('Loaded Cached IndexedDB tables.')
-    console.log('Projects from cache:', cacheProjects);
-    console.log('Tasks from cache:', cachedTasks);
-  }
-
+  const { projects: cacheProjects, isProjectLoading } = useCachedProjects();
+  const { tasks: cachedTasks } = useCachedTasks();
 
   return (
-    <div className=" items-center justify-center">
-        <div className="grid grid-cols-4 gap-6">
-            <StatsCards projects={cacheProjects} tasks={cachedTasks}/>
-            {/* Row 2: Chart + Projects List */}
-                <ProductivityChart className="col-span-3 h-[300px]" />
-                <ProjectsList className="row-span-2 h-full" />
+    <div className="grid grid-cols-4 gap-4 auto-rows-min">
+      {/* Row 1: Executive Stats */}
+      <StatsCards projects={cacheProjects} tasks={cachedTasks} />
 
-                {/* Row 3: Bottom content */}
-                <ReminderCard className="col-span-1 h-[150px]" />
-                <TimeTracker className="col-span-1 h-[150px]" />
-        </div>
+      {/* Row 2: Assistant Executive Briefing & Omnichannel Stream (spans 3) + Projects list (spans 1, 2 rows) */}
+      <AssistantHub className="col-span-3" />
+      <ProjectsList
+        projects={cacheProjects}
+        isLoading={isProjectLoading}
+        className="col-span-1 row-span-2"
+      />
+
+      {/* Row 3: Quick Directives + Time Tracker */}
+      <QuickActions className="col-span-2" />
+      <TimeTracker className="col-span-1" />
     </div>
-  )
+  );
 }
+

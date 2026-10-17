@@ -48,3 +48,32 @@ export async function createProject(projectData: {
     const data = await res.json();
     return data || {};
 }
+
+export async function updateProjectAPI(id: string | number, updates: {
+    projectName?: string;
+    title?: string;
+    description?: string;
+    status?: string;
+    due_date?: string;
+}): Promise<any> {
+    try {
+        const res = await fetch("/api/projects/", {
+            method: "PATCH",
+            headers: {
+                'Content-type': 'application/json',
+            },
+            credentials: 'include',
+            body: JSON.stringify({ id, ...updates }),
+        });
+        if (!res.ok) {
+            console.warn(`Backend update returned status ${res.status}`);
+            return null;
+        }
+        return await res.json();
+    } catch (e) {
+        console.warn("Failed to reach backend API for update, cached locally", e);
+        return null;
+    }
+}
+
+export { updateProjectAPI as updateProject };

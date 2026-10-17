@@ -15,20 +15,15 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
 
   return (
-
-    
-      <div className='h-full bg-gray-100 p-4'>
-
-        <div className="flex h-full gap-4">
-          <Sidebar />
-          <main className="flex-1 flex flex-col">
-            <Header/>
-            <section className="flex-1 overflow-auto p-6 bg-white rounded-xl shadow-sm">
-              {children}
-            </section>
-          </main>
-        </div>
-        
+      <div className='h-full bg-[--background] flex'>
+        <Sidebar />
+        <main className="flex-1 flex flex-col min-w-0 p-4 gap-4 overflow-hidden">
+          <Header />
+          <section className="flex-1 overflow-y-auto pr-1 pb-4">
+            {children}
+          </section>
+        </main>
       </div>
   )
 }
+

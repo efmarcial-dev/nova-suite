@@ -33,9 +33,10 @@ export default function JoinWaitlistModal() {
     setLoading(true);
 
     try {
-      e.preventDefault();
-    // TODO: integrate with backend or service (e.g. Firebase, Supabase, etc.)
-    const res = await fetch('https://www.novadev.solutions/api/create_wait_list/', {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL 
+        ? `${process.env.NEXT_PUBLIC_API_URL.replace(/\/+$/, '')}/create_wait_list/`
+        : '/api/create_wait_list/';
+    const res = await fetch(apiUrl, {
       method: 'POST',
       headers : {
         'Content-Type' : 'application/json',

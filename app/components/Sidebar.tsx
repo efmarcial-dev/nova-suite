@@ -1,65 +1,107 @@
 'use client'
 
-import { Home, ListTodo, CalendarDays, Settings, HelpCircle, LogOut, Download, Plus } from 'lucide-react';
+import { Home, ListTodo, CalendarDays, FolderKanban, Settings, HelpCircle, LogOut, Plus } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import ModalPanel from './ModalPanel';
 import { useState } from 'react';
+import { usePathname } from 'next/navigation';
+import { useCachedUser } from '../hooks/useCachedUser';
+import { motion } from 'framer-motion';
 
 export default function Sidebar() {
-
   const [showNewTask, setShowNewTask] = useState(false);
+  const pathname = usePathname();
+  const { user } = useCachedUser();
+  const currentUser = user?.[0];
 
+  const initials = currentUser
+    ? `${currentUser.first_name?.[0] ?? ''}${currentUser.last_name?.[0] ?? ''}`.toUpperCase()
+    : 'U';
 
-  function plus_button() {
-    return (
-      <button 
-        onClick={(e) => {
-          e.stopPropagation(); // prevent bubbling
-          setShowNewTask(true);
-        }}
-          className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition">
-          <Plus className="w-4 h-4 text-gray-600" />
-        </button>
-    )
-  }
+  const navLinks = [
+    { icon: <Home size={17} />, text: 'Dashboard', href: '/dashboard' },
+    { icon: <ListTodo size={17} />, text: 'Tasks', href: '/dashboard/tasks' },
+    { icon: <FolderKanban size={17} />, text: 'Projects', href: '/dashboard/projects' },
+    { icon: <CalendarDays size={17} />, text: 'Calendar', href: '/dashboard/calendar' },
+  ];
+
+  const bottomLinks = [
+    { icon: <Settings size={17} />, text: 'Settings', href: '/dashboard/settings' },
+    { icon: <HelpCircle size={17} />, text: 'Help', href: '/dashboard/help' },
+    { icon: <LogOut size={17} />, text: 'Logout', href: '/logout' },
+  ];
 
   return (
    <>
-     <aside className="bg-white rounded-xl shadow-md p-4 w-64 flex flex-col justify-between h-full">
+     <aside className="bg-[--sidebar] w-60 shrink-0 flex flex-col justify-between h-full p-4">
       <div>
-        
-        <div className="flex items-center space-x-2 mb-6 ">
-                        <Image src={'/images/nova_logo.png'} alt="Nova Suite" width={34} height={34} />
-                        <span className="text-2xl font-medium text-gray-900">Nova</span>
-                    </div>
+        {/* Logo */}
+        <div className="flex items-center gap-2.5 mb-8 px-2">
+          <div className="w-8 h-8 rounded-lg gradient-brand flex items-center justify-center">
+            <Image src={'/images/nova_logo.png'} alt="Nova Suite" width={20} height={20} />
+          </div>
+          <span className="text-xl font-semibold text-white tracking-tight">Nova Suite</span>
+        </div>
 
-        <nav className="space-y-4">
-          <SidebarLink icon={<Home size={18} />} text="Dashboard" href="/dashboard" />
-          <SidebarLink icon={<ListTodo size={18} />} text="Tasks" href="/dashboard/tasks" extra={plus_button()} />
-          <SidebarLink icon={<CalendarDays size={18} />} text="Calendar" href="/dashboard/calendar" />
+        {/* New Task button */}
+        <button
+          onClick={() => setShowNewTask(true)}
+          className="w-full mb-6 flex items-center justify-center gap-2 py-2 px-4 rounded-xl gradient-brand text-white text-sm font-medium hover:opacity-90 transition-opacity shadow-lg shadow-indigo-900/30"
+        >
+          <Plus size={15} /> New Task
+        </button>
+
+        {/* Main Nav */}
+        <nav className="space-y-1">
+          {navLinks.map((link) => {
+            const isActive = pathname === link.href || (link.href !== '/dashboard' && pathname.startsWith(link.href));
+            return (
+              <SidebarLink
+                key={link.href}
+                icon={link.icon}
+                text={link.text}
+                href={link.href}
+                isActive={isActive}
+              />
+            );
+          })}
         </nav>
 
-        <div className="mt-8 space-y-4 border-t pt-4 text-sm text-gray-600">
-          <SidebarLink icon={<Settings size={18} />} text="Settings" href="/dashboard/settings" />
-          <SidebarLink icon={<HelpCircle size={18} />} text="Help" href="/dashboard/help" />
-          <SidebarLink icon={<LogOut size={18} />} text="Logout" href="/logout" />
+        {/* Bottom Nav */}
+        <div className="mt-8 pt-4 border-t border-[--sidebar-border] space-y-1">
+          {bottomLinks.map((link) => (
+            <SidebarLink
+              key={link.href}
+              icon={link.icon}
+              text={link.text}
+              href={link.href}
+              isActive={pathname === link.href}
+            />
+          ))}
         </div>
       </div>
 
-      <div className="border-t pt-4">
-        <p className="text-sm text-gray-600 mb-2">@ Download Mobile App</p>
-        <button className="bg-blue-600 text-white text-sm px-4 py-2 rounded hover:bg-blue-700 flex items-center gap-2">
-          <Download size={16} /> Download
-        </button>
+      {/* User Avatar */}
+      <div className="flex items-center gap-3 px-2 py-3 rounded-xl bg-[--sidebar-accent] mt-4">
+        <div className="w-8 h-8 rounded-full gradient-brand flex items-center justify-center text-white text-xs font-bold shrink-0">
+          {initials}
+        </div>
+        <div className="min-w-0">
+          <p className="text-sm font-medium text-white truncate">
+            {currentUser ? `${currentUser.first_name} ${currentUser.last_name}` : 'Loading...'}
+          </p>
+          <p className="text-xs text-[--sidebar-foreground] truncate opacity-70">
+            {currentUser?.email ?? ''}
+          </p>
+        </div>
       </div>
     </aside>
 
     {/* New Task Modal */}
     <ModalPanel isOpen={showNewTask} onClose={() => setShowNewTask(false)}>
-        <h2 className="text-xl font-semibold mb-4">Create New Task</h2>
-        {/* New task form here */}
-      </ModalPanel>
+      <h2 className="text-xl font-semibold mb-4">Create New Task</h2>
+    </ModalPanel>
    </>
   )
 }
@@ -68,27 +110,31 @@ function SidebarLink({
   icon,
   text,
   href,
-  extra,
+  isActive,
 }: {
   icon: React.ReactNode
   text: string
   href: string
-  extra?: React.ReactNode
+  isActive: boolean
 }) {
   return (
-    <div className="flex items-center justify-between group">
-      <Link
+    <Link
       href={href}
-      className="flex items-center justify-between text-gray-800 hover:text-blue-600 transition"
+      className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 relative
+        ${isActive
+          ? 'bg-[--sidebar-accent] text-white'
+          : 'text-[--sidebar-foreground] hover:bg-[--sidebar-accent] hover:text-white'
+        }`}
     >
-      <span className="flex items-center gap-2">
-        {icon}
-        {text}
-      </span>
-      
+      {isActive && (
+        <motion.span
+          layoutId="sidebar-active-indicator"
+          className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 rounded-r-full bg-indigo-400"
+          transition={{ type: 'spring', stiffness: 500, damping: 35 }}
+        />
+      )}
+      <span className={isActive ? 'text-indigo-400' : ''}>{icon}</span>
+      {text}
     </Link>
-    {extra && <div className="text-blue-500">{extra}</div>}
-    </div>
-    
   )
 }

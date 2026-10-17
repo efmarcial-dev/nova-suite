@@ -1,21 +1,37 @@
-// components/StatCard.tsx
 'use client'
+import Link from 'next/link'
+import { TrendingUp } from 'lucide-react'
 
 interface StatCardProps {
   title: string
   value: number | string
+  href: string
   icon?: React.ReactNode
+  accent?: string
+  trend?: string
   className?: string
 }
 
-export default function StatCard({ title, value, icon, className = '' }: StatCardProps) {
+export default function StatCard({ title, value, href, icon, accent = 'bg-indigo-100 text-indigo-600', trend, className = '' }: StatCardProps) {
   return (
-    <div className={`bg-white p-10 rounded-xl shadow-sm flex flex-col gap-2 ${className}`}>
+    <Link
+      href={href}
+      className={`group bg-white p-5 rounded-2xl shadow-sm border border-[--border] flex flex-col gap-3 transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 ${className}`}
+    >
       <div className="flex items-center justify-between">
-        <h3 className="text-sm text-gray-500 font-medium">{title}</h3>
-        {icon && <div className="text-blue-500">{icon}</div>}
+        <span className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${accent}`}>
+          {icon}
+        </span>
+        {trend && (
+          <span className="flex items-center gap-1 text-xs font-medium text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
+            <TrendingUp size={11} /> {trend}
+          </span>
+        )}
       </div>
-      <p className="text-3xl font-bold text-gray-800">{value}</p>
-    </div>
+      <div>
+        <p className="text-[--muted-foreground] text-xs font-medium uppercase tracking-wide">{title}</p>
+        <p className="text-3xl font-bold text-[--foreground] mt-0.5 group-hover:text-indigo-600 transition-colors">{value}</p>
+      </div>
+    </Link>
   )
 }

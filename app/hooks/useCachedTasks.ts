@@ -70,10 +70,29 @@ export function useCachedTasks() {
         console.log('Updated the indexedDB new task creation.')
     }
 
+    // Update existing task in memory and cache
+    const updateTask = async (updatedTask: any) => {
+        const updated = tasks.map(task =>
+            task.id === updatedTask.id ? { ...task, ...updatedTask, lastUpdated: Date.now() } : task
+        );
+        setTasks(updated);
+        await saveTasksToCache(updated);
+        console.log(`Task ${updatedTask.id} updated in cache`);
+    }
+
+    // Delete task from cache
+    const deleteTaskFromCache = async (taskId: number | string) => {
+        const updated = tasks.filter(task => task.id !== taskId);
+        setTasks(updated);
+        await saveTasksToCache(updated);
+    }
+
     return {
         tasks,
-        setTasks, // optional, may be useful for edits/deletes.
-        addTaskToCache, // use this after creation 
+        setTasks,
+        addTaskToCache,
+        updateTask,
+        deleteTaskFromCache,
         isLoading, 
         fromCache,
     }

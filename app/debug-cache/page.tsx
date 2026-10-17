@@ -5,9 +5,6 @@ import { useState } from "react"
 import { saveTasksToCache,
     getCachedTasks,
     clearTaskCache,
-    saveAssigneesToCache,
-    getCachedAssignees,
-    clearCachedAssignees,
     saveProjectsToCache,
     getCachedProjects,
     clearCachedProjects,
@@ -18,54 +15,18 @@ import { assert } from "console";
 
 export default function DebugCachePage() {
     const [tasks, setTasks] = useState<any[]>([]);
-    const [assignees, setAssignees] = useState<any[]>([]);
     const [projects, setProjects] = useState<any[]>([]);
 
     const demoProject = [
       {
         id: 1,
         title: 'NovaSuitee',
-        description: 'Test Description',
-        assignee: 4
+        description: 'Test Description'
       },
       {
         id: 2,
         title: "Website",
-        description: "test",
-        assignee: 2
-      }
-    ]
-
-    const demoAssignee = [
-      {
-        id: 1,
-        name: "John Cache",
-        avatarUrl: 'https://i.pravatar.cc/100?img=1'
-      }, 
-      {
-        id: 2,
-        name: 'Bob',
-        avatarUrl: 'https://i.pravatar.cc/100?img=2',
-      },
-      {
-        id: 3,
-        name: 'Carlos',
-        avatarUrl: 'https://i.pravatar.cc/100?img=3'
-      },
-      {
-        id: 4,
-        name: 'Diana',
-        avatarUrl: 'https://i.pravatar.cc/100?img=4'
-      },
-      {
-        id: 5,
-        name: 'Evan',
-        avatarUrl: 'https://i.pravatar.cc/100?img=5'
-      },
-      {
-        id: 6,
-        name: 'Fiona',
-        avatarUrl: 'https://i.pravatar.cc/100?img=6'
+        description: "test"
       }
     ]
 
@@ -79,10 +40,6 @@ export default function DebugCachePage() {
     tags: ['Urgent', 'Frontend'],
     dueDate: 'June 27',
     status: 'todo',
-    assignee: {
-      name: 'Alice',
-      avatarUrl: 'https://i.pravatar.cc/100?img=1',
-    },
   },
   {
     id: '2',
@@ -93,10 +50,6 @@ export default function DebugCachePage() {
     tags: ['API', 'Backend'],
     dueDate: 'June 28',
     status: 'in_progress',
-    assignee: {
-      name: 'Bob',
-      avatarUrl: 'https://i.pravatar.cc/100?img=2',
-    },
   },
   {
     id: '3',
@@ -107,10 +60,6 @@ export default function DebugCachePage() {
     tags: ['Review'],
     dueDate: 'June 30',
     status: 'in_review',
-    assignee: {
-      name: 'Carlos',
-      avatarUrl: 'https://i.pravatar.cc/100?img=3',
-    },
   },
   {
     id: '4',
@@ -121,10 +70,6 @@ export default function DebugCachePage() {
     tags: ['Deploy'],
     dueDate: 'June 29',
     status: 'done',
-    assignee: {
-      name: 'Diana',
-      avatarUrl: 'https://i.pravatar.cc/100?img=4',
-    },
   },
   {
     id: '5',
@@ -135,10 +80,6 @@ export default function DebugCachePage() {
     tags: ['Design', 'UX'],
     dueDate: 'July 1',
     status: 'todo',
-    assignee: {
-      name: 'Evan',
-      avatarUrl: 'https://i.pravatar.cc/100?img=5',
-    },
   },
   {
     id: '6',
@@ -149,10 +90,6 @@ export default function DebugCachePage() {
     tags: ['Testing'],
     dueDate: 'July 2',
     status: 'in_progress',
-    assignee: {
-      name: 'Fiona',
-      avatarUrl: 'https://i.pravatar.cc/100?img=6',
-    },
   },
 ];
 
@@ -166,8 +103,6 @@ export default function DebugCachePage() {
       tags: task.tags,
       status: task.status,
       projectId: '',
-      assignee: task.assignee.name,
-      assigneeUrl: task.assignee.avatarUrl,
       recommendation: task.recommendation,
       dueDate: task.dueDate,
       lastUpate: Date.now(),
@@ -186,22 +121,6 @@ export default function DebugCachePage() {
     await clearTaskCache();
     setTasks([]);
     alert('Cached Cleared');
-  }
-
-  const handleAssigneeSave = async () => {
-    await saveAssigneesToCache(demoAssignee);
-    alert("Assignee saved to cache.")
-  }
-
-  const handleAssigneeLoad = async () => {
-    const cached = await getCachedAssignees();
-    setAssignees(cached);
-  }
-
-  const handleAssigneeClear = async () => {
-    await clearCachedAssignees();
-    setAssignees([]);
-    alert("Cached Cleared")
   }
 
   const handleProjectSave = async () => {
@@ -236,19 +155,6 @@ export default function DebugCachePage() {
       <div className="pt-4">
         <h2 className="font-semibold">Cached Tasks:</h2>
         <pre className="bg-gray-100 p-3 rounded text-sm">{JSON.stringify(tasks, null, 2)}</pre>
-      </div>
-
-      <h1 className="text-xl font-semibold">Assignee Tester</h1>
-
-      <div className="space-x-2">
-        <button onClick={handleAssigneeSave} className="px-4 py-2 bg-blue-600 text-white rounded-md">Save Demo Assignees</button>
-        <button onClick={handleAssigneeLoad} className="px-4 py-2 bg-green-600 text-white rounded-md">Load Cached Assignees</button>
-        <button onClick={handleAssigneeClear} className="px-4 py-2 bg-red-600 text-white rounded-md">Clear Assignees</button>
-      </div>
-
-      <div className="pt-4">
-        <h2 className="font-semibold">Cached Assignee:</h2>
-        <pre className="bg-gray-100 p-3 rounded text-sm">{JSON.stringify(assignees, null, 2)}</pre>
       </div>
 
       <h1 className="text-xl font-semibold">Project Tester</h1>

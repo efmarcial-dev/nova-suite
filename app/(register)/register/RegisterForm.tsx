@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { setAuthCookies } from '@/app/lib/auth';
 
 export default function RegisterForm() {
 
@@ -9,6 +10,7 @@ export default function RegisterForm() {
     const [confirmPassword, setConfirmPassword] = useState('');
     const [first_name, setFirstName] = useState('');
     const [last_name, setLastName] = useState('');
+    const [tenantName, setTenantName] = useState('');
     const [role, setRole] = useState('admin'); // Default role
     const router = useRouter();
     const [loading, setLoading] = useState(false);
@@ -26,27 +28,27 @@ export default function RegisterForm() {
         }
 
         try {
-            console.log('Submitting registration form with:', { email, password, first_name, last_name, role });
             setRole('admin'); // Ensure role is set to 'admin' for registration
             const res = await fetch('/api/register/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ email, password, first_name, last_name, role }),
+                body: JSON.stringify({ email, password, first_name, last_name, tenant_name: tenantName, role }),
             });
 
-            const data = await res.json();
-            console.log('Response data:', data);
+            const data = await res.json().catch(() => ({}));
 
-            if (res.status === 200) {
-                // If registration is successful, redirect to the dashboard
-                console.log('Registration successful');
-                router.push('/onboarding');
+            if (res.ok) {
+                if (data.access) {
+                    setAuthCookies(data.access, data.refresh);
+                    router.push('/onboarding');
+                } else {
+                    router.push('/login');
+                }
             } else {
-                // If registration fails, set the error message
                 console.error('Registration failed:', data);
-                setError(data.error || 'Registration failed');
+                setError(data.error || data.detail || 'Registration failed');
             }
 
         } catch (error) {
@@ -134,6 +136,19 @@ export default function RegisterForm() {
                         className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                     />
 
+                </div>
+                <div>
+                    <label htmlFor="tenant_name" className="block text-sm font-medium text-gray-700">
+                        Workspace Name
+                    </label>
+                    <input
+                        id="tenant_name"
+                        type="text"
+                        value={tenantName}
+                        onChange={(e) => setTenantName(e.target.value)}
+                        required
+                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    />
                 </div>
                 <button
                     type="submit"

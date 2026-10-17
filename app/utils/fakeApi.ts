@@ -1,7 +1,6 @@
 
 export async function createTask(taskData: {
     title: string;
-    selectedAssigneeId?: number | null;
     status: string | null;
     selectedProjectId?: number | null;
     tags: string[];

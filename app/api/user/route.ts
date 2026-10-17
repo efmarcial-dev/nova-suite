@@ -2,6 +2,7 @@
 import { error } from "console";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
+import { getDjangoApiUrl } from "../../lib/api/getDjangoApiUrl";
 
 export async function GET() {
     const cookieStore = await cookies();
@@ -14,7 +15,7 @@ export async function GET() {
     try{
         const response = await fetch(
 
-            `${process.env.NEXT_PUBLIC_API_URL}/api/auth/user/`,
+            getDjangoApiUrl("auth/user/"),
             {
                 headers : {
                     'Content-Type' : 'application/json',

@@ -2,6 +2,7 @@
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 import { serialize } from 'cookie';
+import { getDjangoApiUrl } from '../../lib/api/getDjangoApiUrl';
 
 export async function GET() {
     
@@ -14,7 +15,7 @@ export async function GET() {
   }
 
   try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/refresh/`, {
+    const res = await fetch(getDjangoApiUrl('auth/refresh/'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ refresh }),

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { serialize } from "cookie";
 import { cookies } from "next/headers";
+import { getDjangoApiUrl } from "../../lib/api/getDjangoApiUrl";
 
 export async function POST(req: Request) {
     const accessToken = (await cookies()).get('access')?.value;
@@ -15,7 +16,7 @@ export async function POST(req: Request) {
         const body = await req.json(); // Read the onboarding data from the request body
         console.log(`Received onboarding data: ${JSON.stringify(body)}`);
 
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/onboarding/`, {
+        const res = await fetch(getDjangoApiUrl("auth/onboarding/"), {
             method: 'POST',
             headers: { 
                 'Content-Type': 'application/json',

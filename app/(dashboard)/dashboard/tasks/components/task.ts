@@ -1,5 +1,5 @@
-type TaskStatus = 'todo' | 'in_progress' | 'in_review' | 'done';
-type TaskUrgency = 'high' | 'medium' | 'low';
+export type TaskStatus = 'todo' | 'in_progress' | 'in_review' | 'done';
+export type TaskUrgency = 'critical' | 'high' | 'medium' | 'low';
 
 export type Task = {
   id: number;
@@ -10,9 +10,5 @@ export type Task = {
   tags: string[];
   due_date: string;
   status: TaskStatus;
-  assignee: {
-    avatarUrl: string;
-    name: string;
-  };
   project: number;
 }; 

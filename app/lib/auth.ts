@@ -1,7 +1,8 @@
 // lib/auth.ts
+import { getDjangoApiUrl } from "./api/getDjangoApiUrl";
 
 export async function loginUser(email: string, password: string) {
-  const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/login/`, {
+  const response = await fetch(getDjangoApiUrl("auth/login/"), {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -26,7 +27,7 @@ export async function register(
     last_name : string,
 ) {
 
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/register/`, {
+    const response = await fetch(getDjangoApiUrl("auth/register/"), {
         method: "POST",
         headers: {
             'Content-Type' : 'application/json'
@@ -52,54 +53,32 @@ export async function register(
 
 
 export function setAuthCookies(accessToken: string, refreshToken?: string) {
-
-  const hostname = window.location.hostname  
-  const isProduction = process.env.NODE_ENV === 'production'
-  const domain = isProduction ? 'novadev.solutions' : undefined
+  const isProduction = process.env.NODE_ENV === 'production';
   
-  // Set access token
+  // Set access token on current domain
   document.cookie = `access=${accessToken}; path=/; max-age=86400; SameSite=Lax${
     isProduction ? '; Secure' : ''
-  }${domain ? `; Domain=${domain}` : ''}`
+  }`;
   
-  // Set refresh token
+  // Set refresh token on current domain
   if (refreshToken) {
     document.cookie = `refresh=${refreshToken}; path=/; max-age=604800; SameSite=Lax${
       isProduction ? '; Secure' : ''
-    }${domain ? `; Domain=${domain}` : ''}`
+    }`;
   }
 }
 
 export function clearAuthCookies() {
-    document.cookie = 'access=; path=/; max-age=0';
-    document.cookie = 'refresh=; path=/; max-age=0';
+  document.cookie = 'access=; path=/; max-age=0';
+  document.cookie = 'refresh=; path=/; max-age=0';
 }
 
-export function redirectToTenant(tenantSlug: string) {
-  // Get current hostname to determine if we're in local development
-  const currentHost = window.location.hostname
-  const isLocalhost = currentHost.includes('lvh.me') || currentHost === '127.0.0.1'
-  
-  const protocol = isLocalhost ? 'http' : 'https'
-  const baseDomain = isLocalhost ? 'lvh.me' : (process.env.NEXT_PUBLIC_BASE_DOMAIN || 'novadev.solutions')
-  const port = isLocalhost ? ':3000' : ''
-  
-  const tenantUrl = `${protocol}://${tenantSlug}.${baseDomain}${port}/dashboard`
-  
-  window.location.href = tenantUrl
+export function redirectToTenant(_tenantSlug?: string) {
+  // Single domain: redirect directly to /dashboard on current origin
+  window.location.href = '/dashboard';
 }
 
 export function redirectToLogin() {
-
-  // Get current hostname to determine if we're in local development
-  const currentHost = window.location.hostname
-  const isLocalhost = currentHost.includes('lvh.me') || currentHost === '127.0.0.1'  
-
-  const protocol = isLocalhost ? 'https' : 'http'
-  const baseDomain = isLocalhost ? 'lvh.me' : (process.env.NEXT_PUBLIC_BASE_DOMAIN || 'novadev.solutions')
-  const port = isLocalhost ? ':3000' : ''
-  
-  const loginUrl = `${protocol}://${baseDomain}${port}/login`
-  
-  window.location.href = loginUrl
+  // Single domain: redirect directly to /login on current origin
+  window.location.href = '/login';
 }

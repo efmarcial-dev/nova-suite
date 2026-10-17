@@ -75,9 +75,7 @@ export default function ModalPanel({ isOpen, onClose, hasPills, children }: Moda
         {/* Children (content + form) scrollable */}
         <div 
           ref={scrollRef}
-          className={`flex-1 pt-6 px-6 pb-4 transition-all duration-300 ${
-                      hasPills ? 'overflow-y-auto scrollbar-hide' : 'overflow-hidden'
-                    }`}
+          className="flex-1 pt-6 px-6 pb-4 overflow-y-auto transition-all duration-300"
         >
           {children}
         </div>

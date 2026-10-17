@@ -73,9 +73,20 @@ export function useCachedProjects() {
         console.log(`Project ${newProject.id} added to cache`);
     }
 
+    // update existing project in cache
+    const updateProject = async (updatedProject: any) => {
+        const updated = projects.map(project =>
+            project.id === updatedProject.id ? { ...project, ...updatedProject, last_updated: Date.now() } : project
+        );
+        setProjects(updated);
+        await saveProjectsToCache(updated);
+        console.log(`Project ${updatedProject.id} updated in cache`);
+    }
+
     return {
         projects, 
         isProjectLoading,
         addProjectToCache, 
+        updateProject,
         fromCache}
 }

@@ -9,21 +9,18 @@ import NewProjectForm from "./NewProjectForm";
 import { createTask } from "../lib/api/tasks";
 import { useCachedTasks } from "../hooks/useCachedTasks";
 import ProjectSelect from "./ProjectSelect";
-import AssigneeSelect from "./AssigneeSelect";
 import StatusSelect from "./StatusSelect";
 
 
 
 interface NewTaskFormProps {
     projects: any[];
-    assignees: any[];
     onSubmitSuccess?: () => void;
     setHasPills?: (value: boolean) => void;
 }
 
 export default function NewTaskForm({
     projects,
-    assignees,
     onSubmitSuccess,
     setHasPills
 
@@ -35,7 +32,6 @@ export default function NewTaskForm({
     const [status, setStatus] = useState<string | null>(null);
 
     const [selectedProjectId, setSelectedProjectId] = useState<number | null>(null);
-    const [selectedAssigneeId, setSelectedAssigneeId] = useState<number | null>(null);
 
     const [project, setProject] = useState('');
     const [tags, setTags] = useState<string[]>([]);
@@ -59,7 +55,6 @@ export default function NewTaskForm({
         try {
             const newTask = await createTask({
                 title,
-                selectedAssigneeId,
                 status,
                 selectedProjectId,
                 tags,
@@ -113,14 +108,6 @@ export default function NewTaskForm({
                                 />
                             </div>
 
-                            <div>
-                                <label className="block text-sm font-medium mb-1">Assignee</label>
-                                <AssigneeSelect
-                                    assignees={assignees}
-                                    selectedAssigneeId={selectedAssigneeId}
-                                    setSelectedAssigneeId={setSelectedAssigneeId}
-                                />
-                            </div>
                         </div>
 
                         {/* Row 2 */}
