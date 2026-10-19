@@ -1,58 +1,105 @@
-'use client'
-import {motion} from 'motion/react';
-import { Zap, Shield, Target, Users } from 'lucide-react';
-import { FeatureCard } from './FeatureCard';
+'use client';
+import { motion } from 'motion/react';
+import { Clock, Zap, ShieldCheck, TrendingUp } from 'lucide-react';
+
+const reasons = [
+  {
+    icon: Clock,
+    title: 'Save 2+ Hours Every Day',
+    description:
+      'Executives using NovaSuite report reclaiming over two hours per day previously lost to inbox triage, meeting prep, and manual task tracking. The AI handles the overhead — you handle the decisions.',
+  },
+  {
+    icon: Zap,
+    title: 'AI That Completes Work, Not Just Suggests It',
+    description:
+      'Most AI tools tell you what to do. NovaSuite actually prepares the response, organizes the task, and queues the follow-up — you just review and approve. Your judgment stays in control.',
+  },
+  {
+    icon: TrendingUp,
+    title: 'One Source of Truth Across All Tools',
+    description:
+      'Email, calendar, and tasks finally in sync. NovaSuite reads from your connected providers and surfaces a unified view — no switching between apps, no duplicate information, no missed threads.',
+  },
+  {
+    icon: ShieldCheck,
+    title: 'Enterprise-Grade Privacy, Zero Lock-In',
+    description:
+      'Your data is processed in an isolated tenant workspace. Disconnect Google or Microsoft at any time. We never sell your data or use it to train public AI models. Cancel any time — your tasks and history remain yours.',
+  },
+];
 
 export default function WhySection() {
-    
+  return (
+    <section className="relative py-24 px-6 lg:px-20 bg-slate-50/60">
+      <div className="max-w-[1200px] mx-auto space-y-14">
 
-    return (
-        <section className="relative py-32 px-6 lg:px-20 ">
-        <div className="max-w-[1400px] mx-auto">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-center mb-16"
-          >
-            {/** About Us pill */}
-            <div className="inline-block px-4 py-1 border border-black rounded-full text-small text-black">
-              <h4>Why Choose Nova IT Solutions</h4>
-            </div>
-            {/* Section Heading */}
-            <p className="lg:text-6xl md:text-4xl text-3xl font-regular text-gray-900 max-w-3xl mx-auto">
-          We combine technical excellence with business acumen to deliver solutions that exceed expectations.
-            </p>
-            
-          </motion.div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <FeatureCard
-              icon={<Zap size={28} />}
-              title="Lightning Fast"
-              description="We deliver high-performance solutions optimized for speed and efficiency."
-              delay={0}
-            />
-            <FeatureCard
-              icon={<Shield size={28} />}
-              title="Enterprise Security"
-              description="Bank-level security protocols protect your data and applications."
-              delay={0.1}
-            />
-            <FeatureCard
-              icon={<Target size={28} />}
-              title="Results-Driven"
-              description="Focused on measurable outcomes that impact your bottom line."
-              delay={0.2}
-            />
-            <FeatureCard
-              icon={<Users size={28} />}
-              title="Expert Team"
-              description="Senior engineers with decades of combined experience."
-              delay={0.3}
-            />
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+          className="text-center space-y-4"
+        >
+          <div className="inline-block px-4 py-1.5 border border-slate-300 rounded-full text-xs font-semibold text-slate-600 uppercase tracking-wider">
+            Why NovaSuite
           </div>
+          <h2 className="text-3xl md:text-5xl font-extrabold text-gray-900 max-w-3xl mx-auto leading-tight tracking-tight">
+            Built for how executives actually work
+          </h2>
+          <p className="text-lg text-gray-500 max-w-2xl mx-auto">
+            Not another productivity app. NovaSuite is an intelligence layer that sits across your existing tools and turns raw communication into organized, prioritized, actionable work.
+          </p>
+        </motion.div>
+
+        {/* Reasons grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {reasons.map((r, i) => {
+            const Icon = r.icon;
+            return (
+              <motion.div
+                key={r.title}
+                initial={{ opacity: 0, y: 24 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: i * 0.1 }}
+                className="bg-white rounded-2xl border border-slate-200 p-7 space-y-3 shadow-xs hover:shadow-md transition-shadow"
+              >
+                <div className="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600">
+                  <Icon size={20} />
+                </div>
+                <h3 className="text-base font-bold text-gray-900">{r.title}</h3>
+                <p className="text-sm text-gray-500 leading-relaxed">{r.description}</p>
+              </motion.div>
+            );
+          })}
         </div>
-      </section>
-    )
+
+        {/* Stat strip */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5, delay: 0.3 }}
+          className="grid grid-cols-2 md:grid-cols-4 gap-4"
+        >
+          {[
+            { value: '2h+', label: 'Saved daily per executive' },
+            { value: '5', label: 'Intelligence pillars in one workspace' },
+            { value: '100%', label: 'Your data stays yours' },
+            { value: '1', label: 'Login to run your entire day' },
+          ].map((s) => (
+            <div
+              key={s.label}
+              className="bg-white rounded-2xl border border-slate-200 p-5 text-center shadow-xs"
+            >
+              <p className="text-3xl font-extrabold text-indigo-600">{s.value}</p>
+              <p className="text-xs text-gray-500 mt-1 leading-snug">{s.label}</p>
+            </div>
+          ))}
+        </motion.div>
+      </div>
+    </section>
+  );
 }

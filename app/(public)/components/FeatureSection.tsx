@@ -1,79 +1,167 @@
 'use client';
-import React, {useEffect, useState, useRef} from 'react';
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faSlack, faFacebook, faStripe, faGoogle } from "@fortawesome/free-brands-svg-icons";
-import { faCalendar, faArrowUp, faPlus, faMinus, faCogs, faFileAlt, faPuzzlePiece,
-  faChartLine, faUserShield, faUsers
- } from "@fortawesome/free-solid-svg-icons";
+import { motion } from 'motion/react';
+import {
+  Mail,
+  Calendar,
+  CheckSquare,
+  Sparkles,
+  ClipboardList,
+  ShieldCheck,
+  Zap,
+  BrainCircuit,
+} from 'lucide-react';
 
+const features = [
+  {
+    icon: Mail,
+    color: 'text-blue-600',
+    bg: 'bg-blue-50',
+    border: 'border-blue-100',
+    title: 'Email Intelligence',
+    description:
+      'NovaSuite connects to your Gmail or Microsoft Outlook inbox and automatically classifies incoming messages, surfaces high-priority client correspondence, and prepares AI-drafted replies for you to review and approve before anything is sent.',
+    bullets: [
+      'Inbox triage & urgency scoring',
+      'Action item extraction from emails',
+      'AI-drafted reply preparation',
+      'Daily morning email briefing',
+    ],
+  },
+  {
+    icon: Calendar,
+    color: 'text-violet-600',
+    bg: 'bg-violet-50',
+    border: 'border-violet-100',
+    title: 'Calendar Intelligence',
+    description:
+      'Connect your Google Calendar or Microsoft Outlook calendar and get a live view of your schedule. NovaSuite detects conflicts, extracts meeting agendas, and generates pre-meeting briefings so you arrive fully prepared.',
+    bullets: [
+      'Live calendar sync (Google & Microsoft)',
+      'Conflict detection & schedule health score',
+      'Pre-meeting AI briefing cards',
+      'Deep-work time protection',
+    ],
+  },
+  {
+    icon: CheckSquare,
+    color: 'text-emerald-600',
+    bg: 'bg-emerald-50',
+    border: 'border-emerald-100',
+    title: 'Task & Project Delegation',
+    description:
+      'Turn emails, meetings, and voice directives into structured tasks. Assign them to projects, track progress across your team, and let NovaSuite automatically update task status as work moves forward.',
+    bullets: [
+      'Natural language task creation',
+      'Project boards with priority scoring',
+      'Team assignment & tracking',
+      'Deadline extraction from email & calendar',
+    ],
+  },
+  {
+    icon: Sparkles,
+    color: 'text-amber-600',
+    bg: 'bg-amber-50',
+    border: 'border-amber-100',
+    title: 'AI Executive Briefings',
+    description:
+      "Every morning, NovaSuite compiles a personalized briefing from your inbox, calendar, and open tasks. You see exactly what needs your attention — before you've opened a single email.",
+    bullets: [
+      'Morning executive summary',
+      'Top 3 priorities surfaced automatically',
+      'Upcoming meeting prep digest',
+      'Weekly performance roll-up',
+    ],
+  },
+  {
+    icon: BrainCircuit,
+    color: 'text-indigo-600',
+    bg: 'bg-indigo-50',
+    border: 'border-indigo-100',
+    title: 'Meeting Intelligence',
+    description:
+      'After every meeting NovaSuite extracts decisions, action items, and follow-ups from your calendar events and notes — so nothing slips through the cracks between your inbox and your task board.',
+    bullets: [
+      'Post-meeting action item capture',
+      'Decision logging per project',
+      'Follow-up task auto-creation',
+      'Attendee accountability tracking',
+    ],
+  },
+  {
+    icon: ShieldCheck,
+    color: 'text-rose-600',
+    bg: 'bg-rose-50',
+    border: 'border-rose-100',
+    title: 'Security & Privacy by Design',
+    description:
+      'Every provider connection uses OAuth 2.0 — your password is never shared. Your email and calendar data is processed only within your private workspace and is never sold or used to train external AI models.',
+    bullets: [
+      'OAuth 2.0 secure authorization',
+      'Isolated per-tenant workspace',
+      'Disconnect any provider in Settings',
+      'Google & Microsoft Limited Use Policy compliant',
+    ],
+  },
+];
 
 export default function FeatureSection() {
-    
-    const features = [
-    {
-      icon: faCogs,
-      title: "AI Automation",
-      description: "Automate repetitive tasks with AI and streamline workflows to free your team for high-value work."
-    },
-    {
-      icon: faChartLine,
-      title: "Real-Time Dashboards",
-      description: "Make smarter decisions with real-time insights tailored to your team and industry. Track customer activity and conversion data with instant, actionable dashboards. "
-    },
-    {
-      icon: faUserShield,
-      title: "Enterprise-Grade Security",
-      description: "Manage access control with role-based permissions to protect sensitive CRM data. GDPR, HIPAA, and SOC2-ready"
-    },
-    {
-      icon: faUsers,
-      title: "Lead & Client Analysis",
-      description: "Track leads, clients, and contacts effortlessly and close more deals with less effort."
-    },
-    {
-      icon: faFileAlt,
-      title: "Document Handling",
-      description: "Secure, organized document workflows tailored for industries like legal, healthcare, and finance."
-    },
-    {
-      icon: faPuzzlePiece,
-      title: "Custom Toolkits by Industry",
-      description: "Use vertical SaaS modules built for your specific industry—from consulting to construction—no clutter, just what you need."
-    },
-  ];
-
   return (
-    <>
-        {/* Features Section */}
-      <div id="features" className="container mx-auto text-center space-y-6 mt-20 ">
-        {/** About Us pill */}
-        <div className="inline-block px-4 py-1 border border-black rounded-full text-small text-black">
-          Features
+    <section id="features" className="relative py-24 px-6 lg:px-20 bg-white">
+      <div className="max-w-[1200px] mx-auto space-y-16">
+
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+          className="text-center space-y-4"
+        >
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-700 text-xs font-semibold uppercase tracking-wider">
+            <Zap size={13} />
+            Platform Features
+          </div>
+          <h2 className="text-3xl md:text-5xl font-extrabold text-gray-900 max-w-3xl mx-auto leading-tight tracking-tight">
+            Everything an executive needs — in one intelligent workspace
+          </h2>
+          <p className="text-lg text-gray-500 max-w-2xl mx-auto">
+            NovaSuite replaces your scattered inboxes, calendar apps, and task tools with a single AI-powered command center built around how executive work actually flows.
+          </p>
+        </motion.div>
+
+        {/* Feature grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {features.map((f, i) => {
+            const Icon = f.icon;
+            return (
+              <motion.div
+                key={f.title}
+                initial={{ opacity: 0, y: 24 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: i * 0.08 }}
+                className={`rounded-2xl border ${f.border} bg-white p-6 space-y-4 shadow-xs flex flex-col hover:shadow-md transition-shadow`}
+              >
+                <div className={`w-11 h-11 rounded-xl ${f.bg} border ${f.border} flex items-center justify-center ${f.color} shrink-0`}>
+                  <Icon size={22} />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-gray-900">{f.title}</h3>
+                  <p className="text-sm text-gray-500 mt-1.5 leading-relaxed">{f.description}</p>
+                </div>
+                <ul className="space-y-1.5 pt-1 border-t border-slate-100 mt-auto">
+                  {f.bullets.map((b) => (
+                    <li key={b} className="flex items-start gap-2 text-xs text-gray-600">
+                      <span className={`mt-0.5 shrink-0 ${f.color}`}>✓</span>
+                      {b}
+                    </li>
+                  ))}
+                </ul>
+              </motion.div>
+            );
+          })}
         </div>
-        {/* Section Heading */}
-        <h2 className="lg:text-6xl md:text-4xl text-3xl font-regular text-gray-900 max-w-3xl mx-auto">
-        Powerful Features for Modern CRM Success
-        </h2>
       </div>
-
-      <div className="max-w-7xl mx-auto mt-10">
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {features.map((feature, idx) => (
-            <div
-              key={idx}
-              className="bg-white border border-[#4E7BFF]/10 hover:border-[#4E7BFF]/30 transition-all rounded-xl p-6 flex flex-col items-start"
-            >
-              <div className="bg-gray-100 p-4 rounded-md mb-4 shadow-md">
-                <FontAwesomeIcon icon={feature.icon} className="text-blue-600 w-6 h-6 text-xl" />
-              </div>
-              <h3 className="text-xl font-semibold text-gray-800 mb-2 mt-4">{feature.title}</h3>
-              <p className="text-sm text-gray-600">{feature.description}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-    </>
-  )
-
+    </section>
+  );
 }

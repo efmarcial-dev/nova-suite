@@ -8,7 +8,8 @@ import FeatureSection from "./components/FeatureSection";
 import CTASec from "./components/CTA";
 import { CTASection } from "./components/CTASection";
 import { useRouter } from "next/navigation";
-import UnravelingFlow from './components/UravelingFlow'
+import UnravelingFlow from './components/UravelingFlow';
+import DataTransparency from './components/DataTransparency';
 
 
 export default function Home() {
@@ -21,6 +22,7 @@ export default function Home() {
         <NewsLetterModal/>
         <HeroSection />
         <UnravelingFlow />
+        <DataTransparency />
         <ServiceSection />
         <FeatureSection />
         <WhySection />
@@ -29,15 +31,15 @@ export default function Home() {
         <section className="py-32 px-6 lg:px-20">
           <div className="max-w-[1200px] mx-auto">
             <CTASection
-              title="Join Us on This Journey"
-              description="Partner with a team that's committed to your success and passionate about technology innovation."
+              title="Your Executive Workspace Is Ready"
+              description="Connect your Gmail or Outlook inbox, Google or Microsoft calendar, and start your first AI-powered briefing in under 5 minutes."
               primaryButton={{
-                text: 'Work With Us',
-                onClick: () => router.push('/contact'),
+                text: 'Get Started Free →',
+                onClick: () => router.push('/register'),
               }}
               secondaryButton={{
-                text: 'View Our Work',
-                onClick: () => router.push('/case-studies'),
+                text: 'Sign In to Dashboard',
+                onClick: () => router.push('/login'),
               }}
             />
           </div>
