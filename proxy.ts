@@ -28,6 +28,8 @@ export function proxy(request: NextRequest) {
     '/about',
     '/contact',
     '/services',
+    '/privacy',
+    '/terms',
     '/debug-cache',
   ];
   const isPublicPath = publicPaths.includes(currentPath);
