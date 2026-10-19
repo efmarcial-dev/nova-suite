@@ -10,12 +10,31 @@ export async function POST(request: Request) {
             body: JSON.stringify(body),
         });
 
-        return new Response(await backendResponse.text(), {
-            status: backendResponse.status,
-            headers: {
-                "Content-Type": backendResponse.headers.get("Content-Type") ?? "application/json",
-            },
-        });
+        const data = await backendResponse.json().catch(() => ({}));
+
+        if (!backendResponse.ok) {
+            return NextResponse.json(data, { status: backendResponse.status });
+        }
+
+        const response = NextResponse.json(data, { status: backendResponse.status });
+        const isProduction = process.env.NODE_ENV === 'production';
+        if (data.access) {
+            response.cookies.set('access', data.access, {
+                path: '/',
+                maxAge: 86400,
+                sameSite: 'lax',
+                secure: isProduction,
+            });
+        }
+        if (data.refresh) {
+            response.cookies.set('refresh', data.refresh, {
+                path: '/',
+                maxAge: 604800,
+                sameSite: 'lax',
+                secure: isProduction,
+            });
+        }
+        return response;
     } catch (error) {
         console.error("Registration request failed:", error);
         return NextResponse.json({ error: "Registration service unavailable" }, { status: 502 });

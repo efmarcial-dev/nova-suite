@@ -1,7 +1,8 @@
 'use client';
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { setAuthCookies } from '@/app/lib/auth';
+import FounderMilestoneCard from '@/app/components/FounderMilestoneCard';
 
 export default function RegisterForm() {
 
@@ -12,7 +13,6 @@ export default function RegisterForm() {
     const [last_name, setLastName] = useState('');
     const [tenantName, setTenantName] = useState('');
     const [role, setRole] = useState('admin'); // Default role
-    const router = useRouter();
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
@@ -42,9 +42,9 @@ export default function RegisterForm() {
             if (res.ok) {
                 if (data.access) {
                     setAuthCookies(data.access, data.refresh);
-                    router.push('/onboarding');
+                    window.location.href = '/onboarding';
                 } else {
-                    router.push('/login');
+                    window.location.href = '/login';
                 }
             } else {
                 console.error('Registration failed:', data);
@@ -60,9 +60,24 @@ export default function RegisterForm() {
     }
 
     return (
-        <div className="bg-white p-8 rounded-xl shadow-md">
-            <h2 className='text-2xl font-semibold text-center mb-6'>Register</h2>
-            <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="space-y-6">
+            <FounderMilestoneCard variant="card" showDetails={true} />
+
+            <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
+                <div className="text-center mb-6">
+                    <h2 className='text-2xl font-bold text-gray-900'>Claim Your Founder Account</h2>
+                    <p className="text-xs text-gray-500 mt-1">
+                        Register below to secure your Member #100 lifetime access.
+                    </p>
+                </div>
+
+                {error && (
+                    <div className="mb-4 p-3 rounded-xl bg-red-50 border border-red-200 text-red-600 text-xs">
+                        {error}
+                    </div>
+                )}
+
+                <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
                     <label htmlFor="email" className="block text-sm font-medium text-gray-700">
                         Email
@@ -185,9 +200,15 @@ export default function RegisterForm() {
             'Create Account'
           )}
                 </button>
-            </form>
-        </div>
-    )
+      </form>
 
-
+      <div className="mt-6 text-center text-sm text-gray-600">
+        Already have an account?{' '}
+        <Link href="/login" className="font-medium text-indigo-600 hover:text-indigo-500">
+          Sign In
+        </Link>
+      </div>
+    </div>
+    </div>
+  )
 }

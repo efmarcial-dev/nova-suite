@@ -28,9 +28,10 @@ import {
   disconnectCalendarProviderAPI,
   saveCalendarConnectionAPI,
   saveCalendarEventAPI,
+  syncCalendarEventsAPI,
 } from '@/app/lib/api/calendar';
 
-type ProviderId = 'google' | 'outlook' | 'apple';
+type ProviderId = 'google' | 'outlook';
 
 interface CalendarEvent {
   id: string;
@@ -46,54 +47,30 @@ interface CalendarEvent {
   hasConflict?: boolean;
 }
 
-const sampleEvents: CalendarEvent[] = [
-  {
-    id: 'evt-1',
-    title: 'Executive Team Sync & Weekly Standup',
-    startTime: '9:00 AM',
-    endTime: '9:45 AM',
-    startHour: 9,
-    durationHours: 0.75,
-    type: 'meeting',
-    location: 'Google Meet',
-    attendees: ['Sarah Jenkins', 'Marcus Chen', 'Alex Rivera'],
-    assistantBrief: 'Assistant note: Review Q3 product backlog before this call.',
-  },
-  {
-    id: 'evt-2',
-    title: '🛡️ Protected Focus Block: High Priority Tasks',
-    startTime: '10:30 AM',
-    endTime: '12:30 PM',
-    startHour: 10.5,
-    durationHours: 2.0,
-    type: 'focus',
-    assistantBrief: 'Assistant blocked 2h focus time. Notifications muted to prevent interruptions.',
-  },
-  {
-    id: 'evt-3',
-    title: 'Client Milestone 2 Strategy Review',
-    startTime: '2:00 PM',
-    endTime: '3:00 PM',
-    startHour: 14,
-    durationHours: 1.0,
-    type: 'review',
-    location: 'Zoom',
-    attendees: ['Apex Labs Stakeholders'],
-    assistantBrief: 'Milestone sign-off received via email earlier today. Reviewing Phase 3 timeline.',
-  },
-  {
-    id: 'evt-4',
-    title: 'Product Sprint Architecture Review',
-    startTime: '3:30 PM',
-    endTime: '4:15 PM',
-    startHour: 15.5,
-    durationHours: 0.75,
-    type: 'meeting',
-    location: 'In-Office Conference Room B',
-    attendees: ['Engineering Leads'],
-    assistantBrief: 'Suggested prep: Check task TASK-1 confidence scoring before discussion.',
-  },
-];
+function mapBackendEvent(evt: any): CalendarEvent {
+  const startDate = evt.start ? new Date(evt.start) : new Date();
+  const endDate = evt.end ? new Date(evt.end) : new Date(startDate.getTime() + 60 * 60 * 1000);
+  const startHour = startDate.getHours() + startDate.getMinutes() / 60;
+  const endHour = endDate.getHours() + endDate.getMinutes() / 60;
+  const durationHours = Math.max(0.5, endHour - startHour);
+
+  const formatH = (d: Date) => {
+    return d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+  };
+
+  return {
+    id: String(evt.id || `evt-${Date.now()}`),
+    title: evt.title || '(No Title)',
+    startTime: formatH(startDate),
+    endTime: formatH(endDate),
+    startHour,
+    durationHours,
+    type: (evt.event_type as any) || 'meeting',
+    location: evt.location || '',
+    attendees: Array.isArray(evt.attendees) ? evt.attendees : [],
+    assistantBrief: evt.assistant_brief || evt.assistantBrief || '',
+  };
+}
 
 export default function CalendarPage() {
   const { user } = useCachedUser();
@@ -113,55 +90,76 @@ export default function CalendarPage() {
 
   // Calendar view state
   const [viewMode, setViewMode] = useState<'day' | 'week'>('day');
-  const [events, setEvents] = useState<CalendarEvent[]>(sampleEvents);
+  const [events, setEvents] = useState<CalendarEvent[]>([]);
+  const [isSyncing, setIsSyncing] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [newEventTitle, setNewEventTitle] = useState('');
   const [newEventTime, setNewEventTime] = useState('11:00');
   const [newEventType, setNewEventType] = useState<'meeting' | 'focus'>('meeting');
 
-  // Load connection state from backend and fallback to localStorage for demo continuity
+  // Load connection state from backend and sync real events
   useEffect(() => {
     const hydrateCalendar = async () => {
+      // Check query params if redirected from OAuth
+      let paramProvider: ProviderId | null = null;
+      if (typeof window !== 'undefined') {
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('connected') === 'calendar') {
+          const prov = params.get('provider');
+          if (prov === 'outlook' || prov === 'google') {
+            paramProvider = prov;
+          }
+        }
+      }
+
       const connection = await fetchCalendarConnectionAPI();
-      if (connection?.isConnected) {
+      const isConnectedProvider = connection?.isConnected || Boolean(paramProvider);
+
+      if (isConnectedProvider) {
         setIsConnected(true);
-        setSelectedProvider(connection.provider || 'google');
-        setConnectedEmail(connection.email || (currentUser?.email ?? 'user@novasuite.io'));
+        const activeProv: ProviderId = paramProvider || (connection?.provider === 'outlook' ? 'outlook' : 'google');
+        setSelectedProvider(activeProv);
+        setConnectedEmail(connection?.email || (currentUser?.email ?? ''));
+
+        // Initial sync from provider
+        try {
+          await syncCalendarEventsAPI(activeProv);
+        } catch (e) {
+          console.warn('Initial calendar sync skipped:', e);
+        }
       }
 
       const backendEvents = await fetchCalendarEventsAPI();
       if (Array.isArray(backendEvents) && backendEvents.length > 0) {
-        setEvents(backendEvents.map((event) => ({
-          ...event,
-          startHour: Number(event.startHour ?? 9),
-          durationHours: Number(event.durationHours ?? 1),
-          attendees: event.attendees ?? [],
-        })));
-        return;
-      }
-
-      try {
-        const saved = localStorage.getItem('nova_calendar_connection');
-        if (saved) {
-          const data = JSON.parse(saved);
-          if (data.isConnected) {
-            setIsConnected(true);
-            setSelectedProvider(data.provider || 'google');
-            setConnectedEmail(data.email || (currentUser?.email ?? 'user@novasuite.io'));
-          }
-        }
-      } catch (e) {
-        console.error(e);
+        setEvents(backendEvents.map(mapBackendEvent));
+      } else {
+        setEvents([]);
       }
     };
 
     hydrateCalendar();
   }, [currentUser]);
 
-  const handleConnect = async () => {
+  const handleSyncCalendar = async () => {
+    setIsSyncing(true);
+    try {
+      await syncCalendarEventsAPI(selectedProvider);
+      const backendEvents = await fetchCalendarEventsAPI();
+      if (Array.isArray(backendEvents)) {
+        setEvents(backendEvents.map(mapBackendEvent));
+      }
+    } catch (err) {
+      console.error('Failed to sync calendar events from provider', err);
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  const handleConnect = async (targetProvider?: ProviderId) => {
     setIsConnecting(true);
-    const email = currentUser?.email || 'eduardo@novasuite.io';
-    const provider = selectedProvider === 'outlook' ? 'outlook' : 'google';
+    const email = currentUser?.email || 'user@novasuite.io';
+    const provider = (targetProvider || selectedProvider) === 'outlook' ? 'outlook' : 'google';
+    setSelectedProvider(provider);
 
     try {
       const result = await connectCalendarProviderAPI(provider);
@@ -232,6 +230,11 @@ export default function CalendarPage() {
     if (!newEventTitle.trim()) return;
 
     const [hours, mins] = newEventTime.split(':').map(Number);
+    const today = new Date();
+    today.setHours(hours, mins || 0, 0, 0);
+    const startIso = today.toISOString();
+    const endIso = new Date(today.getTime() + 60 * 60 * 1000).toISOString();
+
     const startHour = hours + (mins || 0) / 60;
     const endHour = startHour + 1;
 
@@ -256,13 +259,26 @@ export default function CalendarPage() {
         : 'Assistant meeting alerts enabled for this event.',
     };
 
-    const savedEvent = await saveCalendarEventAPI({
-      ...newEvt,
-      event_type: newEventType,
-      assistantBrief: newEvt.assistantBrief,
-    });
+    try {
+      const savedEvent = await saveCalendarEventAPI({
+        title: newEventTitle,
+        start: startIso,
+        end: endIso,
+        event_type: newEventType,
+        assistant_brief: newEvt.assistantBrief,
+        sync_provider: selectedProvider,
+      });
 
-    setEvents((prev) => [...prev, savedEvent ?? newEvt]);
+      if (savedEvent) {
+        setEvents((prev) => [...prev, mapBackendEvent(savedEvent)]);
+      } else {
+        setEvents((prev) => [...prev, newEvt]);
+      }
+    } catch (err) {
+      console.error('Error saving event', err);
+      setEvents((prev) => [...prev, newEvt]);
+    }
+
     setShowAddModal(false);
     setNewEventTitle('');
   };
@@ -294,17 +310,6 @@ export default function CalendarPage() {
       tag: 'Enterprise Standard',
       desc: 'Microsoft 365, Exchange, and Outlook.com with corporate SSO.',
       color: 'border-sky-200 bg-sky-50/40',
-    },
-    apple: {
-      name: 'Apple Calendar (iCloud)',
-      icon: (
-        <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.37c.62-.75 1.04-1.8 0.93-2.85-.9.04-2 .6-2.65 1.35-.58.66-1.09 1.73-.95 2.76.99.08 2.04-.51 2.67-1.26z" />
-        </svg>
-      ),
-      tag: 'Apple Ecosystem',
-      desc: 'Syncs with your iPhone, Mac, and iCloud. Native calendar integration.',
-      color: 'border-slate-200 bg-slate-50/60',
     },
   };
 
@@ -451,7 +456,7 @@ export default function CalendarPage() {
           </div>
 
           <button
-            onClick={handleConnect}
+            onClick={() => handleConnect()}
             disabled={isConnecting}
             className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 rounded-xl gradient-brand text-white text-sm font-semibold hover:opacity-90 transition-opacity shadow-md shadow-indigo-200 disabled:opacity-50 cursor-pointer"
           >
@@ -499,6 +504,14 @@ export default function CalendarPage() {
         </div>
 
         <div className="flex items-center gap-2">
+          <button
+            onClick={handleSyncCalendar}
+            disabled={isSyncing}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[--border] bg-white hover:bg-gray-50 text-xs font-semibold text-[--foreground] shadow-xs transition-colors disabled:opacity-50"
+          >
+            <RefreshCw size={13} className={isSyncing ? "animate-spin text-indigo-600" : "text-gray-500"} />
+            <span>{isSyncing ? 'Syncing...' : 'Sync Calendar'}</span>
+          </button>
           <button
             onClick={() => setShowAddModal(true)}
             className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl gradient-brand text-white text-xs font-semibold hover:opacity-90 shadow-sm transition-opacity"
@@ -554,64 +567,109 @@ export default function CalendarPage() {
 
           {/* Event Timeline */}
           <div className="space-y-3">
-            {events.map((evt) => {
-              const isFocus = evt.type === 'focus';
-              return (
-                <div
-                  key={evt.id}
-                  className={`rounded-2xl border p-4 transition-all duration-150 flex flex-col gap-2.5 ${
-                    isFocus
-                      ? 'bg-gradient-to-r from-indigo-50/70 to-violet-50/70 border-indigo-200'
-                      : 'bg-[--background] border-[--border] hover:border-gray-300'
-                  }`}
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="space-y-0.5">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-mono font-semibold text-indigo-600">
-                          {evt.startTime} – {evt.endTime}
-                        </span>
-                        <span
-                          className={`text-[10px] font-semibold px-2 py-0.5 rounded-full uppercase tracking-wider ${
-                            isFocus
-                              ? 'bg-indigo-600 text-white'
-                              : 'bg-white text-[--muted-foreground] border border-[--border]'
-                          }`}
-                        >
-                          {evt.type}
-                        </span>
+            {events.length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-[--border] p-10 text-center flex flex-col items-center justify-center gap-3 bg-[--background]">
+                <div className="w-12 h-12 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600">
+                  <CalendarIcon size={24} />
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-[--foreground]">
+                    {isConnected ? 'No upcoming events found' : 'No calendar connected'}
+                  </h3>
+                  <p className="text-xs text-[--muted-foreground] max-w-sm mt-1">
+                    {isConnected
+                      ? 'Your connected calendar has no events scheduled for this period or needs a fresh sync.'
+                      : 'Connect your Google or Microsoft Outlook account to sync live meetings and events.'}
+                  </p>
+                </div>
+                {isConnected ? (
+                  <button
+                    onClick={handleSyncCalendar}
+                    disabled={isSyncing}
+                    className="mt-2 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow-xs disabled:opacity-50 transition-all cursor-pointer"
+                  >
+                    <RefreshCw size={13} className={isSyncing ? 'animate-spin' : ''} />
+                    {isSyncing ? 'Syncing...' : 'Sync Events Now'}
+                  </button>
+                ) : (
+                  <div className="flex items-center gap-2 mt-2">
+                    <button
+                      onClick={() => handleConnect('google')}
+                      disabled={isConnecting}
+                      className="px-3.5 py-2 rounded-xl bg-white border border-[--border] text-xs font-semibold text-[--foreground] hover:border-indigo-400 hover:text-indigo-600 transition-all cursor-pointer disabled:opacity-50"
+                    >
+                      Connect Google
+                    </button>
+                    <button
+                      onClick={() => handleConnect('outlook')}
+                      disabled={isConnecting}
+                      className="px-3.5 py-2 rounded-xl bg-white border border-[--border] text-xs font-semibold text-[--foreground] hover:border-indigo-400 hover:text-indigo-600 transition-all cursor-pointer disabled:opacity-50"
+                    >
+                      Connect Outlook
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              events.map((evt) => {
+                const isFocus = evt.type === 'focus';
+                return (
+                  <div
+                    key={evt.id}
+                    className={`rounded-2xl border p-4 transition-all duration-150 flex flex-col gap-2.5 ${
+                      isFocus
+                        ? 'bg-gradient-to-r from-indigo-50/70 to-violet-50/70 border-indigo-200'
+                        : 'bg-[--background] border-[--border] hover:border-gray-300'
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="space-y-0.5">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-mono font-semibold text-indigo-600">
+                            {evt.startTime} – {evt.endTime}
+                          </span>
+                          <span
+                            className={`text-[10px] font-semibold px-2 py-0.5 rounded-full uppercase tracking-wider ${
+                              isFocus
+                                ? 'bg-indigo-600 text-white'
+                                : 'bg-white text-[--muted-foreground] border border-[--border]'
+                            }`}
+                          >
+                            {evt.type}
+                          </span>
+                        </div>
+                        <h3 className="text-sm font-bold text-[--foreground] leading-snug">
+                          {evt.title}
+                        </h3>
                       </div>
-                      <h3 className="text-sm font-bold text-[--foreground] leading-snug">
-                        {evt.title}
-                      </h3>
+
+                      {evt.location && (
+                        <span className="text-xs text-[--muted-foreground] flex items-center gap-1 bg-white px-2 py-1 rounded-lg border border-[--border]">
+                          <Video size={12} className="text-indigo-500" />
+                          {evt.location}
+                        </span>
+                      )}
                     </div>
 
-                    {evt.location && (
-                      <span className="text-xs text-[--muted-foreground] flex items-center gap-1 bg-white px-2 py-1 rounded-lg border border-[--border]">
-                        <Video size={12} className="text-indigo-500" />
-                        {evt.location}
-                      </span>
+                    {/* Attendees */}
+                    {evt.attendees && evt.attendees.length > 0 && (
+                      <div className="flex items-center gap-2 text-xs text-[--muted-foreground]">
+                        <span className="font-medium text-[--foreground]">Attendees:</span>
+                        <span>{evt.attendees.join(', ')}</span>
+                      </div>
+                    )}
+
+                    {/* AI Assistant Insight / Briefing */}
+                    {evt.assistantBrief && (
+                      <div className="flex items-start gap-2 bg-white/90 rounded-xl p-2.5 border border-indigo-100 text-xs text-indigo-950">
+                        <Sparkles size={13} className="text-indigo-600 mt-0.5 shrink-0" />
+                        <p className="leading-relaxed">{evt.assistantBrief}</p>
+                      </div>
                     )}
                   </div>
-
-                  {/* Attendees */}
-                  {evt.attendees && evt.attendees.length > 0 && (
-                    <div className="flex items-center gap-2 text-xs text-[--muted-foreground]">
-                      <span className="font-medium text-[--foreground]">Attendees:</span>
-                      <span>{evt.attendees.join(', ')}</span>
-                    </div>
-                  )}
-
-                  {/* AI Assistant Insight / Briefing */}
-                  {evt.assistantBrief && (
-                    <div className="flex items-start gap-2 bg-white/90 rounded-xl p-2.5 border border-indigo-100 text-xs text-indigo-950">
-                      <Sparkles size={13} className="text-indigo-600 mt-0.5 shrink-0" />
-                      <p className="leading-relaxed">{evt.assistantBrief}</p>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+                );
+              })
+            )}
           </div>
         </div>
 

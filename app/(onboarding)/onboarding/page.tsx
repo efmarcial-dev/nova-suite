@@ -1,26 +1,26 @@
 'use client';
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import WelcomeWorkspaceStep from './components/WelcomeWorkspaceStep';
 import WorkStyleStep from './components/WorkStyleStep';
+import PrioritizationPhilosophyStep from './components/PrioritizationPhilosophy';
 import TaskCategoriesStep from './components/TaskCategoriesStep';
 import TaskRankingStep from './components/TaskRankingStep';
 import SpecialContextStep from './components/SpecialContextStep';
+import TutorialStep from './components/TutorialStep';
+import SubscribeStep from './components/SubscribeStep';
 import DoneStep from './components/DoneStep';
-import PrioritizationPhilosophyStep from './components/PrioritizationPhilosophy';
-import { useRouter } from "next/navigation";
-
 
 export default function OnboardingPage() {
-
     const router = useRouter();
     const [step, setStep] = useState(0);
 
     // Store onboarding data progressively
     const [formData, setFormData] = useState({
-        workspace_name : "",
+        workspace_name: "",
         role: "",
-        workStyle : "",
+        workStyle: "",
         preferredHours: { start: "", end: "" },
         recurringRules: [] as any[],
         taskCategories: [] as any[],
@@ -29,105 +29,106 @@ export default function OnboardingPage() {
         projects: [] as any[],
         glossary: "",
 
-        // New fields for prioritization and context
-        prioritizationPhilosophy: {choice: "", details: ""},
-        urgencyDefinition: {choice: "", details: ""},
-        importanceDefinition: {choice: "", details: ""},
+        // Prioritization and context
+        prioritizationPhilosophy: { choice: "", details: "" },
+        urgencyDefinition: { choice: "", details: "" },
+        importanceDefinition: { choice: "", details: "" },
     });
 
-    const handleNext = (newData: Partial<typeof formData>) => {
-        setFormData(prev => ({ ...prev, ...newData }));
+    const handleNext = (newData?: Partial<typeof formData>) => {
+        if (newData) {
+            setFormData(prev => ({ ...prev, ...newData }));
+        }
         setStep(prev => prev + 1);
-    }
+    };
 
-    const handleBack = () => setStep(prev => prev - 1);
+    const handleBack = () => setStep(prev => Math.max(0, prev - 1));
 
-    const handleFinish =  async (newData: Partial<typeof formData>) => {
-        const finalData = { ...formData , ...newData};
+    // Save preferences from SpecialContextStep and advance to TutorialStep
+    const handleSavePreferences = async (newData: Partial<typeof formData>) => {
+        const finalData = { ...formData, ...newData };
         setFormData(finalData);
 
-        // Move to DoneStep immediately
-        setStep(prev => prev + 1);
-
-
-        try{
-            // Here you can make an API call to save the onboarding data
-            console.log("Final Onboarding Data:", finalData);
-            // Example API call to save onboarding data
-            const res = await fetch('/api/onboarding', {
+        try {
+            console.log("Saving onboarding preferences:", finalData);
+            await fetch('/api/onboarding', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-
                 body: JSON.stringify(finalData),
-                credentials: 'include', // Important: send cookies for auth 
+                credentials: 'include',
             });
-
-            if (!res.ok) {
-                throw new Error('Failed to save onboarding data');
-            } else {
-                // Redirect or show a success message
-                await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate delay
-                console.log("Onboarding Complete", finalData);
-                 // Redirect to dashboard or another page
-                router.push('/dashboard');
-                
-            }
-        
-        }catch(error) {
-            console.error("Error during onboarding completion:", error);
-            // Optionally handle error, e.g., show a notification
+        } catch (error) {
+            console.error("Error during preferences save:", error);
         }
 
-        
-    }
+        // Advance to Tutorial step
+        setStep(prev => prev + 1);
+    };
 
     // Define all steps components
     const steps = [
-        <WelcomeWorkspaceStep 
-            data = {formData}
+        <WelcomeWorkspaceStep
+            key="welcome"
+            data={formData}
             onNext={handleNext}
             onBack={handleBack}
         />,
-        <WorkStyleStep 
-            data = {formData}
-            onNext = {handleNext}
-            onBack = {handleBack}
+        <WorkStyleStep
+            key="workstyle"
+            data={formData}
+            onNext={handleNext}
+            onBack={handleBack}
         />,
-
-        <PrioritizationPhilosophyStep 
-            data = {formData}
-            onNext = {handleNext}
-            onBack = {handleBack}
+        <PrioritizationPhilosophyStep
+            key="philosophy"
+            data={formData}
+            onNext={handleNext}
+            onBack={handleBack}
         />,
-        
-        <TaskCategoriesStep 
-            data = {formData}
-            onNext = {handleNext}
-            onBack = {handleBack}
+        <TaskCategoriesStep
+            key="categories"
+            data={formData}
+            onNext={handleNext}
+            onBack={handleBack}
         />,
-        <TaskRankingStep 
-            data = {formData}
-            onNext = {handleNext}
-            onBack = {handleBack}
+        <TaskRankingStep
+            key="ranking"
+            data={formData}
+            onNext={handleNext}
+            onBack={handleBack}
         />,
-        <SpecialContextStep 
-            data = {formData}
-            onNext = {handleFinish} // Final save & move to DoneStep
-            onBack = {handleBack}
+        <SpecialContextStep
+            key="context"
+            data={formData}
+            onNext={handleSavePreferences}
+            onBack={handleBack}
         />,
-        <DoneStep/>
+        <TutorialStep
+            key="tutorial"
+            onNext={() => setStep(prev => prev + 1)}
+            onBack={handleBack}
+        />,
+        <SubscribeStep
+            key="subscribe"
+            onNext={() => setStep(prev => prev + 1)}
+            onBack={handleBack}
+        />,
+        <DoneStep key="done" />
     ];
 
+    const currentStepIndex = Math.min(step, steps.length - 1);
+
     return (
-        <div className="max-w-2xl mx-auto p-6 bg-white rounded-lg shadow">
-            <ProgressBar 
-                currentStep={step} 
-                totalSteps={steps.length} />
-                {steps[step]}
+        <div className="max-w-2xl mx-auto p-6 sm:p-8 bg-white rounded-2xl border border-[--border] shadow-xs my-6">
+            <ProgressBar
+                currentStep={currentStepIndex}
+                totalSteps={steps.length}
+            />
+            {steps[currentStepIndex]}
         </div>
-    )
+    );
 }
 
 type ProgressBarProps = {
@@ -136,13 +137,19 @@ type ProgressBarProps = {
 };
 
 function ProgressBar({ currentStep, totalSteps }: ProgressBarProps) {
-    const progress = ((currentStep + 1) / totalSteps) * 100;
+    const progress = Math.min(100, Math.round(((currentStep + 1) / totalSteps) * 100));
     return (
-        <div className="w-full bg-gray-200 rounded-full h-2 mb-6">
-
-            <div className="bg-blue-500 h-2 rounded-full"
-                style={{ width: `${progress}%` }}
-            ></div>
+        <div className="mb-8">
+            <div className="flex items-center justify-between text-[11px] font-semibold text-gray-400 mb-2">
+                <span>Step {currentStep + 1} of {totalSteps}</span>
+                <span>{progress}% Completed</span>
+            </div>
+            <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
+                <div
+                    className="bg-indigo-600 h-1.5 rounded-full transition-all duration-300 ease-out"
+                    style={{ width: `${progress}%` }}
+                />
+            </div>
         </div>
-    )
+    );
 }

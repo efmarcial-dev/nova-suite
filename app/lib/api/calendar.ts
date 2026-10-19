@@ -118,3 +118,24 @@ export async function saveCalendarEventAPI(payload: Record<string, any>): Promis
     return null;
   }
 }
+
+export async function syncCalendarEventsAPI(provider: string = 'google'): Promise<any> {
+  try {
+    const res = await fetch('/api/calendar/events/sync/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ provider }),
+    });
+
+    if (!res.ok) {
+      return null;
+    }
+
+    return await res.json();
+  } catch (error) {
+    console.warn('Failed to sync calendar events from provider', error);
+    return null;
+  }
+}
+

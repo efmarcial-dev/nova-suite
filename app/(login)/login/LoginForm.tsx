@@ -1,10 +1,9 @@
 'use client';
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { loginUser, setAuthCookies } from "@/app/lib/auth";
 
 export default function LoginForm() {
-  const router = useRouter();
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -21,10 +20,10 @@ export default function LoginForm() {
       // Set access and refresh token cookies
       setAuthCookies(data.access, data.refresh)
       
-      // Redirect to dashboard
-      router.push('/dashboard')
-    } catch (err) {
-      setError('Invalid credentials. Please try again.')
+      // Full redirect to dashboard so server components/middleware read new cookies
+      window.location.href = '/dashboard'
+    } catch (err: any) {
+      setError(err?.message || 'Invalid credentials. Please try again.')
       setLoading(false)
     }
   }
@@ -104,7 +103,13 @@ return (
           )}
         </button>
       </form>
+
+      <div className="mt-6 text-center text-sm text-gray-600">
+        Don&apos;t have an account?{' '}
+        <Link href="/register" className="font-medium text-indigo-600 hover:text-indigo-500">
+          Create an account
+        </Link>
+      </div>
     </div>
   )
-
 }

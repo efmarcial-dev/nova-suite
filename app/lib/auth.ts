@@ -2,7 +2,7 @@
 import { getDjangoApiUrl } from "./api/getDjangoApiUrl";
 
 export async function loginUser(email: string, password: string) {
-  const response = await fetch(getDjangoApiUrl("auth/login/"), {
+  const response = await fetch('/api/login/', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -10,11 +10,12 @@ export async function loginUser(email: string, password: string) {
     body: JSON.stringify({ email, password }),
   })
 
+  const data = await response.json().catch(() => ({}))
+
   if (!response.ok) {
-    throw new Error('Login failed')
+    throw new Error(data.detail || data.error || 'Login failed. Please check your credentials.')
   }
 
-  const data = await response.json()
   return data // Should include: { access, refresh, user: { tenant_slug, ... } }
 }
 
@@ -26,8 +27,7 @@ export async function register(
     first_name: string,
     last_name : string,
 ) {
-
-    const response = await fetch(getDjangoApiUrl("auth/register/"), {
+    const response = await fetch('/api/register/', {
         method: "POST",
         headers: {
             'Content-Type' : 'application/json'
@@ -41,14 +41,13 @@ export async function register(
         })
     })
 
-    if(!response.ok){
-        throw new Error("Signup failedd")
+    const data = await response.json().catch(() => ({}))
+
+    if (!response.ok) {
+        throw new Error(data.detail || data.error || "Registration failed")
     }
 
-    const data = await response.json()
-
     return data // Should include : {access, refresh, user: {tenant_slug, ....}}
-
 }
 
 

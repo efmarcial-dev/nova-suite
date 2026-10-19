@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import {
   Sparkles,
   Mail,
@@ -11,13 +12,21 @@ import {
   Clock,
   Zap,
   RotateCcw,
+  RefreshCw,
   Inbox,
-  Check
+  Check,
+  ExternalLink
 } from 'lucide-react';
 import { useCachedUser } from '../hooks/useCachedUser';
 import { useCachedTasks } from '../hooks/useCachedTasks';
 import { useCachedProjects } from '../hooks/useCachedProjects';
 import { fetchMessagesAPI, saveMessagesAPI } from '@/app/lib/api/messages';
+import {
+  fetchEmailProvidersAPI,
+  fetchEmailMessagesAPI,
+  connectEmailProviderAPI,
+  EmailProviderStatus
+} from '@/app/lib/api/email';
 
 export type ChannelType = 'all' | 'email' | 'system';
 
@@ -34,57 +43,6 @@ interface MessageItem {
   status: 'delivered' | 'pending' | 'resolved';
 }
 
-const defaultMessages: MessageItem[] = [
-  {
-    id: 'msg-1',
-    channel: 'email',
-    direction: 'outbound',
-    sender: 'Nova Executive Assistant',
-    recipient: 'eduardo@novasuite.io',
-    subject: 'Daily Executive Briefing & Calendar Review',
-    content: "Good morning Eduardo. You have 2 high-priority deliverables scheduled for today and a client strategy sync at 2:00 PM. I have prepared draft notes and checked your schedule for any overlaps.",
-    aiAction: "Synthesized morning agenda & queued email briefing",
-    timestamp: "8:30 AM",
-    status: 'delivered',
-  },
-  {
-    id: 'msg-2',
-    channel: 'email',
-    direction: 'inbound',
-    sender: 'Sarah Jenkins (Apex Labs)',
-    recipient: 'eduardo@novasuite.io',
-    subject: 'Milestone 2 Sign-off & Asset Delivery',
-    content: "Hi Eduardo, we've reviewed the designs and everything looks approved. Please proceed with Phase 3 when ready.",
-    aiAction: "Parsed sign-off & marked 'Client Asset Delivery' task as ready",
-    timestamp: "9:15 AM",
-    status: 'resolved',
-  },
-  {
-    id: 'msg-3',
-    channel: 'email',
-    direction: 'inbound',
-    sender: 'Finance & Invoicing System',
-    recipient: 'eduardo@novasuite.io',
-    subject: 'Contractor Invoice Notification — Project Alpha',
-    content: "Invoice #INV-2049 from Lead Designer has been submitted for approval ($3,400.00).",
-    aiAction: "Extracted invoice total & prepared 1-click authorization draft",
-    timestamp: "10:02 AM",
-    status: 'delivered',
-  },
-  {
-    id: 'msg-4',
-    channel: 'system',
-    direction: 'internal',
-    sender: 'Executive Intelligence Engine',
-    recipient: 'Dashboard Stream',
-    subject: 'Backlog Health Optimization',
-    content: "Analyzed your task backlog: 3 tasks were missing due dates. Target dates have been assigned based on active project milestones.",
-    aiAction: "Backlog health score improved from 72% → 91%",
-    timestamp: "10:45 AM",
-    status: 'resolved',
-  },
-];
-
 const channelConfig = {
   all: { label: 'All Inquiries', icon: Inbox, color: 'text-indigo-600' },
   email: { label: 'Executive Emails', icon: Mail, color: 'text-violet-600', bg: 'bg-violet-50 border-violet-200 text-violet-700' },
@@ -98,46 +56,81 @@ export default function AssistantHub({ className = '' }: { className?: string })
   const currentUser = user?.[0];
 
   const [activeChannel, setActiveChannel] = useState<ChannelType>('all');
-  const [messages, setMessages] = useState<MessageItem[]>(defaultMessages);
+  const [messages, setMessages] = useState<MessageItem[]>([]);
+  const [connectedEmailProvider, setConnectedEmailProvider] = useState<EmailProviderStatus | null>(null);
+  const [isConnectingProvider, setIsConnectingProvider] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [directiveInput, setDirectiveInput] = useState('');
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
   const [isDispatching, setIsDispatching] = useState(false);
 
-  // Load persisted messages from backend and then local fallback
+  // Load email providers and live inbox messages
+  const hydrateMessages = async () => {
+    setIsRefreshing(true);
+    try {
+      const providers = await fetchEmailProvidersAPI();
+      const connected = providers.find((p) => p.is_connected);
+      setConnectedEmailProvider(connected || null);
+
+      let liveEmailItems: MessageItem[] = [];
+
+      if (connected) {
+        const remoteEmails = await fetchEmailMessagesAPI(connected.provider, '', 25);
+        if (Array.isArray(remoteEmails) && remoteEmails.length > 0) {
+          liveEmailItems = remoteEmails.map((item) => ({
+            id: item.id,
+            channel: 'email',
+            direction: item.direction || 'inbound',
+            sender: item.sender || 'Unknown Sender',
+            recipient: item.recipient || (currentUser?.email ?? 'You'),
+            subject: item.subject || '(No Subject)',
+            content: item.snippet || item.content || '',
+            timestamp: item.timestamp
+              ? new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+              : 'Recent',
+            status: item.status === 'read' ? 'resolved' : 'delivered',
+            aiAction: item.direction === 'inbound' ? 'AI Triage & Action Item Detection' : undefined,
+          }));
+        }
+      }
+
+      // Also fetch any assistant system messages
+      const remoteDirectives = await fetchMessagesAPI();
+      const combined = [...liveEmailItems, ...(Array.isArray(remoteDirectives) ? remoteDirectives : [])];
+      setMessages(combined);
+    } catch (e) {
+      console.warn('Could not hydrate live email messages:', e);
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
   useEffect(() => {
-    const hydrateMessages = async () => {
-      const remoteMessages = await fetchMessagesAPI();
-      if (remoteMessages.length > 0) {
-        setMessages(remoteMessages);
+    hydrateMessages();
+  }, [currentUser]);
+
+  const handleConnectProvider = async (provider: 'gmail' | 'outlook') => {
+    setIsConnectingProvider(true);
+    try {
+      const result = await connectEmailProviderAPI(provider);
+      const authUrl = result?.authorization_url || result?.auth_url || result?.url;
+      if (authUrl) {
+        window.location.href = authUrl;
         return;
       }
-
-      try {
-        const saved = localStorage.getItem('nova_assistant_email_messages');
-        if (saved) {
-          setMessages(JSON.parse(saved));
-        }
-      } catch (e) {
-        console.error(e);
-      }
-    };
-
-    hydrateMessages();
-  }, []);
+    } catch (e) {
+      console.error('Failed to initiate email provider OAuth', e);
+    } finally {
+      setIsConnectingProvider(false);
+    }
+  };
 
   const saveMessages = async (items: MessageItem[]) => {
     setMessages(items);
-
     try {
       await saveMessagesAPI({ messages: items });
     } catch (e) {
       console.error('Failed to save assistant messages', e);
-    }
-
-    try {
-      localStorage.setItem('nova_assistant_email_messages', JSON.stringify(items));
-    } catch (e) {
-      console.error(e);
     }
   };
 
@@ -154,11 +147,11 @@ export default function AssistantHub({ className = '' }: { className?: string })
     const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     const userMsg: MessageItem = {
       id: `dir-${Date.now()}`,
-      channel: 'email',
+      channel: 'system',
       direction: 'inbound',
-      sender: currentUser ? `${currentUser.first_name} (Boss)` : 'You (Boss)',
-      recipient: 'Nova Assistant (Inbox)',
-      subject: `Executive Directive: ${directiveInput.slice(0, 32)}...`,
+      sender: currentUser ? `${currentUser.first_name} (Executive)` : 'You (Executive)',
+      recipient: 'Nova Assistant',
+      subject: `Directive: ${directiveInput.slice(0, 32)}...`,
       content: directiveInput,
       timestamp: timeStr,
       status: 'delivered',
@@ -168,31 +161,31 @@ export default function AssistantHub({ className = '' }: { className?: string })
     saveMessages(newItems);
     setDirectiveInput('');
 
-    // Simulate assistant proactive confirmation
+    // Proactive assistant confirmation
     setTimeout(() => {
       const assistantReply: MessageItem = {
         id: `reply-${Date.now()}`,
-        channel: 'email',
+        channel: 'system',
         direction: 'outbound',
         sender: 'Nova Assistant',
         recipient: currentUser ? `${currentUser.first_name}` : 'You',
-        subject: `Re: Executive Directive Execution`,
-        content: `Understood! I am executing: "${userMsg.content}". I have updated your priority queue and will send a confirmation email once completed.`,
+        subject: `Re: Directive Execution`,
+        content: `Understood! I am executing: "${userMsg.content}". I have updated your priority queue and will alert you upon completion.`,
         aiAction: "Action queued in background workflow runner",
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         status: 'resolved',
       };
       saveMessages([assistantReply, ...newItems]);
       setIsDispatching(false);
-    }, 800);
+    }, 700);
   };
 
   const handleQuickChip = (promptText: string) => {
     setDirectiveInput(promptText);
   };
 
-  const handleResetFeed = () => {
-    saveMessages(defaultMessages);
+  const handleRefreshFeed = () => {
+    hydrateMessages();
   };
 
   const filteredMessages = activeChannel === 'all'
@@ -273,11 +266,12 @@ export default function AssistantHub({ className = '' }: { className?: string })
 
           <div className="flex items-center gap-1.5 self-start sm:self-auto">
             <button
-              onClick={handleResetFeed}
-              title="Reset sample feed"
-              className="p-1.5 rounded-lg text-[--muted-foreground] hover:text-[--foreground] hover:bg-[--background] transition-colors border border-transparent hover:border-[--border]"
+              onClick={handleRefreshFeed}
+              disabled={isRefreshing}
+              title="Refresh live messages"
+              className="p-1.5 rounded-lg text-[--muted-foreground] hover:text-[--foreground] hover:bg-[--background] transition-colors border border-transparent hover:border-[--border] disabled:opacity-50"
             >
-              <RotateCcw size={13} />
+              <RefreshCw size={13} className={isRefreshing ? "animate-spin text-indigo-600" : ""} />
             </button>
             <div className="flex items-center gap-1 bg-[--background] p-1 rounded-xl border border-[--border]">
               {(['all', 'email', 'system'] as ChannelType[]).map((ch) => {
@@ -305,9 +299,45 @@ export default function AssistantHub({ className = '' }: { className?: string })
 
         {/* Message Feed Container */}
         <div className="space-y-2.5 max-h-[300px] overflow-y-auto pr-1">
-          {filteredMessages.length === 0 ? (
+          {activeChannel !== 'system' && !connectedEmailProvider ? (
+            <div className="py-7 px-5 text-center bg-gray-50/70 border border-dashed border-[--border] rounded-2xl flex flex-col items-center justify-center space-y-3">
+              <div className="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-600 flex items-center justify-center">
+                <Mail className="w-5 h-5" />
+              </div>
+              <div className="max-w-md">
+                <h3 className="text-xs font-bold text-gray-900">No Email Provider Connected</h3>
+                <p className="text-[11px] text-gray-500 mt-1">
+                  Connect your Google (Gmail) or Microsoft (Outlook) account to activate live inbox triage, action item detection, and executive morning summaries.
+                </p>
+              </div>
+              <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => handleConnectProvider('gmail')}
+                  disabled={isConnectingProvider}
+                  className="px-3 py-1.5 rounded-xl bg-white border border-gray-300 hover:border-indigo-400 text-xs font-semibold text-gray-700 hover:text-indigo-600 shadow-xs transition flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
+                >
+                  <span>Connect Gmail</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleConnectProvider('outlook')}
+                  disabled={isConnectingProvider}
+                  className="px-3 py-1.5 rounded-xl bg-white border border-gray-300 hover:border-indigo-400 text-xs font-semibold text-gray-700 hover:text-indigo-600 shadow-xs transition flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
+                >
+                  <span>Connect Outlook</span>
+                </button>
+                <Link
+                  href="/dashboard/settings"
+                  className="px-3 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-xs font-semibold text-indigo-700 border border-indigo-200 transition"
+                >
+                  Settings &rarr;
+                </Link>
+              </div>
+            </div>
+          ) : filteredMessages.length === 0 ? (
             <div className="py-10 text-center text-xs text-[--muted-foreground]">
-              No messages in this filter yet.
+              No messages found.
             </div>
           ) : (
             filteredMessages.map((msg) => {

@@ -5,14 +5,13 @@ import Sidebar from '../../components/Sidebar';
 import Header from '../../components/Header';
 import { getCurrentUser, getTenant } from '@/app/lib/getTenant';
 
+import SubscriptionGuard from '@/app/components/SubscriptionGuard';
+import FirstRunTourModal from '@/app/components/FirstRunTourModal';
+
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   
   const user = await getCurrentUser()
   const tenant = await getTenant()
-
-  console.log("user: ",user);
-  console.log("tenant: ", tenant);
-
 
   return (
       <div className='h-full bg-[--background] flex'>
@@ -20,8 +19,11 @@ export default async function DashboardLayout({ children }: { children: React.Re
         <main className="flex-1 flex flex-col min-w-0 p-4 gap-4 overflow-hidden">
           <Header />
           <section className="flex-1 overflow-y-auto pr-1 pb-4">
-            {children}
+            <SubscriptionGuard>
+              {children}
+            </SubscriptionGuard>
           </section>
+          <FirstRunTourModal />
         </main>
       </div>
   )

@@ -1,6 +1,6 @@
 'use client';
 
-import { Bell, Search, UserCircle } from 'lucide-react'
+import { Bell, Search, UserCircle, Sparkles } from 'lucide-react'
 import { useCachedUser } from '../hooks/useCachedUser';
 
 export default function Header() {
@@ -13,6 +13,10 @@ export default function Header() {
   const initials = currentUser
     ? `${currentUser.first_name?.[0] ?? ''}${currentUser.last_name?.[0] ?? ''}`.toUpperCase()
     : 'U';
+
+  const handleLaunchTour = () => {
+    window.dispatchEvent(new CustomEvent('nova:open-tour'));
+  };
 
   return (
     <div className="flex items-center justify-between px-5 py-3 bg-white rounded-2xl shadow-sm border border-[--border]">
@@ -45,6 +49,17 @@ export default function Header() {
 
       {/* Right side */}
       <div className="flex items-center gap-3 ml-4">
+        {/* Replay Tour Button */}
+        <button
+          type="button"
+          onClick={handleLaunchTour}
+          title="Product Tour & AI Guide"
+          className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200/80 rounded-xl transition-all shadow-sm"
+        >
+          <Sparkles size={14} className="text-indigo-600 animate-pulse" />
+          <span>Product Tour</span>
+        </button>
+
         {/* Bell */}
         <button
           id="header-notifications"
