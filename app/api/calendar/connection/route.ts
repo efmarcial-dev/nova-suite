@@ -22,14 +22,15 @@ export async function GET(request: Request) {
     });
 
     if (!res.ok) {
-      return Response.json({ connection: { isConnected: false } }, { status: 200 });
+      const details = await res.json().catch(() => ({}));
+      return Response.json(details, { status: res.status });
     }
 
     const data = await res.json();
     return Response.json(data, { status: 200 });
   } catch (error) {
     console.error('Calendar connection fetch failed', error);
-    return Response.json({ connection: { isConnected: false } }, { status: 200 });
+    return Response.json({ message: 'Calendar connection fetch failed' }, { status: 502 });
   }
 }
 

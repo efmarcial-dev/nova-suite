@@ -19,6 +19,7 @@ import MatrixViewComponent from './MartixViewComponent';
 import { useCachedTasks } from '@/app/hooks/useCachedTasks';
 import { updateTaskInCache, deleteTaskInCache } from '@/app/lib/cache/NovaCacheHelpers';
 import { updateTaskAPI, deleteTaskAPI } from '@/app/lib/api/tasks';
+import { emitTaskChangeEvent } from '@/app/lib/events/novaEvents';
 import { Task } from './task';
 
 export default function TaskBoard({
@@ -43,12 +44,8 @@ export default function TaskBoard({
   );
 
   useEffect(() => {
-    try {
-      if (!isLoading && cacheTasks.length > 0) {
-        setTasks(cacheTasks);
-      }
-    } catch (error) {
-      console.log(error);
+    if (!isLoading) {
+      setTasks(cacheTasks);
     }
   }, [cacheTasks, isLoading]);
 
@@ -87,6 +84,7 @@ export default function TaskBoard({
       if (updatedTask) {
         updateTaskInCache(updatedTask);
         updateTaskAPI(updatedTask.id, { status: newStatus });
+        emitTaskChangeEvent({ action: 'update', task: updatedTask });
       }
 
       return updatedTasks;
@@ -98,12 +96,14 @@ export default function TaskBoard({
       prev.map((t) => (t.id === updated.id ? updated : t))
     );
     await updateTaskInCache(updated);
+    emitTaskChangeEvent({ action: 'update', task: updated });
     await updateTaskAPI(updated.id, updated);
   };
 
   const handleDeleteTask = async (taskId: number) => {
     setTasks((prev) => prev.filter((t) => t.id !== taskId));
     await deleteTaskInCache(taskId);
+    emitTaskChangeEvent({ action: 'delete', taskId });
     await deleteTaskAPI(taskId);
   };
 

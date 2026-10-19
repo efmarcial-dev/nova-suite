@@ -81,18 +81,20 @@ export default function SettingsPage() {
   const [showUpdateCard, setShowUpdateCard] = useState(false);
 
   // Navigation tab
-  const [activeTab, setActiveTab] = useState<'profile' | 'email' | 'assistant' | 'notifications' | 'billing'>('profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'email' | 'assistant' | 'notifications'>('profile');
 
   // Profile states
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
-  const [timezone, setTimezone] = useState('America/Los_Angeles (Pacific Time)');
+  const [timezone, setTimezone] = useState('UTC');
 
   // Email Provider Connection states
   const [connectedProvider, setConnectedProvider] = useState<EmailProviderId | null>(null);
   const [connectedEmail, setConnectedEmail] = useState('');
   const [isConnecting, setIsConnecting] = useState<EmailProviderId | null>(null);
+  const [integrationError, setIntegrationError] = useState('');
+  const [settingsError, setSettingsError] = useState('');
 
   // Email Sync Guardrails
   const [autoParseTasks, setAutoParseTasks] = useState(true);
@@ -140,23 +142,34 @@ export default function SettingsPage() {
           const active = pList.find((p: any) => p.is_connected);
           if (active) {
             setConnectedProvider(active.provider === 'outlook' ? 'microsoft' : 'gmail');
-            setConnectedEmail(active.email);
+            setConnectedEmail(active.email || '');
+          } else {
+            setConnectedProvider(null);
+            setConnectedEmail('');
           }
+        } else {
+          throw new Error(`Email provider status request failed (${emailRes.status})`);
         }
       } catch (err) {
         console.warn('Could not fetch email providers in settings', err);
+        setIntegrationError(err instanceof Error ? err.message : 'Could not load email provider status.');
       }
 
-      const savedSettings = await fetchSettingsAPI();
-      if (savedSettings.timezone) setTimezone(savedSettings.timezone);
-      if (savedSettings.briefingTime) setBriefingTime(savedSettings.briefingTime);
-      if (savedSettings.assistantTone) setAssistantTone(savedSettings.assistantTone);
-      if (savedSettings.urgentEmailAlerts !== undefined) setUrgentEmailAlerts(savedSettings.urgentEmailAlerts);
-      if (savedSettings.dailyBriefingEmail !== undefined) setDailyBriefingEmail(savedSettings.dailyBriefingEmail);
-      if (savedSettings.calendarWarnings !== undefined) setCalendarWarnings(savedSettings.calendarWarnings);
-      if (savedSettings.autoParseTasks !== undefined) setAutoParseTasks(savedSettings.autoParseTasks);
-      if (savedSettings.draftReplies !== undefined) setDraftReplies(savedSettings.draftReplies);
-      if (savedSettings.trackDeadlines !== undefined) setTrackDeadlines(savedSettings.trackDeadlines);
+      try {
+        const savedSettings = await fetchSettingsAPI();
+        if (savedSettings.timezone) setTimezone(savedSettings.timezone);
+        if (savedSettings.briefingTime) setBriefingTime(savedSettings.briefingTime);
+        if (savedSettings.assistantTone) setAssistantTone(savedSettings.assistantTone);
+        if (savedSettings.urgentEmailAlerts !== undefined) setUrgentEmailAlerts(savedSettings.urgentEmailAlerts);
+        if (savedSettings.dailyBriefingEmail !== undefined) setDailyBriefingEmail(savedSettings.dailyBriefingEmail);
+        if (savedSettings.calendarWarnings !== undefined) setCalendarWarnings(savedSettings.calendarWarnings);
+        if (savedSettings.autoParseTasks !== undefined) setAutoParseTasks(savedSettings.autoParseTasks);
+        if (savedSettings.draftReplies !== undefined) setDraftReplies(savedSettings.draftReplies);
+        if (savedSettings.trackDeadlines !== undefined) setTrackDeadlines(savedSettings.trackDeadlines);
+        setSettingsError('');
+      } catch (err) {
+        setSettingsError(err instanceof Error ? err.message : 'Could not load settings from the backend.');
+      }
     };
 
     hydrateSettings();
@@ -164,44 +177,24 @@ export default function SettingsPage() {
 
   const handleConnectProvider = async (pid: EmailProviderId) => {
     setIsConnecting(pid);
-    const syncEmail = email || currentUser?.email || 'eduardo@novasuite.io';
+    const syncEmail = email || currentUser?.email || '';
     const backendProvider = pid === 'microsoft' ? 'outlook' : 'gmail';
-
-    setConnectedProvider(pid);
-    setConnectedEmail(syncEmail);
+    setIntegrationError('');
 
     try {
-      const result = await connectEmailProviderAPI(backendProvider, syncEmail);
+      const result = await connectEmailProviderAPI(backendProvider, syncEmail || undefined);
       const authUrl = result?.authorization_url || result?.auth_url || result?.authorizationUrl || result?.url;
 
       if (authUrl) {
         window.location.href = authUrl;
         return;
       }
-
-      await saveSettingsAPI({
-        connectedProvider: pid,
-        connectedEmail: syncEmail,
-        email: syncEmail,
-      });
+      throw new Error('The backend did not return an authorization URL.');
     } catch (e) {
       console.error('Failed to save email provider connection', e);
+      setIntegrationError(e instanceof Error ? e.message : 'Could not start email authorization.');
+      setIsConnecting(null);
     }
-
-    try {
-      localStorage.setItem(
-        'nova_connected_email_provider',
-        JSON.stringify({
-          provider: pid,
-          email: syncEmail,
-          connectedAt: new Date().toISOString(),
-        })
-      );
-    } catch (e) {
-      console.error(e);
-    }
-
-    setIsConnecting(null);
   };
 
   const handleDisconnectProvider = async () => {
@@ -209,15 +202,12 @@ export default function SettingsPage() {
 
     try {
       await disconnectEmailProviderAPI(backendProvider);
+      setConnectedProvider(null);
+      setConnectedEmail('');
+      setIntegrationError('');
     } catch (e) {
       console.error('Failed to disconnect email provider', e);
-    }
-
-    setConnectedProvider(null);
-    try {
-      localStorage.removeItem('nova_connected_email_provider');
-    } catch (e) {
-      console.error(e);
+      setIntegrationError(e instanceof Error ? e.message : 'Could not disconnect email provider.');
     }
   };
 
@@ -246,31 +236,13 @@ export default function SettingsPage() {
         autoParseTasks,
         draftReplies,
         trackDeadlines,
-        connectedProvider,
-        connectedEmail,
       });
+      setSettingsError('');
     } catch (e) {
       console.error('Backend settings save failed', e);
-    }
-
-    try {
-      localStorage.setItem(
-        'nova_user_settings',
-        JSON.stringify({
-          timezone,
-          briefingTime,
-          assistantTone,
-          urgentEmailAlerts,
-          dailyBriefingEmail,
-          calendarWarnings,
-          taskScoreUpdates,
-          autoParseTasks,
-          draftReplies,
-          trackDeadlines,
-        })
-      );
-    } catch (e) {
-      console.error(e);
+      setSettingsError(e instanceof Error ? e.message : 'Could not save settings to the backend.');
+      setIsSaving(false);
+      return;
     }
 
     setTimeout(() => {
@@ -312,6 +284,12 @@ export default function SettingsPage() {
         </button>
       </div>
 
+      {(integrationError || settingsError) && (
+        <div role="alert" className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          {integrationError || settingsError}
+        </div>
+      )}
+
       {/* Navigation Tabs */}
       <div className="flex items-center gap-1 bg-[--background] p-1 rounded-xl border border-[--border] w-fit flex-wrap">
         {[
@@ -319,7 +297,6 @@ export default function SettingsPage() {
           { id: 'email' as const, label: 'Email Providers', icon: Mail },
           { id: 'assistant' as const, label: 'Assistant & Briefings', icon: Bot },
           { id: 'notifications' as const, label: 'Email Alerts', icon: Bell },
-          { id: 'billing' as const, label: 'Subscription & Billing', icon: CreditCard },
         ].map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -726,130 +703,6 @@ export default function SettingsPage() {
                 className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 border-gray-300 mt-0.5"
               />
             </label>
-          </div>
-        </div>
-      )}
-
-      {/* TAB 5: SUBSCRIPTION & BILLING */}
-      {activeTab === 'billing' && (
-        <div className="space-y-6">
-          {/* Plan Overview Card */}
-          <div className="bg-white rounded-2xl border border-[--border] p-6 shadow-xs space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-[--border]">
-              <div>
-                <div className="flex items-center gap-2.5">
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-lg font-bold text-[--foreground]">
-                      {subscription?.isLifetime || subscription?.plan === 'founder_lifetime'
-                        ? 'Nova Executive Founder Lifetime Pass'
-                        : 'Nova Executive Pro'}
-                    </h3>
-                    {(subscription?.isLifetime || subscription?.plan === 'founder_lifetime') && (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 text-amber-800 border border-amber-300">
-                        <Trophy className="w-3 h-3 text-amber-600" />
-                        <span>Member #100</span>
-                      </span>
-                    )}
-                  </div>
-                  <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold border ${
-                    hasAccess
-                      ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                      : 'bg-amber-50 text-amber-700 border-amber-200'
-                  }`}>
-                    {hasAccess ? (subscription?.isLifetime ? 'Lifetime Active' : 'Active Subscription') : 'Payment Required'}
-                  </span>
-                </div>
-                <p className="text-xs text-[--muted-foreground] mt-1">
-                  Full executive assistant suite with daily briefings, priority task scoring, email intelligence, and meeting synthesis.
-                </p>
-              </div>
-
-              <div className="text-left sm:text-right">
-                <span className="text-2xl font-bold text-[--foreground]">
-                  {subscription?.isLifetime || subscription?.plan === 'founder_lifetime' ? '$99' : '$49'}
-                </span>
-                <span className="text-xs text-[--muted-foreground]">
-                  {subscription?.isLifetime || subscription?.plan === 'founder_lifetime' ? ' (One-Time for Life)' : ' / month'}
-                </span>
-                <p className="text-[11px] text-[--muted-foreground] mt-0.5">
-                  {subscription?.isLifetime || subscription?.plan === 'founder_lifetime'
-                    ? 'Founder Pass • No recurring monthly charges'
-                    : subscription?.currentPeriodEnd
-                    ? `Next renewal: ${new Date(subscription.currentPeriodEnd).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}`
-                    : 'Renews monthly'}
-                </p>
-              </div>
-            </div>
-
-            {/* Plan Perks */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {[
-                'Unlimited AI Executive Directives',
-                'Daily morning briefing synthesis',
-                'Automated 0–100 task importance scoring',
-                'Google & Outlook calendar guardrails',
-                'Single-domain offline caching & sync',
-                'Official Square-backed secure checkout portal',
-              ].map((perk, i) => (
-                <div key={i} className="flex items-center gap-2 text-xs text-gray-700">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                  <span>{perk}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Payment Method Card */}
-          <div className="bg-white rounded-2xl border border-[--border] p-6 shadow-xs space-y-5">
-            <div className="flex items-center justify-between">
-              <div>
-                <h4 className="text-sm font-semibold text-[--foreground]">Square Payment Portal</h4>
-                <p className="text-xs text-[--muted-foreground] mt-0.5">
-                  Payments are encrypted and processed by Square. No credit card numbers are stored on Nova servers.
-                </p>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setShowUpdateCard(!showUpdateCard)}
-                className="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 transition"
-              >
-                {showUpdateCard ? 'Close Portal' : 'Open Square Portal'}
-              </button>
-            </div>
-
-            {showUpdateCard ? (
-              <div className="pt-2 max-w-lg">
-                <SquarePaymentPortal
-                  planName="Nova Executive Founder Lifetime Pass"
-                  originalPrice={199}
-                  finalPrice={99}
-                  promoCode="FOUNDER100"
-                  onSuccess={() => {
-                    refreshSubscription();
-                    setShowUpdateCard(false);
-                  }}
-                  onCancel={() => setShowUpdateCard(false)}
-                />
-              </div>
-            ) : (
-              <div className="flex items-center gap-3 p-3.5 rounded-xl bg-[--background] border border-[--border]">
-                <div className="w-9 h-9 rounded-xl bg-white border border-[--border] flex items-center justify-center text-gray-700">
-                  <CreditCard className="w-4 h-4 text-indigo-600" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-semibold text-gray-800">
-                    {hasAccess ? 'Square Card on File' : 'No Active Card on File'}
-                  </p>
-                  <p className="text-[11px] text-gray-500">
-                    {hasAccess ? 'Primary payment method for recurring monthly charges' : 'Add a payment method to activate your subscription'}
-                  </p>
-                </div>
-                <span className="text-[11px] text-emerald-700 font-semibold flex items-center gap-1 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
-                  <Lock className="w-3 h-3" /> Encrypted
-                </span>
-              </div>
-            )}
           </div>
         </div>
       )}

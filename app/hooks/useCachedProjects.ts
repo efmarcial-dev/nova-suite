@@ -54,11 +54,33 @@ export function useCachedProjects() {
 
         load();
 
-        return ()=> {
-            isMounted = false;
+        const handleProjectChange = (e: Event) => {
+            const detail = (e as CustomEvent).detail;
+            if (!detail) return;
+
+            if (detail.action === 'create' && detail.project) {
+                setProjects(prev => {
+                    const exists = prev.some(p => p.id === detail.project.id);
+                    if (exists) return prev.map(p => p.id === detail.project.id ? detail.project : p);
+                    return [...prev, detail.project];
+                });
+            } else if (detail.action === 'update' && detail.project) {
+                setProjects(prev => prev.map(p => p.id === detail.project.id ? { ...p, ...detail.project } : p));
+            } else if (detail.action === 'delete' && detail.projectId) {
+                setProjects(prev => prev.filter(p => p.id !== detail.projectId));
+            }
+        };
+
+        if (typeof window !== 'undefined') {
+            window.addEventListener('nova:project-change', handleProjectChange);
         }
 
-        
+        return ()=> {
+            isMounted = false;
+            if (typeof window !== 'undefined') {
+                window.removeEventListener('nova:project-change', handleProjectChange);
+            }
+        }
     }, []);
 
     // add new project to cache

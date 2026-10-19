@@ -22,13 +22,14 @@ export async function GET(request: Request) {
     });
 
     if (!res.ok) {
-      return Response.json({ providers: [] }, { status: 200 });
+      const details = await res.json().catch(() => ({}));
+      return Response.json(details, { status: res.status });
     }
 
     const data = await res.json();
     return Response.json(data, { status: 200 });
   } catch (error) {
     console.error('Email providers fetch failed', error);
-    return Response.json({ providers: [] }, { status: 200 });
+    return Response.json({ message: 'Email providers fetch failed' }, { status: 502 });
   }
 }

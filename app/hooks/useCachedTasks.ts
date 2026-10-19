@@ -53,8 +53,32 @@ export function useCachedTasks() {
 
         load();
 
+        const handleTaskChange = (e: Event) => {
+            const detail = (e as CustomEvent).detail;
+            if (!detail) return;
+
+            if (detail.action === 'create' && detail.task) {
+                setTasks(prev => {
+                    const exists = prev.some(t => t.id === detail.task.id);
+                    if (exists) return prev.map(t => t.id === detail.task.id ? detail.task : t);
+                    return [detail.task, ...prev];
+                });
+            } else if (detail.action === 'update' && detail.task) {
+                setTasks(prev => prev.map(t => t.id === detail.task.id ? { ...t, ...detail.task } : t));
+            } else if (detail.action === 'delete' && detail.taskId) {
+                setTasks(prev => prev.filter(t => t.id !== detail.taskId));
+            }
+        };
+
+        if (typeof window !== 'undefined') {
+            window.addEventListener('nova:task-change', handleTaskChange);
+        }
+
         return ()=> {
             isMounted = false;
+            if (typeof window !== 'undefined') {
+                window.removeEventListener('nova:task-change', handleTaskChange);
+            }
         }
     },[]);
 

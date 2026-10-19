@@ -18,14 +18,15 @@ export async function GET() {
     });
 
     if (!res.ok) {
-      return Response.json({ events: [] }, { status: 200 });
+      const details = await res.json().catch(() => ({}));
+      return Response.json(details, { status: res.status });
     }
 
     const data = await res.json();
     return Response.json(data, { status: 200 });
   } catch (error) {
     console.error('Calendar events fetch failed', error);
-    return Response.json({ events: [] }, { status: 200 });
+    return Response.json({ message: 'Calendar events fetch failed' }, { status: 502 });
   }
 }
 

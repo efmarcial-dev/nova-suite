@@ -4,15 +4,18 @@ import { Home, ListTodo, CalendarDays, FolderKanban, Settings, HelpCircle, LogOu
 import Link from 'next/link';
 import Image from 'next/image';
 import ModalPanel from './ModalPanel';
+import NewTaskForm from './NewTaskForm';
 import { useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { useCachedUser } from '../hooks/useCachedUser';
+import { useCachedProjects } from '../hooks/useCachedProjects';
 import { motion } from 'framer-motion';
 
 export default function Sidebar() {
   const [showNewTask, setShowNewTask] = useState(false);
   const pathname = usePathname();
   const { user } = useCachedUser();
+  const { projects: cachedProjects } = useCachedProjects();
   const currentUser = user?.[0];
 
   const initials = currentUser
@@ -101,6 +104,10 @@ export default function Sidebar() {
     {/* New Task Modal */}
     <ModalPanel isOpen={showNewTask} onClose={() => setShowNewTask(false)}>
       <h2 className="text-xl font-semibold mb-4">Create New Task</h2>
+      <NewTaskForm
+        projects={cachedProjects}
+        onSubmitSuccess={() => setShowNewTask(false)}
+      />
     </ModalPanel>
    </>
   )

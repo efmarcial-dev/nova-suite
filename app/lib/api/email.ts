@@ -28,7 +28,7 @@ export async function fetchEmailProvidersAPI(): Promise<EmailProviderStatus[]> {
     });
 
     if (!res.ok) {
-      return [];
+      throw new Error(`Email provider request failed (${res.status})`);
     }
 
     const data = await res.json();
@@ -37,27 +37,28 @@ export async function fetchEmailProvidersAPI(): Promise<EmailProviderStatus[]> {
     return [];
   } catch (error) {
     console.warn('Failed to fetch email providers from backend', error);
-    return [];
+    throw error;
   }
 }
 
-export async function connectEmailProviderAPI(provider: string): Promise<any> {
+export async function connectEmailProviderAPI(provider: string, email?: string): Promise<any> {
   try {
     const res = await fetch('/api/email/providers/connect/', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
-      body: JSON.stringify({ provider }),
+      body: JSON.stringify({ provider, ...(email ? { email } : {}) }),
     });
 
     if (!res.ok) {
-      return null;
+      const body = await res.json().catch(() => ({}));
+      throw new Error(body.details || body.detail || body.message || `Email connection failed (${res.status})`);
     }
 
     return await res.json();
   } catch (error) {
     console.warn('Failed to start email OAuth flow', error);
-    return null;
+    throw error;
   }
 }
 
@@ -100,14 +101,14 @@ export async function fetchEmailMessagesAPI(
     });
 
     if (!res.ok) {
-      return [];
+      throw new Error(`Email messages request failed (${res.status})`);
     }
 
     const data = await res.json();
     return Array.isArray(data.messages) ? data.messages : [];
   } catch (error) {
     console.warn('Failed to fetch live email messages', error);
-    return [];
+    throw error;
   }
 }
 

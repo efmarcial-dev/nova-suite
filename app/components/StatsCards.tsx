@@ -21,7 +21,6 @@ export default function StatsCards({projects, tasks}: StatProps) {
         href="/dashboard/projects"
         icon={<Briefcase size={18} />}
         accent="bg-indigo-100 text-indigo-600"
-        trend="+2 this month"
       />
       <StatCard
         title="Total Tasks"
@@ -43,7 +42,6 @@ export default function StatsCards({projects, tasks}: StatProps) {
         href="/dashboard/projects?status=completed"
         icon={<CheckCircle size={18} />}
         accent="bg-emerald-100 text-emerald-600"
-        trend="On track"
       />
     </div>
   )

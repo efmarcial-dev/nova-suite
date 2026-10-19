@@ -56,13 +56,29 @@ let dbPromise: Promise<IDBPDatabase<NovaCacheDBD>>;
 
 export function initNovaCache() {
     if (!dbPromise) {
-        dbPromise = openDB<NovaCacheDBD>('NovaCacheDB', 3, {
-            upgrade(db) {
+        dbPromise = openDB<NovaCacheDBD>('NovaCacheDB', 4, {
+            upgrade(db, _oldVersion, _newVersion, transaction) {
                 const nativeDb = db as unknown as IDBDatabase;
                 if (nativeDb.objectStoreNames.contains('assignees')) {
                     nativeDb.deleteObjectStore('assignees');
                 }
-                if (!db.objectStoreNames.contains('user')){
+                if (db.objectStoreNames.contains('user') && transaction.objectStore('user').keyPath !== 'id') {
+                    // Earlier builds used a different key path. Recreate this store so
+                    // writes consistently use the normalized `id` property.
+                    const nativeTransaction = transaction as unknown as IDBTransaction;
+                    const existingUsers = nativeTransaction.objectStore('user').getAll();
+                    existingUsers.onsuccess = () => {
+                        const users = existingUsers.result;
+                        nativeDb.deleteObjectStore('user');
+                        const userStore = nativeDb.createObjectStore('user', { keyPath: 'id' });
+                        for (const user of users) {
+                            const id = user?.id ?? user?.email;
+                            if (id !== undefined && id !== null && String(id).trim()) {
+                                userStore.put({ ...user, id: String(id) });
+                            }
+                        }
+                    };
+                } else if (!db.objectStoreNames.contains('user')){
                     db.createObjectStore('user', {keyPath: 'id'});
                 }
                 if (!db.objectStoreNames.contains('tasks')){

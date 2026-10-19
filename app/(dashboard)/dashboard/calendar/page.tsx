@@ -5,28 +5,21 @@ import {
   Calendar as CalendarIcon,
   Check,
   Sparkles,
-  Clock,
   Video,
   ShieldCheck,
   Plus,
   RefreshCw,
-  AlertTriangle,
-  ChevronLeft,
-  ChevronRight,
   ExternalLink,
-  Settings2,
   Lock,
   Bot
 } from 'lucide-react';
 import { useCachedUser } from '@/app/hooks/useCachedUser';
-import { useCachedTasks } from '@/app/hooks/useCachedTasks';
 import ModalPanel from '@/app/components/ModalPanel';
 import {
   fetchCalendarConnectionAPI,
   fetchCalendarEventsAPI,
   connectCalendarProviderAPI,
   disconnectCalendarProviderAPI,
-  saveCalendarConnectionAPI,
   saveCalendarEventAPI,
   syncCalendarEventsAPI,
 } from '@/app/lib/api/calendar';
@@ -45,13 +38,19 @@ interface CalendarEvent {
   attendees?: string[];
   assistantBrief?: string;
   hasConflict?: boolean;
+  startAt: string;
+  endAt: string;
 }
 
 function mapBackendEvent(evt: any): CalendarEvent {
-  const startDate = evt.start ? new Date(evt.start) : new Date();
-  const endDate = evt.end ? new Date(evt.end) : new Date(startDate.getTime() + 60 * 60 * 1000);
-  const startHour = startDate.getHours() + startDate.getMinutes() / 60;
-  const endHour = endDate.getHours() + endDate.getMinutes() / 60;
+  const startValue = evt.start_time || evt.start || evt.startTime;
+  const endValue = evt.end_time || evt.end || evt.endTime;
+  const startDate = startValue ? new Date(startValue) : new Date(NaN);
+  const endDate = endValue ? new Date(endValue) : new Date(NaN);
+  const safeStart = Number.isNaN(startDate.getTime()) ? new Date() : startDate;
+  const safeEnd = Number.isNaN(endDate.getTime()) ? new Date(safeStart.getTime() + 60 * 60 * 1000) : endDate;
+  const startHour = safeStart.getHours() + safeStart.getMinutes() / 60;
+  const endHour = safeEnd.getHours() + safeEnd.getMinutes() / 60;
   const durationHours = Math.max(0.5, endHour - startHour);
 
   const formatH = (d: Date) => {
@@ -59,26 +58,29 @@ function mapBackendEvent(evt: any): CalendarEvent {
   };
 
   return {
-    id: String(evt.id || `evt-${Date.now()}`),
+    id: String(evt.id || `${safeStart.toISOString()}-${evt.title || 'event'}`),
     title: evt.title || '(No Title)',
-    startTime: formatH(startDate),
-    endTime: formatH(endDate),
+    startTime: evt.startTime || formatH(safeStart),
+    endTime: evt.endTime || formatH(safeEnd),
     startHour,
     durationHours,
-    type: (evt.event_type as any) || 'meeting',
+    type: (evt.event_type || evt.type || 'meeting') as any,
     location: evt.location || '',
     attendees: Array.isArray(evt.attendees) ? evt.attendees : [],
     assistantBrief: evt.assistant_brief || evt.assistantBrief || '',
+    startAt: safeStart.toISOString(),
+    endAt: safeEnd.toISOString(),
   };
 }
 
 export default function CalendarPage() {
   const { user } = useCachedUser();
-  const { tasks } = useCachedTasks();
   const currentUser = user?.[0];
 
   // Calendar connection state
   const [isConnected, setIsConnected] = useState<boolean>(false);
+  const [connectionError, setConnectionError] = useState('');
+  const [eventsError, setEventsError] = useState('');
   const [selectedProvider, setSelectedProvider] = useState<ProviderId>('google');
   const [isConnecting, setIsConnecting] = useState(false);
   const [connectedEmail, setConnectedEmail] = useState('');
@@ -112,12 +114,18 @@ export default function CalendarPage() {
         }
       }
 
-      const connection = await fetchCalendarConnectionAPI();
-      const isConnectedProvider = connection?.isConnected || Boolean(paramProvider);
+      let connection: Record<string, any> = {};
+      try {
+        connection = await fetchCalendarConnectionAPI();
+        setConnectionError('');
+      } catch {
+        setConnectionError('Could not load calendar connection status. Please refresh or try again.');
+      }
+      const isConnectedProvider = Boolean(connection?.isConnected);
 
       if (isConnectedProvider) {
         setIsConnected(true);
-        const activeProv: ProviderId = paramProvider || (connection?.provider === 'outlook' ? 'outlook' : 'google');
+        const activeProv: ProviderId = connection?.provider === 'outlook' ? 'outlook' : (paramProvider || 'google');
         setSelectedProvider(activeProv);
         setConnectedEmail(connection?.email || (currentUser?.email ?? ''));
 
@@ -126,23 +134,28 @@ export default function CalendarPage() {
           await syncCalendarEventsAPI(activeProv);
         } catch (e) {
           console.warn('Initial calendar sync skipped:', e);
+          setEventsError('Calendar is connected, but sync failed. Check your provider permissions and retry.');
         }
+      } else {
+        setIsConnected(false);
       }
 
-      const backendEvents = await fetchCalendarEventsAPI();
-      if (Array.isArray(backendEvents) && backendEvents.length > 0) {
+      try {
+        const backendEvents = await fetchCalendarEventsAPI();
         setEvents(backendEvents.map(mapBackendEvent));
-      } else {
+      } catch {
         setEvents([]);
+        setEventsError('Could not load calendar events from the backend.');
       }
     };
 
-    hydrateCalendar();
+    void hydrateCalendar();
   }, [currentUser]);
 
   const handleSyncCalendar = async () => {
     setIsSyncing(true);
     try {
+      setEventsError('');
       await syncCalendarEventsAPI(selectedProvider);
       const backendEvents = await fetchCalendarEventsAPI();
       if (Array.isArray(backendEvents)) {
@@ -150,6 +163,7 @@ export default function CalendarPage() {
       }
     } catch (err) {
       console.error('Failed to sync calendar events from provider', err);
+      setEventsError(err instanceof Error ? err.message : 'Calendar sync failed.');
     } finally {
       setIsSyncing(false);
     }
@@ -157,7 +171,6 @@ export default function CalendarPage() {
 
   const handleConnect = async (targetProvider?: ProviderId) => {
     setIsConnecting(true);
-    const email = currentUser?.email || 'user@novasuite.io';
     const provider = (targetProvider || selectedProvider) === 'outlook' ? 'outlook' : 'google';
     setSelectedProvider(provider);
 
@@ -169,59 +182,25 @@ export default function CalendarPage() {
         window.location.href = authUrl;
         return;
       }
-
-      await saveCalendarConnectionAPI({
-        isConnected: true,
-        provider,
-        email,
-        connectedAt: new Date().toISOString(),
-      });
+      throw new Error('The backend did not return an authorization URL.');
     } catch (e) {
       console.error('Failed to save calendar connection', e);
-    }
-
-    setIsConnected(true);
-    setConnectedEmail(email);
-    setIsConnecting(false);
-
-    try {
-      localStorage.setItem(
-        'nova_calendar_connection',
-        JSON.stringify({
-          isConnected: true,
-          provider: selectedProvider,
-          email,
-          connectedAt: new Date().toISOString(),
-        })
-      );
-    } catch (e) {
-      console.error(e);
+      setConnectionError(e instanceof Error ? e.message : 'Could not start calendar authorization.');
+    } finally {
+      setIsConnecting(false);
     }
   };
 
   const handleDisconnect = async () => {
-    setIsConnected(false);
-
     try {
       await disconnectCalendarProviderAPI(selectedProvider === 'outlook' ? 'outlook' : 'google');
+      setIsConnected(false);
+      setConnectedEmail('');
+      setEvents([]);
+      setConnectionError('');
     } catch (e) {
       console.error('Failed to disconnect calendar connection', e);
-    }
-
-    try {
-      await saveCalendarConnectionAPI({
-        isConnected: false,
-        provider: selectedProvider === 'outlook' ? 'outlook' : 'google',
-        email: connectedEmail,
-      });
-    } catch (e) {
-      console.error('Failed to disconnect calendar connection', e);
-    }
-
-    try {
-      localStorage.removeItem('nova_calendar_connection');
-    } catch (e) {
-      console.error(e);
+      setConnectionError(e instanceof Error ? e.message : 'Could not disconnect calendar.');
     }
   };
 
@@ -236,47 +215,25 @@ export default function CalendarPage() {
     const endIso = new Date(today.getTime() + 60 * 60 * 1000).toISOString();
 
     const startHour = hours + (mins || 0) / 60;
-    const endHour = startHour + 1;
-
-    const formatH = (h: number) => {
-      const hourPart = Math.floor(h);
-      const minPart = Math.round((h - hourPart) * 60);
-      const period = hourPart >= 12 ? 'PM' : 'AM';
-      const adjusted = hourPart % 12 || 12;
-      return `${adjusted}:${minPart.toString().padStart(2, '0')} ${period}`;
-    };
-
-    const newEvt: CalendarEvent = {
-      id: `evt-${Date.now()}`,
-      title: newEventTitle,
-      startTime: formatH(startHour),
-      endTime: formatH(endHour),
-      startHour,
-      durationHours: 1.0,
-      type: newEventType,
-      assistantBrief: newEventType === 'focus'
-        ? 'Assistant focus protection active for scheduled block.'
-        : 'Assistant meeting alerts enabled for this event.',
-    };
-
     try {
+      setEventsError('');
       const savedEvent = await saveCalendarEventAPI({
         title: newEventTitle,
-        start: startIso,
-        end: endIso,
+        start_time: startIso,
+        end_time: endIso,
         event_type: newEventType,
-        assistant_brief: newEvt.assistantBrief,
         sync_provider: selectedProvider,
       });
 
       if (savedEvent) {
         setEvents((prev) => [...prev, mapBackendEvent(savedEvent)]);
       } else {
-        setEvents((prev) => [...prev, newEvt]);
+        throw new Error('The backend did not save the calendar event.');
       }
     } catch (err) {
       console.error('Error saving event', err);
-      setEvents((prev) => [...prev, newEvt]);
+      setEventsError(err instanceof Error ? err.message : 'Could not save the calendar event.');
+      return;
     }
 
     setShowAddModal(false);
@@ -332,6 +289,12 @@ export default function CalendarPage() {
             Your executive assistant monitors your schedule to warn you about meeting overlaps, protect your daily focus time, and send you proactive email briefings.
           </p>
         </div>
+
+        {(connectionError || eventsError) && (
+          <div role="alert" className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+            {connectionError || eventsError}
+          </div>
+        )}
 
         {/* Provider Selection Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -481,6 +444,24 @@ export default function CalendarPage() {
   // STATE 2: CONNECTED CALENDAR & LIVE EXECUTIVE AGENDA VIEW
   // -------------------------------------------------------------
   const activeProvider = providerDetails[selectedProvider];
+  const todayEvents = events.filter((event) => new Date(event.startAt).toDateString() === new Date().toDateString());
+  const now = new Date();
+  const weekStart = new Date(now);
+  weekStart.setHours(0, 0, 0, 0);
+  weekStart.setDate(weekStart.getDate() - ((weekStart.getDay() + 6) % 7));
+  const weekEnd = new Date(weekStart);
+  weekEnd.setDate(weekEnd.getDate() + 7);
+  const visibleEvents = events
+    .filter((event) => {
+      const eventDate = new Date(event.startAt);
+      if (viewMode === 'day') return eventDate.toDateString() === now.toDateString();
+      return eventDate >= weekStart && eventDate < weekEnd;
+    })
+    .sort((a, b) => new Date(a.startAt).getTime() - new Date(b.startAt).getTime());
+  const todayMeetings = todayEvents.filter((event) => event.type !== 'focus');
+  const meetingHours = todayMeetings.reduce((total, event) => total + Math.max(0, (new Date(event.endAt).getTime() - new Date(event.startAt).getTime()) / 3600000), 0);
+  const focusHours = todayEvents.filter((event) => event.type === 'focus').reduce((total, event) => total + Math.max(0, (new Date(event.endAt).getTime() - new Date(event.startAt).getTime()) / 3600000), 0);
+  const conflictsToday = todayEvents.filter((event) => event.hasConflict).length;
 
   return (
     <div className="space-y-5">
@@ -498,7 +479,7 @@ export default function CalendarPage() {
               </h2>
             </div>
             <p className="text-xs text-[--muted-foreground]">
-              Syncing with <span className="font-medium text-[--foreground]">{connectedEmail}</span> • Assistant guardrails active
+              Connected account: <span className="font-medium text-[--foreground]">{connectedEmail || 'provider account'}</span>
             </p>
           </div>
         </div>
@@ -526,6 +507,12 @@ export default function CalendarPage() {
           </button>
         </div>
       </div>
+
+      {(connectionError || eventsError) && (
+        <div role="alert" className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          {connectionError || eventsError}
+        </div>
+      )}
 
       {/* Main Schedule View */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
@@ -567,18 +554,18 @@ export default function CalendarPage() {
 
           {/* Event Timeline */}
           <div className="space-y-3">
-            {events.length === 0 ? (
+            {visibleEvents.length === 0 ? (
               <div className="rounded-2xl border border-dashed border-[--border] p-10 text-center flex flex-col items-center justify-center gap-3 bg-[--background]">
                 <div className="w-12 h-12 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600">
                   <CalendarIcon size={24} />
                 </div>
                 <div>
                   <h3 className="text-sm font-semibold text-[--foreground]">
-                    {isConnected ? 'No upcoming events found' : 'No calendar connected'}
+                    {isConnected ? `No events found for this ${viewMode}` : 'No calendar connected'}
                   </h3>
                   <p className="text-xs text-[--muted-foreground] max-w-sm mt-1">
                     {isConnected
-                      ? 'Your connected calendar has no events scheduled for this period or needs a fresh sync.'
+                      ? 'Your connected calendar has no events in this view. Try another view or sync again.'
                       : 'Connect your Google or Microsoft Outlook account to sync live meetings and events.'}
                   </p>
                 </div>
@@ -611,7 +598,7 @@ export default function CalendarPage() {
                 )}
               </div>
             ) : (
-              events.map((evt) => {
+              visibleEvents.map((evt) => {
                 const isFocus = evt.type === 'focus';
                 return (
                   <div
@@ -679,29 +666,26 @@ export default function CalendarPage() {
           <div className="bg-white rounded-2xl border border-[--border] p-5 space-y-3 shadow-xs">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-bold text-[--foreground] flex items-center gap-2">
-                <ShieldCheck size={16} className="text-emerald-600" />
-                Schedule Health: 94%
+                <ShieldCheck size={16} className={conflictsToday ? 'text-amber-600' : 'text-emerald-600'} />
+                Today&apos;s Schedule
               </h3>
-              <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-                Optimized
+              <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${conflictsToday ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-slate-50 text-slate-600 border-slate-200'}`}>
+                {conflictsToday ? `${conflictsToday} conflict${conflictsToday === 1 ? '' : 's'}` : 'Live calendar data'}
               </span>
             </div>
             <p className="text-xs text-[--muted-foreground] leading-relaxed">
-              No overlapping conflicts found for today. 2 hours of deep work protected for high-confidence task delivery.
+              Showing counts from events returned by your connected calendar for today.
             </p>
             <div className="pt-2 border-t border-[--border] space-y-2 text-xs">
               <div className="flex justify-between text-[--muted-foreground]">
                 <span>Total Meetings Today:</span>
-                <span className="font-semibold text-[--foreground]">3 (2.5 hrs)</span>
+                <span className="font-semibold text-[--foreground]">{todayMeetings.length} ({meetingHours.toFixed(1)} hrs)</span>
               </div>
               <div className="flex justify-between text-[--muted-foreground]">
                 <span>Focus / Deep Work:</span>
-                <span className="font-semibold text-indigo-600">2.0 hrs</span>
+                <span className="font-semibold text-indigo-600">{focusHours.toFixed(1)} hrs</span>
               </div>
-              <div className="flex justify-between text-[--muted-foreground]">
-                <span>Free Buffer:</span>
-                <span className="font-semibold text-emerald-600">3.5 hrs</span>
-              </div>
+              <div className="text-[--muted-foreground]">{todayEvents.length} event{todayEvents.length === 1 ? '' : 's'} scheduled today</div>
             </div>
           </div>
 
@@ -716,7 +700,7 @@ export default function CalendarPage() {
               </h4>
             </div>
             <p className="text-xs text-[--foreground] leading-relaxed">
-              Need to shift your day? Tell your assistant to reschedule or alert participants via email.
+              These are examples of requests you can write in the assistant stream. No schedule changes happen automatically.
             </p>
             <div className="space-y-2">
               {[
@@ -724,14 +708,12 @@ export default function CalendarPage() {
                 '✉️ Send email update to meeting attendees',
                 '⚡ Clear my afternoon for project deadline',
               ].map((chip) => (
-                <button
+                <p
                   key={chip}
-                  type="button"
-                  onClick={() => alert(`Directive dispatched: "${chip}"`)}
-                  className="w-full text-left text-xs font-medium px-3 py-2 rounded-xl bg-white hover:bg-indigo-50 text-[--foreground] hover:text-indigo-600 border border-indigo-100 transition-colors cursor-pointer"
+                  className="w-full text-left text-xs font-medium px-3 py-2 rounded-xl bg-white text-[--muted-foreground] border border-indigo-100"
                 >
                   {chip}
-                </button>
+                </p>
               ))}
             </div>
           </div>

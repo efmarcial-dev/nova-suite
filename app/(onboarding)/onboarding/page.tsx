@@ -7,7 +7,7 @@ import WorkStyleStep from './components/WorkStyleStep';
 import PrioritizationPhilosophyStep from './components/PrioritizationPhilosophy';
 import TaskCategoriesStep from './components/TaskCategoriesStep';
 import TaskRankingStep from './components/TaskRankingStep';
-import SpecialContextStep from './components/SpecialContextStep';
+import ProviderSetupStep from './components/ProviderSetupStep';
 import TutorialStep from './components/TutorialStep';
 import SubscribeStep from './components/SubscribeStep';
 import DoneStep from './components/DoneStep';
@@ -99,10 +99,9 @@ export default function OnboardingPage() {
             onNext={handleNext}
             onBack={handleBack}
         />,
-        <SpecialContextStep
-            key="context"
-            data={formData}
-            onNext={handleSavePreferences}
+        <ProviderSetupStep
+            key="providers"
+            onNext={() => handleNext()}
             onBack={handleBack}
         />,
         <TutorialStep

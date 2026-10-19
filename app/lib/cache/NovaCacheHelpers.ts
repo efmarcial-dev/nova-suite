@@ -1,14 +1,17 @@
-import { init } from "next/dist/compiled/webpack/webpack";
 import { initNovaCache } from "./NovaCache";
-import { getCurrentUser, getTenant } from "../getTenant";
 
 
 {/* User */}
-export async function saveUserToCache( user: any[]) {
+export async function saveUserToCache(user: any[]) {
+    if (!Array.isArray(user) || user.length === 0) return;
     const db = await initNovaCache();
     const tx = db.transaction('user', 'readwrite');
     for (const u of user) {
-        await tx.store.put(u);
+        if (!u) continue;
+        const cacheId = u.id ?? u.email;
+        if (cacheId === undefined || cacheId === null || !String(cacheId).trim()) continue;
+        const validUser = { ...u, id: String(cacheId) };
+        await tx.store.put(validUser);
     }
     await tx.done;
 }

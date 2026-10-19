@@ -17,7 +17,11 @@ export async function fetchUserAPI() : Promise<User[]> {
         }
 
         const data = await res.json();
-        return data.user || [];
+        if (Array.isArray(data)) return data;
+        if (Array.isArray(data.user)) return data.user;
+        if (data.user && typeof data.user === 'object') return [data.user];
+        if (data.id || data.email) return [data];
+        return [];
 
     } catch (error) {
         console.log(`Internal Error: ${error}`);

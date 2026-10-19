@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { CloudUpload } from 'lucide-react';
 import { createProject } from '../lib/api/projects';
 import { useCachedProjects } from '../hooks/useCachedProjects';
+import { emitProjectChangeEvent } from '../lib/events/novaEvents';
 
 export default function NewProjectForm({
   onSave,
@@ -37,6 +38,7 @@ export default function NewProjectForm({
       console.log('New project created:', newProject);
 
       await addProjectToCache(newProject);
+      emitProjectChangeEvent({ action: 'create', project: newProject });
 
       if (projectName.trim()) {
             onSave(projectName.trim());

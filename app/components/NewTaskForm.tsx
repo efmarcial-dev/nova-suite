@@ -8,6 +8,7 @@ import {X, CalendarPlus, CloudUpload, Plus} from 'lucide-react'
 import NewProjectForm from "./NewProjectForm";
 import { createTask } from "../lib/api/tasks";
 import { useCachedTasks } from "../hooks/useCachedTasks";
+import { emitTaskChangeEvent } from "../lib/events/novaEvents";
 import ProjectSelect from "./ProjectSelect";
 import StatusSelect from "./StatusSelect";
 
@@ -69,11 +70,14 @@ export default function NewTaskForm({
             // Add to cache database
             await addTaskToCache(newTask);
 
+            // Emit task change event so TaskBoard and all components update instantly
+            emitTaskChangeEvent({ action: 'create', task: newTask });
+
             // Reset form or call parent close
             onSubmitSuccess?.();
         } catch(err) {
             console.error('Failed to create task', err)
-            alert("Faild to save task");
+            alert("Failed to save task");
         } finally {
             setLoading(false);
         }

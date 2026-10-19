@@ -6,21 +6,14 @@ import {
   Sparkles,
   Mail,
   Send,
-  Volume2,
-  VolumeX,
-  CheckCircle2,
-  Clock,
   Zap,
-  RotateCcw,
   RefreshCw,
   Inbox,
   Check,
   ExternalLink
 } from 'lucide-react';
 import { useCachedUser } from '../hooks/useCachedUser';
-import { useCachedTasks } from '../hooks/useCachedTasks';
-import { useCachedProjects } from '../hooks/useCachedProjects';
-import { fetchMessagesAPI, saveMessagesAPI } from '@/app/lib/api/messages';
+import { fetchMessagesAPI, createMessageAPI } from '@/app/lib/api/messages';
 import {
   fetchEmailProvidersAPI,
   fetchEmailMessagesAPI,
@@ -51,8 +44,6 @@ const channelConfig = {
 
 export default function AssistantHub({ className = '' }: { className?: string }) {
   const { user } = useCachedUser();
-  const { tasks } = useCachedTasks();
-  const { projects } = useCachedProjects();
   const currentUser = user?.[0];
 
   const [activeChannel, setActiveChannel] = useState<ChannelType>('all');
@@ -61,8 +52,9 @@ export default function AssistantHub({ className = '' }: { className?: string })
   const [isConnectingProvider, setIsConnectingProvider] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [directiveInput, setDirectiveInput] = useState('');
-  const [isPlayingAudio, setIsPlayingAudio] = useState(false);
   const [isDispatching, setIsDispatching] = useState(false);
+  const [directiveError, setDirectiveError] = useState('');
+  const [providerError, setProviderError] = useState('');
 
   // Load email providers and live inbox messages
   const hydrateMessages = async () => {
@@ -98,8 +90,10 @@ export default function AssistantHub({ className = '' }: { className?: string })
       const remoteDirectives = await fetchMessagesAPI();
       const combined = [...liveEmailItems, ...(Array.isArray(remoteDirectives) ? remoteDirectives : [])];
       setMessages(combined);
+      setProviderError('');
     } catch (e) {
       console.warn('Could not hydrate live email messages:', e);
+      setProviderError(e instanceof Error ? e.message : 'Could not load live email data.');
     } finally {
       setIsRefreshing(false);
     }
@@ -112,6 +106,7 @@ export default function AssistantHub({ className = '' }: { className?: string })
   const handleConnectProvider = async (provider: 'gmail' | 'outlook') => {
     setIsConnectingProvider(true);
     try {
+      setProviderError('');
       const result = await connectEmailProviderAPI(provider);
       const authUrl = result?.authorization_url || result?.auth_url || result?.url;
       if (authUrl) {
@@ -120,64 +115,36 @@ export default function AssistantHub({ className = '' }: { className?: string })
       }
     } catch (e) {
       console.error('Failed to initiate email provider OAuth', e);
+      setProviderError(e instanceof Error ? e.message : 'Could not start email authorization.');
     } finally {
       setIsConnectingProvider(false);
     }
   };
 
-  const saveMessages = async (items: MessageItem[]) => {
-    setMessages(items);
-    try {
-      await saveMessagesAPI({ messages: items });
-    } catch (e) {
-      console.error('Failed to save assistant messages', e);
-    }
-  };
-
-  const pendingTasksCount = tasks.filter((t) => t.status !== 'done').length;
-  const criticalTasksCount = tasks.filter((t) => t.priority === 'high' && t.status !== 'done').length;
-  const inProgressProjectsCount = projects.filter((p) => p.status === 'in_progress').length;
-
-  const handleSendDirective = (e?: React.FormEvent) => {
+  const handleSendDirective = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!directiveInput.trim() || isDispatching) return;
 
     setIsDispatching(true);
+    setDirectiveError('');
 
-    const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    const userMsg: MessageItem = {
-      id: `dir-${Date.now()}`,
-      channel: 'system',
-      direction: 'inbound',
-      sender: currentUser ? `${currentUser.first_name} (Executive)` : 'You (Executive)',
-      recipient: 'Nova Assistant',
-      subject: `Directive: ${directiveInput.slice(0, 32)}...`,
-      content: directiveInput,
-      timestamp: timeStr,
-      status: 'delivered',
-    };
-
-    const newItems = [userMsg, ...messages];
-    saveMessages(newItems);
-    setDirectiveInput('');
-
-    // Proactive assistant confirmation
-    setTimeout(() => {
-      const assistantReply: MessageItem = {
-        id: `reply-${Date.now()}`,
+    try {
+      const saved = await createMessageAPI({
         channel: 'system',
-        direction: 'outbound',
-        sender: 'Nova Assistant',
-        recipient: currentUser ? `${currentUser.first_name}` : 'You',
-        subject: `Re: Directive Execution`,
-        content: `Understood! I am executing: "${userMsg.content}". I have updated your priority queue and will alert you upon completion.`,
-        aiAction: "Action queued in background workflow runner",
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        status: 'resolved',
-      };
-      saveMessages([assistantReply, ...newItems]);
+        direction: 'inbound',
+        sender: currentUser ? `${currentUser.first_name} (Executive)` : 'Executive',
+        recipient: 'Nova Assistant',
+        subject: `Directive: ${directiveInput.slice(0, 32)}`,
+        content: directiveInput,
+      });
+      if (!saved) throw new Error('The backend did not save this directive.');
+      setDirectiveInput('');
+      await hydrateMessages();
+    } catch (error) {
+      setDirectiveError(error instanceof Error ? error.message : 'Could not save the directive.');
+    } finally {
       setIsDispatching(false);
-    }, 700);
+    }
   };
 
   const handleQuickChip = (promptText: string) => {
@@ -194,63 +161,6 @@ export default function AssistantHub({ className = '' }: { className?: string })
 
   return (
     <div className={`bg-white rounded-2xl shadow-sm border border-[--border] p-5 flex flex-col gap-5 ${className}`}>
-      {/* 1. Today's Executive Briefing Banner */}
-      <div className="relative overflow-hidden rounded-xl gradient-brand text-white p-5 shadow-sm">
-        {/* Decorative background glow */}
-        <div className="absolute -top-12 -right-12 w-48 h-48 rounded-full bg-white/10 blur-2xl pointer-events-none" />
-        
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="space-y-1.5">
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span className="text-xs font-semibold uppercase tracking-wider text-indigo-200">
-                Personal Executive Assistant • Email Connected
-              </span>
-            </div>
-            <h1 className="text-lg md:text-xl font-bold tracking-tight">
-              Good morning, {currentUser?.first_name || 'Chief'} ☕
-            </h1>
-            <p className="text-xs md:text-sm text-indigo-100/90 max-w-xl leading-relaxed">
-              You have <span className="font-semibold text-white">{criticalTasksCount} priority item{criticalTasksCount !== 1 ? 's' : ''}</span> requiring attention and <span className="font-semibold text-white">{pendingTasksCount} total tasks</span> across <span className="font-semibold text-white">{inProgressProjectsCount} active projects</span>. Your connected mailbox is actively monitored.
-            </p>
-          </div>
-
-          {/* Audio memo toggle */}
-          <button
-            onClick={() => setIsPlayingAudio(!isPlayingAudio)}
-            className="self-start md:self-center flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white/15 hover:bg-white/25 border border-white/20 text-xs font-medium backdrop-blur-sm transition-all shrink-0 cursor-pointer"
-          >
-            {isPlayingAudio ? (
-              <>
-                <VolumeX size={15} className="text-white" />
-                <span>Stop Memo</span>
-              </>
-            ) : (
-              <>
-                <Volume2 size={15} className="text-indigo-200" />
-                <span>45s Audio Briefing</span>
-              </>
-            )}
-          </button>
-        </div>
-
-        {/* Executive Highlights Bar */}
-        <div className="relative z-10 grid grid-cols-1 sm:grid-cols-3 gap-2.5 mt-4 pt-3.5 border-t border-white/15 text-xs">
-          <div className="flex items-center gap-2 bg-white/10 rounded-lg px-3 py-2">
-            <Zap size={14} className="text-amber-300 shrink-0" />
-            <span className="truncate">Top: Review Milestone 2 delivery</span>
-          </div>
-          <div className="flex items-center gap-2 bg-white/10 rounded-lg px-3 py-2">
-            <Clock size={14} className="text-sky-300 shrink-0" />
-            <span className="truncate">Calendar: Next meeting at 2:00 PM</span>
-          </div>
-          <div className="flex items-center gap-2 bg-white/10 rounded-lg px-3 py-2">
-            <CheckCircle2 size={14} className="text-emerald-300 shrink-0" />
-            <span className="truncate">Assistant: Executive emails processed</span>
-          </div>
-        </div>
-      </div>
-
       {/* 2. Executive Email & Assistant Stream */}
       <div className="space-y-3">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
@@ -298,6 +208,11 @@ export default function AssistantHub({ className = '' }: { className?: string })
         </div>
 
         {/* Message Feed Container */}
+      {providerError && (
+        <p role="alert" className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2">
+          {providerError}
+        </p>
+      )}
         <div className="space-y-2.5 max-h-[300px] overflow-y-auto pr-1">
           {activeChannel !== 'system' && !connectedEmailProvider ? (
             <div className="py-7 px-5 text-center bg-gray-50/70 border border-dashed border-[--border] rounded-2xl flex flex-col items-center justify-center space-y-3">
@@ -334,6 +249,7 @@ export default function AssistantHub({ className = '' }: { className?: string })
                   Settings &rarr;
                 </Link>
               </div>
+              {providerError && <p role="alert" className="text-xs text-rose-600">{providerError}</p>}
             </div>
           ) : filteredMessages.length === 0 ? (
             <div className="py-10 text-center text-xs text-[--muted-foreground]">
@@ -397,7 +313,7 @@ export default function AssistantHub({ className = '' }: { className?: string })
           {/* Directive Channel Badge (Email only) */}
           <div className="flex items-center gap-1.5 px-3 py-2.5 bg-[--background] border border-[--border] rounded-xl text-xs font-medium text-[--foreground] shrink-0">
             <Mail size={13} className="text-indigo-600" />
-            <span>Email Directive</span>
+            <span>Directive</span>
           </div>
 
           {/* Directive text input */}
@@ -407,7 +323,7 @@ export default function AssistantHub({ className = '' }: { className?: string })
               type="text"
               value={directiveInput}
               onChange={(e) => setDirectiveInput(e.target.value)}
-              placeholder='Give directive (e.g. "Draft reply to Sarah regarding Milestone 2", "Schedule follow-up email")...'
+              placeholder="Write a directive to save to your assistant stream..."
               className="w-full pl-9 pr-4 py-2.5 text-xs sm:text-sm bg-[--background] border border-[--border] rounded-xl outline-none focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 transition-all placeholder:text-[--muted-foreground]"
             />
           </div>
@@ -431,6 +347,8 @@ export default function AssistantHub({ className = '' }: { className?: string })
             )}
           </button>
         </form>
+        <p className="text-[11px] text-[--muted-foreground]">Directives are saved to your backend stream. They are not automatically executed.</p>
+        {directiveError && <p role="alert" className="text-xs text-rose-600">{directiveError}</p>}
 
         {/* 1-Click Directive Chips */}
         <div className="flex items-center gap-1.5 flex-wrap text-xs">

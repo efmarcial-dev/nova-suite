@@ -7,14 +7,19 @@ export async function fetchCalendarConnectionAPI(): Promise<Record<string, any>>
     });
 
     if (!res.ok) {
-      return { isConnected: false };
+      throw new Error(`Calendar connection request failed (${res.status})`);
     }
 
     const data = await res.json();
-    return data.connection ?? data ?? { isConnected: false };
+    const connection = data.connection ?? data ?? {};
+    return {
+      ...connection,
+      isConnected: connection.isConnected ?? connection.is_connected ?? false,
+      connectedAt: connection.connectedAt ?? connection.connected_at ?? null,
+    };
   } catch (error) {
     console.warn('Failed to fetch calendar connection from backend', error);
-    return { isConnected: false };
+    throw error;
   }
 }
 
@@ -28,14 +33,15 @@ export async function connectCalendarProviderAPI(provider: string): Promise<any>
     });
 
     if (!res.ok) {
-      return null;
+      const body = await res.json().catch(() => ({}));
+      throw new Error(body.details || body.detail || body.message || `Calendar connection failed (${res.status})`);
     }
 
     const data = await res.json();
     return data;
   } catch (error) {
     console.warn('Failed to start calendar OAuth flow', error);
-    return null;
+    throw error;
   }
 }
 
@@ -49,13 +55,14 @@ export async function disconnectCalendarProviderAPI(provider: string): Promise<a
     });
 
     if (!res.ok) {
-      return null;
+      const body = await res.json().catch(() => ({}));
+      throw new Error(body.details || body.detail || body.message || `Calendar disconnect failed (${res.status})`);
     }
 
     return await res.json();
   } catch (error) {
     console.warn('Failed to disconnect calendar provider', error);
-    return null;
+    throw error;
   }
 }
 
@@ -69,13 +76,14 @@ export async function saveCalendarConnectionAPI(payload: Record<string, any>): P
     });
 
     if (!res.ok) {
-      return null;
+      const body = await res.json().catch(() => ({}));
+      throw new Error(body.details || body.detail || body.message || `Calendar update failed (${res.status})`);
     }
 
     return await res.json();
   } catch (error) {
     console.warn('Failed to save calendar connection to backend', error);
-    return null;
+    throw error;
   }
 }
 
@@ -88,14 +96,14 @@ export async function fetchCalendarEventsAPI(): Promise<any[]> {
     });
 
     if (!res.ok) {
-      return [];
+      throw new Error(`Calendar events request failed (${res.status})`);
     }
 
     const data = await res.json();
-    return Array.isArray(data) ? data : data.events ?? [];
+    return Array.isArray(data) ? data : Array.isArray(data.events) ? data.events : [];
   } catch (error) {
     console.warn('Failed to fetch calendar events from backend', error);
-    return [];
+    throw error;
   }
 }
 
@@ -109,13 +117,14 @@ export async function saveCalendarEventAPI(payload: Record<string, any>): Promis
     });
 
     if (!res.ok) {
-      return null;
+      const body = await res.json().catch(() => ({}));
+      throw new Error(body.detail || body.message || `Calendar event create failed (${res.status})`);
     }
 
     return await res.json();
   } catch (error) {
     console.warn('Failed to create calendar event on backend', error);
-    return null;
+    throw error;
   }
 }
 
@@ -129,13 +138,14 @@ export async function syncCalendarEventsAPI(provider: string = 'google'): Promis
     });
 
     if (!res.ok) {
-      return null;
+      const body = await res.json().catch(() => ({}));
+      throw new Error(body.detail || body.message || `Calendar sync failed (${res.status})`);
     }
 
     return await res.json();
   } catch (error) {
     console.warn('Failed to sync calendar events from provider', error);
-    return null;
+    throw error;
   }
 }
 

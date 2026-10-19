@@ -18,7 +18,7 @@ export async function fetchMessagesAPI(): Promise<any[]> {
   }
 }
 
-export async function saveMessagesAPI(payload: Record<string, any>): Promise<any> {
+export async function createMessageAPI(payload: Record<string, any>): Promise<any> {
   try {
     const res = await fetch('/api/messages/', {
       method: 'POST',
