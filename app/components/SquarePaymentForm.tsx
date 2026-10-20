@@ -10,12 +10,6 @@ interface SquarePaymentFormProps {
   onCancel?: () => void;
 }
 
-declare global {
-  interface Window {
-    Square?: any;
-  }
-}
-
 export default function SquarePaymentForm({
   planName = "Nova Executive Pro",
   amount = "$49/mo",
@@ -78,14 +72,18 @@ export default function SquarePaymentForm({
 
   // 2. Initialize Card container when SDK is ready
   useEffect(() => {
-    if (!isSdkLoaded || useSimulation || !window.Square) return;
+    if (!isSdkLoaded || useSimulation) return;
+
+    const square = window.Square;
+    if (!square) return;
+    const squareSdk: NonNullable<typeof window.Square> = square;
 
     let mounted = true;
 
     async function initSquare() {
       try {
         setIsInitializing(true);
-        const payments = window.Square.payments(appId, locationId);
+        const payments = squareSdk.payments(appId, locationId);
         const card = await payments.card({
           style: {
             input: {

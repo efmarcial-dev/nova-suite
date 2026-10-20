@@ -31,6 +31,11 @@ export interface EmailInsight {
   analyzed_at: string;
 }
 
+export interface EmailReplyDraft {
+  reply_draft: string;
+  rationale: string;
+}
+
 export async function fetchEmailProvidersAPI(): Promise<EmailProviderStatus[]> {
   try {
     const res = await fetch('/api/email/providers/', {
@@ -141,6 +146,38 @@ export async function analyzeEmailMessagesAPI(
 
   const data = await res.json();
   return data.insights && typeof data.insights === 'object' ? data.insights : {};
+}
+
+export async function draftEmailReplyAPI(payload: {
+  provider: string;
+  instruction: string;
+  email: Pick<EmailMessageItem, 'id' | 'subject' | 'sender' | 'content'>;
+}): Promise<EmailReplyDraft> {
+  const res = await fetch('/api/email/messages/draft-reply/', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok) await throwProviderApiError(res, `Reply draft failed (${res.status})`);
+  return res.json();
+}
+
+export async function sendEmailReplyAPI(payload: {
+  provider: string;
+  message_id: string;
+  content: string;
+}): Promise<any> {
+  const res = await fetch('/api/email/messages/reply/', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok) await throwProviderApiError(res, `Email reply failed (${res.status})`);
+  return res.json();
 }
 
 export async function sendEmailMessageAPI(payload: {

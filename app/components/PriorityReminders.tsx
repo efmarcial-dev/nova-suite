@@ -42,7 +42,7 @@ export default function PriorityReminders({
 
   const { reminders, totalReminderCount } = useMemo(() => {
     const candidates = tasks.filter((task) => {
-      if (task.status === 'done' || task.status === 'archived') return false;
+      if (task.status === 'done') return false;
       if (task.snoozed_until && new Date(task.snoozed_until).getTime() > clock) return false;
       const priority = task.priority?.toLowerCase();
       const overdue = Boolean(task.due_date && new Date(task.due_date).getTime() < clock);

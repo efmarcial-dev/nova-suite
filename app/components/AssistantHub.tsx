@@ -11,13 +11,17 @@ import {
   AlertTriangle,
   CheckCircle2,
 } from 'lucide-react';
+import ModalPanel from '@/app/components/ModalPanel';
 import { useCachedUser } from '../hooks/useCachedUser';
 import { fetchMessagesAPI, createMessageAPI } from '@/app/lib/api/messages';
 import {
   analyzeEmailMessagesAPI,
+  draftEmailReplyAPI,
   fetchEmailProvidersAPI,
   fetchEmailMessagesAPI,
   connectEmailProviderAPI,
+  sendEmailReplyAPI,
+  EmailReplyDraft,
   EmailInsight,
   EmailMessageItem,
   EmailProviderStatus
@@ -48,6 +52,7 @@ export default function AssistantHub({ className = '' }: { className?: string })
   const currentUser = user?.[0];
 
   const [messages, setMessages] = useState<MessageItem[]>([]);
+  const [inboxEmails, setInboxEmails] = useState<EmailMessageItem[]>([]);
   const [connectedEmailProvider, setConnectedEmailProvider] = useState<EmailProviderStatus | null>(null);
   const [isConnectingProvider, setIsConnectingProvider] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -61,7 +66,37 @@ export default function AssistantHub({ className = '' }: { className?: string })
   const [aiAnalysisComplete, setAiAnalysisComplete] = useState(false);
   const [aiError, setAiError] = useState('');
   const [emailFilter, setEmailFilter] = useState<'all' | 'important' | 'high'>('all');
+  const [replyCommand, setReplyCommand] = useState('');
+  const [isDraftingReply, setIsDraftingReply] = useState(false);
+  const [isSendingReply, setIsSendingReply] = useState(false);
+  const [replyError, setReplyError] = useState('');
+  const [replySentNotice, setReplySentNotice] = useState('');
+  const [replyReview, setReplyReview] = useState<{
+    email: EmailMessageItem;
+    insight: EmailInsight;
+    draft: EmailReplyDraft;
+    instruction: string;
+    content: string;
+  } | null>(null);
   const aiAnalysisInFlight = useRef(false);
+
+  const priorityRank: Record<EmailInsight['priority'], number> = {
+    urgent: 4,
+    high: 3,
+    normal: 2,
+    low: 1,
+  };
+
+  const topPriorityMessage = messages
+    .filter((message) => message.channel === 'email' && message.direction === 'inbound' && message.aiInsight)
+    .sort((first, second) => {
+      const priorityDifference = priorityRank[second.aiInsight!.priority] - priorityRank[first.aiInsight!.priority];
+      if (priorityDifference !== 0) return priorityDifference;
+      const firstEmail = inboxEmails.find((email) => email.id === first.id);
+      const secondEmail = inboxEmails.find((email) => email.id === second.id);
+      return new Date(secondEmail?.timestamp || 0).getTime() - new Date(firstEmail?.timestamp || 0).getTime();
+    })[0];
+  const topPriorityEmail = inboxEmails.find((email) => email.id === topPriorityMessage?.id);
 
   const filteredMessages = messages.filter((message) => {
     if (emailFilter === 'all') return true;
@@ -86,6 +121,7 @@ export default function AssistantHub({ className = '' }: { className?: string })
       if (connected) {
         remoteEmails = await fetchEmailMessagesAPI(connected.provider, '', 25);
       }
+      setInboxEmails(remoteEmails);
 
       const liveEmailItems: MessageItem[] = remoteEmails.map((item) => ({
         id: item.id,
@@ -176,6 +212,62 @@ export default function AssistantHub({ className = '' }: { className?: string })
       setProviderError(e instanceof Error ? e.message : 'Could not start email authorization.');
     } finally {
       setIsConnectingProvider(false);
+    }
+  };
+
+  const handleDraftTopPriorityReply = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!connectedEmailProvider || !topPriorityEmail || !topPriorityMessage?.aiInsight || !replyCommand.trim()) return;
+
+    setIsDraftingReply(true);
+    setReplyError('');
+    setReplySentNotice('');
+    try {
+      const draft = await draftEmailReplyAPI({
+        provider: connectedEmailProvider.provider,
+        instruction: replyCommand.trim(),
+        email: {
+          id: topPriorityEmail.id,
+          subject: topPriorityEmail.subject,
+          sender: topPriorityEmail.sender,
+          content: topPriorityEmail.content,
+        },
+      });
+      setReplyReview({
+        email: topPriorityEmail,
+        insight: topPriorityMessage.aiInsight,
+        draft,
+        instruction: replyCommand.trim(),
+        content: draft.reply_draft,
+      });
+    } catch (error) {
+      setProviderReconnectRequired(error instanceof ProviderReconnectRequiredError);
+      setReplyError(error instanceof Error ? error.message : 'Could not prepare the reply.');
+    } finally {
+      setIsDraftingReply(false);
+    }
+  };
+
+  const handleSendApprovedReply = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!connectedEmailProvider || !replyReview?.content.trim() || isSendingReply) return;
+
+    setIsSendingReply(true);
+    setReplyError('');
+    try {
+      await sendEmailReplyAPI({
+        provider: connectedEmailProvider.provider,
+        message_id: replyReview.email.id,
+        content: replyReview.content.trim(),
+      });
+      setReplySentNotice(`Reply sent to ${replyReview.email.sender} in the original thread.`);
+      setReplyReview(null);
+      await hydrateMessages();
+    } catch (error) {
+      setProviderReconnectRequired(error instanceof ProviderReconnectRequiredError);
+      setReplyError(error instanceof Error ? error.message : 'Could not send the reply.');
+    } finally {
+      setIsSendingReply(false);
     }
   };
 
@@ -326,6 +418,79 @@ export default function AssistantHub({ className = '' }: { className?: string })
           <p role="status" className="text-[11px] text-amber-700">
             Inbox loaded, but AI analysis could not finish. {aiError}
           </p>
+        )}
+        {connectedEmailProvider && (
+          <section className="overflow-hidden rounded-2xl border border-indigo-200 bg-gradient-to-br from-indigo-50 via-white to-violet-50 shadow-sm shadow-indigo-100/70">
+            <div className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex min-w-0 items-start gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-600 text-white shadow-md shadow-indigo-200">
+                  <Sparkles size={18} />
+                </div>
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h3 className="text-sm font-bold text-indigo-950">Priority Reply Studio</h3>
+                    <span className="rounded-full border border-indigo-200 bg-white/80 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-indigo-700">
+                      Draft first · you approve
+                    </span>
+                  </div>
+                  <p className="mt-1 text-xs leading-relaxed text-indigo-800">
+                    Give Nova your direction. It will draft a reply to the top-priority message in this inbox.
+                  </p>
+                </div>
+              </div>
+              {topPriorityMessage?.aiInsight && (
+                <div className={`shrink-0 rounded-xl border px-3 py-2 text-xs ${
+                  topPriorityMessage.aiInsight.priority === 'urgent'
+                    ? 'border-rose-200 bg-rose-50 text-rose-800'
+                    : topPriorityMessage.aiInsight.priority === 'high'
+                      ? 'border-orange-200 bg-orange-50 text-orange-800'
+                      : 'border-indigo-200 bg-white text-indigo-800'
+                }`}>
+                  <p className="font-bold">{topPriorityMessage.aiInsight.priority.toUpperCase()} · selected email</p>
+                  <p className="mt-0.5 max-w-xs truncate">{topPriorityEmail?.subject || topPriorityMessage.subject}</p>
+                </div>
+              )}
+            </div>
+            <form onSubmit={handleDraftTopPriorityReply} className="flex flex-col gap-2 border-t border-indigo-100 bg-white/70 p-3 sm:flex-row">
+              <label className="sr-only" htmlFor="priority-reply-command">Instructions for the reply</label>
+              <input
+                id="priority-reply-command"
+                type="text"
+                value={replyCommand}
+                onChange={(event) => setReplyCommand(event.target.value)}
+                maxLength={1000}
+                placeholder="How should Nova handle it? e.g. Confirm receipt and ask to meet Friday."
+                className="min-w-0 flex-1 rounded-xl border border-indigo-100 bg-white px-3.5 py-2.5 text-xs outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-200"
+              />
+              <button
+                type="submit"
+                disabled={!replyCommand.trim() || !topPriorityEmail || isDraftingReply || isAnalyzingAI || isRefreshing}
+                className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-indigo-200 transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {isDraftingReply ? <RefreshCw size={14} className="animate-spin" /> : <Sparkles size={14} />}
+                {isDraftingReply ? 'Preparing draft…' : 'Draft top-priority reply'}
+              </button>
+            </form>
+            <div className="flex flex-wrap items-center justify-between gap-2 px-4 pb-3 text-[10px] text-indigo-700">
+              <span>{isAnalyzingAI ? 'Priorities are still being analyzed…' : topPriorityEmail ? `Replying to ${topPriorityEmail.sender}` : 'Waiting for inbox priority analysis.'}</span>
+              <span>Nothing sends until you review and approve it.</span>
+            </div>
+            {(replyError || replySentNotice) && (
+              <div className={`mx-3 mb-3 rounded-xl border px-3 py-2 text-xs ${replyError ? 'border-rose-200 bg-rose-50 text-rose-800' : 'border-emerald-200 bg-emerald-50 text-emerald-800'}`}>
+                {replyError || replySentNotice}
+                {replyError && providerReconnectRequired && (
+                  <button
+                    type="button"
+                    onClick={() => handleConnectProvider(connectedEmailProvider.provider)}
+                    disabled={isConnectingProvider}
+                    className="ml-2 rounded-lg border border-rose-200 bg-white px-2 py-1 font-semibold hover:bg-rose-100 disabled:opacity-50"
+                  >
+                    Reconnect provider
+                  </button>
+                )}
+              </div>
+            )}
+          </section>
         )}
         <div className="space-y-2.5 max-h-[300px] overflow-y-auto pr-1">
           {!connectedEmailProvider ? (
@@ -543,6 +708,79 @@ export default function AssistantHub({ className = '' }: { className?: string })
           ))}
         </div>
       </div>
+
+      <ModalPanel
+        isOpen={Boolean(replyReview)}
+        onClose={() => { if (!isSendingReply) { setReplyReview(null); setReplyError(''); } }}
+      >
+        {replyReview && (
+          <div className="space-y-5">
+            <div className="border-b border-[--border] pb-4">
+              <div className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-indigo-700">
+                <Sparkles size={14} /> AI reply · review required
+              </div>
+              <h2 className="text-lg font-bold text-slate-950">Review your reply</h2>
+              <p className="mt-1 text-xs leading-relaxed text-slate-600">
+                This will reply in the existing thread. The original sender and subject are read from your connected mailbox when sending.
+              </p>
+            </div>
+
+            <div className="rounded-xl border border-rose-100 bg-rose-50/70 p-3">
+              <div className="mb-2 flex items-center justify-between gap-2">
+                <span className="rounded-full bg-rose-600 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-white">
+                  {replyReview.insight.priority} priority
+                </span>
+                <span className="text-[10px] font-medium text-rose-800">{replyReview.email.timestamp ? new Date(replyReview.email.timestamp).toLocaleString() : ''}</span>
+              </div>
+              <p className="text-xs font-bold text-slate-900">{replyReview.email.subject || '(No subject)'}</p>
+              <p className="mt-1 text-[11px] text-slate-600">From: {replyReview.email.sender}</p>
+              <p className="mt-2 line-clamp-4 whitespace-pre-wrap text-xs leading-relaxed text-slate-700">
+                {replyReview.email.snippet || replyReview.email.content}
+              </p>
+              <p className="mt-2 border-t border-rose-100 pt-2 text-[11px] text-rose-900">
+                <span className="font-semibold">Why this email:</span> {replyReview.insight.priority_reason || replyReview.insight.summary}
+              </p>
+            </div>
+
+            <div className="rounded-xl border border-indigo-100 bg-indigo-50/70 p-3 text-xs leading-relaxed text-indigo-950">
+              <span className="font-bold">Your direction:</span> {replyReview.instruction}
+              {replyReview.draft.rationale && <p className="mt-1 text-[11px] text-indigo-800">Draft rationale: {replyReview.draft.rationale}</p>}
+            </div>
+
+            <form onSubmit={handleSendApprovedReply} className="space-y-3">
+              <label htmlFor="approved-email-reply" className="block text-xs font-semibold text-slate-800">Reply text</label>
+              <textarea
+                id="approved-email-reply"
+                required
+                rows={9}
+                maxLength={5000}
+                value={replyReview.content}
+                onChange={(event) => setReplyReview((current) => current ? { ...current, content: event.target.value } : current)}
+                className="w-full resize-y rounded-xl border border-slate-200 bg-white p-3 text-sm leading-relaxed text-slate-800 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+              />
+              {replyError && <p role="alert" className="text-xs text-rose-700">{replyError}</p>}
+              <div className="flex flex-wrap items-center justify-between gap-2 border-t border-[--border] pt-3">
+                <button
+                  type="button"
+                  disabled={isSendingReply}
+                  onClick={() => { setReplyReview(null); setReplyError(''); }}
+                  className="rounded-xl px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 disabled:opacity-50"
+                >
+                  Discard draft
+                </button>
+                <button
+                  type="submit"
+                  disabled={!replyReview.content.trim() || isSendingReply}
+                  className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-2.5 text-xs font-bold text-white shadow-md shadow-indigo-200 transition hover:bg-indigo-700 disabled:cursor-wait disabled:opacity-50"
+                >
+                  {isSendingReply ? <RefreshCw size={14} className="animate-spin" /> : <Send size={14} />}
+                  {isSendingReply ? 'Sending reply…' : 'Approve & send reply'}
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
+      </ModalPanel>
     </div>
   );
 }
