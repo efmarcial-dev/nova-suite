@@ -16,22 +16,30 @@ export async function POST(request: Request) {
             return NextResponse.json(data, { status: backendResponse.status });
         }
 
-        const response = NextResponse.json(data, { status: backendResponse.status });
+        const { access, refresh, ...userData } = data;
+        const response = NextResponse.json(
+            { ...userData, authenticated: Boolean(access) },
+            { status: backendResponse.status },
+        );
         const isProduction = process.env.NODE_ENV === 'production';
-        if (data.access) {
-            response.cookies.set('access', data.access, {
+        if (access) {
+            response.cookies.set('access', access, {
                 path: '/',
-                maxAge: 86400,
+                // The JWT still expires after one hour; this cookie lifetime
+                // lets the client refresh it before proxy.ts redirects.
+                maxAge: 14 * 24 * 60 * 60,
                 sameSite: 'lax',
                 secure: isProduction,
+                httpOnly: true,
             });
         }
-        if (data.refresh) {
-            response.cookies.set('refresh', data.refresh, {
+        if (refresh) {
+            response.cookies.set('refresh', refresh, {
                 path: '/',
-                maxAge: 604800,
+                maxAge: 14 * 24 * 60 * 60,
                 sameSite: 'lax',
                 secure: isProduction,
+                httpOnly: true,
             });
         }
         return response;

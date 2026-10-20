@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { CreditCard, PaymentForm } from 'react-square-web-payments-sdk';
 import { ShieldCheck, CheckCircle2, AlertCircle, Sparkles, Lock, Trophy, RefreshCw } from 'lucide-react';
+import { fetchWithAuthRefresh } from '@/app/lib/api/fetchWithAuthRefresh';
 
 interface SquareCheckoutProps {
   planName?: string;
@@ -47,7 +48,7 @@ export default function SquareCheckout({
 
     try {
       // Step 1: Charge via Django → Square backend (POST /api/payments/charge/)
-      const chargeRes = await fetch('/api/payments/charge', {
+      const chargeRes = await fetchWithAuthRefresh('/api/payments/charge', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -62,29 +63,15 @@ export default function SquareCheckout({
       const chargeData = await chargeRes.json();
 
       if (!chargeRes.ok || chargeData.status !== 'SUCCESS') {
-        throw new Error(chargeData.message || 'Payment was declined. Please try a different card.');
+        throw new Error(
+          chargeData.message || chargeData.error || 'Payment was declined. Please try a different card.'
+        );
       }
 
-      // Step 2: Activate subscription in our system
-      const subRes = await fetch('/api/subscription', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          token: sourceId,
-          plan,
-          square_payment_id: chargeData.payment_id,
-          promo_code: promoCode,
-          amount: amountCents,
-        }),
-      });
-
-      const subData = await subRes.json();
-
-      if (!subRes.ok) {
-        // Payment succeeded but DB activation failed — still show success
-        console.warn('Subscription DB activation pending:', subData);
-      }
-
+      // Django has already recorded the invoice and activated the subscription
+      // before returning SUCCESS. Do not POST to /api/subscription here: that
+      // backend endpoint is a status-only GET and the old Next.js fallback
+      // could show success even when no subscription had been persisted.
       setPaymentSuccess(true);
       setMessage({
         type: 'success',
@@ -92,7 +79,7 @@ export default function SquareCheckout({
       });
 
       if (onSuccess) {
-        setTimeout(() => onSuccess({ ...chargeData, ...subData }), 1200);
+        setTimeout(() => onSuccess(chargeData), 1200);
       }
     } catch (err: any) {
       console.error('Payment error:', err);

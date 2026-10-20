@@ -31,8 +31,7 @@ export function useAuth() {
     }
 
     const logout = () => {
-        clearAuthCookies()
-        redirectToLogin()
+        void clearAuthCookies().finally(redirectToLogin)
     }
 
     return {user, loading, logout, refetch: checkAuth}

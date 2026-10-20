@@ -1,43 +1,72 @@
 // /app/api/refresh/route.ts
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
-import { serialize } from 'cookie';
 import { getDjangoApiUrl } from '../../lib/api/getDjangoApiUrl';
 
-export async function GET() {
-    
+async function refreshAccessToken() {
   const refreshCookie = await cookies();
-
   const refresh = refreshCookie.get('refresh')?.value;
 
   if (!refresh) {
-    return NextResponse.json({ error: 'No refresh token' }, { status: 401 });
+    const response = NextResponse.json({ error: 'No refresh token' }, { status: 401 });
+    response.cookies.delete('access');
+    response.cookies.delete('refresh');
+    return response;
   }
 
+  let res: Response;
   try {
-    const res = await fetch(getDjangoApiUrl('auth/refresh/'), {
+    res = await fetch(getDjangoApiUrl('auth/refresh/'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ refresh }),
     });
-
-    if (!res.ok) throw new Error('Failed to refresh');
-
-    const data = await res.json();
-    const newAccess = data['access'];
-
-    const accessCookie = serialize('access', newAccess, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: 60 * 15, // 15 mins
-      path: '/',
-    });
-
-    const response = NextResponse.json({ success: true });
-    response.headers.set('Set-Cookie', accessCookie);
-    return response;
-  } catch (err) {
-    return NextResponse.json({ error: 'Refresh failed' }, { status: 403 });
+  } catch {
+    return NextResponse.json({ error: 'Refresh service unavailable' }, { status: 502 });
   }
+
+  if (!res.ok) {
+    const response = NextResponse.json({ error: 'Refresh token is invalid or expired' }, { status: 401 });
+    response.cookies.delete('access');
+    response.cookies.delete('refresh');
+    return response;
+  }
+
+  const data = await res.json();
+  if (!data.access) {
+    return NextResponse.json({ error: 'Refresh response did not include an access token' }, { status: 502 });
+  }
+
+  const response = NextResponse.json({ success: true });
+  const cookieOptions = {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax' as const,
+    path: '/',
+  };
+
+  response.cookies.set('access', data.access, {
+    ...cookieOptions,
+    // JWT validity is enforced by Django. The cookie remains as a session
+    // marker so a stale access token can be refreshed on the next page load.
+    maxAge: 14 * 24 * 60 * 60,
+  });
+
+  // Persist replacement refresh tokens when Django rotates them.
+  if (data.refresh) {
+    response.cookies.set('refresh', data.refresh, {
+      ...cookieOptions,
+      maxAge: 14 * 24 * 60 * 60,
+    });
+  }
+
+  return response;
+}
+
+export async function GET() {
+  return refreshAccessToken();
+}
+
+export async function POST() {
+  return refreshAccessToken();
 }

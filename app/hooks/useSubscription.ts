@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { fetchWithAuthRefresh } from "@/app/lib/api/fetchWithAuthRefresh";
 
 export interface SubscriptionData {
   plan: string;
@@ -28,7 +29,7 @@ export function useSubscription() {
     setIsLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/subscription", { cache: "no-store" });
+      const res = await fetchWithAuthRefresh("/api/subscription", { cache: "no-store" });
       if (!res.ok) {
         throw new Error(`Failed to load subscription (${res.status})`);
       }

@@ -1,3 +1,5 @@
+import { throwProviderApiError } from './providerErrors';
+
 export async function fetchCalendarConnectionAPI(): Promise<Record<string, any>> {
   try {
     const res = await fetch('/api/calendar/connection/', {
@@ -117,8 +119,7 @@ export async function saveCalendarEventAPI(payload: Record<string, any>): Promis
     });
 
     if (!res.ok) {
-      const body = await res.json().catch(() => ({}));
-      throw new Error(body.detail || body.message || `Calendar event create failed (${res.status})`);
+      await throwProviderApiError(res, `Calendar event create failed (${res.status})`);
     }
 
     return await res.json();
@@ -138,8 +139,7 @@ export async function syncCalendarEventsAPI(provider: string = 'google'): Promis
     });
 
     if (!res.ok) {
-      const body = await res.json().catch(() => ({}));
-      throw new Error(body.detail || body.message || `Calendar sync failed (${res.status})`);
+      await throwProviderApiError(res, `Calendar sync failed (${res.status})`);
     }
 
     return await res.json();
@@ -148,4 +148,3 @@ export async function syncCalendarEventsAPI(provider: string = 'google'): Promis
     throw error;
   }
 }
-

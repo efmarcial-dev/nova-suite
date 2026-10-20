@@ -23,6 +23,7 @@ import {
   saveCalendarEventAPI,
   syncCalendarEventsAPI,
 } from '@/app/lib/api/calendar';
+import { ProviderReconnectRequiredError } from '@/app/lib/api/providerErrors';
 
 type ProviderId = 'google' | 'outlook';
 
@@ -81,6 +82,7 @@ export default function CalendarPage() {
   const [isConnected, setIsConnected] = useState<boolean>(false);
   const [connectionError, setConnectionError] = useState('');
   const [eventsError, setEventsError] = useState('');
+  const [reconnectRequired, setReconnectRequired] = useState(false);
   const [selectedProvider, setSelectedProvider] = useState<ProviderId>('google');
   const [isConnecting, setIsConnecting] = useState(false);
   const [connectedEmail, setConnectedEmail] = useState('');
@@ -132,9 +134,11 @@ export default function CalendarPage() {
         // Initial sync from provider
         try {
           await syncCalendarEventsAPI(activeProv);
+          setReconnectRequired(false);
         } catch (e) {
           console.warn('Initial calendar sync skipped:', e);
-          setEventsError('Calendar is connected, but sync failed. Check your provider permissions and retry.');
+          setReconnectRequired(e instanceof ProviderReconnectRequiredError);
+          setEventsError(e instanceof Error ? e.message : 'Calendar sync failed.');
         }
       } else {
         setIsConnected(false);
@@ -157,12 +161,14 @@ export default function CalendarPage() {
     try {
       setEventsError('');
       await syncCalendarEventsAPI(selectedProvider);
+      setReconnectRequired(false);
       const backendEvents = await fetchCalendarEventsAPI();
       if (Array.isArray(backendEvents)) {
         setEvents(backendEvents.map(mapBackendEvent));
       }
     } catch (err) {
       console.error('Failed to sync calendar events from provider', err);
+      setReconnectRequired(err instanceof ProviderReconnectRequiredError);
       setEventsError(err instanceof Error ? err.message : 'Calendar sync failed.');
     } finally {
       setIsSyncing(false);
@@ -171,6 +177,7 @@ export default function CalendarPage() {
 
   const handleConnect = async (targetProvider?: ProviderId) => {
     setIsConnecting(true);
+    setReconnectRequired(false);
     const provider = (targetProvider || selectedProvider) === 'outlook' ? 'outlook' : 'google';
     setSelectedProvider(provider);
 
@@ -232,6 +239,7 @@ export default function CalendarPage() {
       }
     } catch (err) {
       console.error('Error saving event', err);
+      setReconnectRequired(err instanceof ProviderReconnectRequiredError);
       setEventsError(err instanceof Error ? err.message : 'Could not save the calendar event.');
       return;
     }
@@ -293,6 +301,16 @@ export default function CalendarPage() {
         {(connectionError || eventsError) && (
           <div role="alert" className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
             {connectionError || eventsError}
+            {reconnectRequired && (
+              <button
+                type="button"
+                onClick={() => handleConnect(selectedProvider)}
+                disabled={isConnecting}
+                className="ml-3 rounded-lg border border-amber-300 bg-white px-3 py-1.5 text-xs font-semibold hover:bg-amber-100 disabled:opacity-50"
+              >
+                Reconnect {selectedProvider === 'outlook' ? 'Outlook' : 'Google'}
+              </button>
+            )}
           </div>
         )}
 
@@ -511,6 +529,16 @@ export default function CalendarPage() {
       {(connectionError || eventsError) && (
         <div role="alert" className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
           {connectionError || eventsError}
+          {reconnectRequired && (
+            <button
+              type="button"
+              onClick={() => handleConnect(selectedProvider)}
+              disabled={isConnecting}
+              className="ml-3 rounded-lg border border-amber-300 bg-white px-3 py-1.5 text-xs font-semibold hover:bg-amber-100 disabled:opacity-50"
+            >
+              Reconnect {selectedProvider === 'outlook' ? 'Outlook' : 'Google'}
+            </button>
+          )}
         </div>
       )}
 

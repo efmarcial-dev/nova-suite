@@ -3,26 +3,26 @@ import Image from 'next/image';
 import Link from 'next/link';
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
-    
   return (
-    // Optional: custom branding or background
-
-    <div className="min-h-screen flex flex-col bg-gray-50">
-      {/* Top-left logo */}
-      <Link href="/" className="absolute top-6 left-6 flex items-center space-x-2">
-        <Image
-          src="/images/nova_logo.png"
-          alt="Logo"
-          width={40}
-          height={40}
-        />
-        <span className="text-2xl font-medium text-gray-900">NovaSuite</span>
-      </Link>
-
-      {/* Main content area */}
-      <div className="flex-grow flex items-center justify-center h-full">
-        <div className="w-full max-w-md p-6">{children}</div>
-      </div>
+    <div className="min-h-screen bg-[#f7f8fc] text-slate-900">
+      <header className="border-b border-slate-200/80 bg-white/85 backdrop-blur">
+        <div className="mx-auto flex h-[68px] max-w-7xl items-center justify-between px-5 sm:px-8">
+          <Link href="/" className="flex items-center gap-2.5">
+            <Image
+              src="/images/nova_logo.png"
+              alt="NovaSuite"
+              width={34}
+              height={34}
+              priority
+            />
+            <span className="text-lg font-semibold tracking-tight text-slate-950">NovaSuite</span>
+          </Link>
+          <span className="text-xs font-medium text-slate-500">Workspace setup</span>
+        </div>
+      </header>
+      <main className="mx-auto w-full max-w-7xl px-4 pb-12 pt-7 sm:px-8 sm:pt-10">
+        {children}
+      </main>
     </div>
   );
 }

@@ -11,6 +11,10 @@ export async function POST(request: Request) {
   try {
     const body = await request.json().catch(() => ({}));
     const provider = body.provider || 'google';
+    const syncPayload: Record<string, unknown> = { provider };
+
+    if (body.time_min) syncPayload.time_min = body.time_min;
+    if (body.time_max) syncPayload.time_max = body.time_max;
 
     const res = await fetch(getDjangoApiUrl('auth/calendar/events/sync/'), {
       method: 'POST',
@@ -18,11 +22,7 @@ export async function POST(request: Request) {
         Authorization: `Bearer ${accessToken}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        provider,
-        time_min: body.time_min || null,
-        time_max: body.time_max || null,
-      }),
+      body: JSON.stringify(syncPayload),
     });
 
     if (!res.ok) {

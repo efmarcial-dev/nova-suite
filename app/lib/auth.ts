@@ -51,25 +51,12 @@ export async function register(
 }
 
 
-export function setAuthCookies(accessToken: string, refreshToken?: string) {
-  const isProduction = process.env.NODE_ENV === 'production';
-  
-  // Set access token on current domain
-  document.cookie = `access=${accessToken}; path=/; max-age=86400; SameSite=Lax${
-    isProduction ? '; Secure' : ''
-  }`;
-  
-  // Set refresh token on current domain
-  if (refreshToken) {
-    document.cookie = `refresh=${refreshToken}; path=/; max-age=604800; SameSite=Lax${
-      isProduction ? '; Secure' : ''
-    }`;
+export async function clearAuthCookies() {
+  try {
+    await fetch('/api/logout', { method: 'POST', credentials: 'same-origin' });
+  } catch {
+    // Continue to the login page if the logout API is temporarily unavailable.
   }
-}
-
-export function clearAuthCookies() {
-  document.cookie = 'access=; path=/; max-age=0';
-  document.cookie = 'refresh=; path=/; max-age=0';
 }
 
 export function redirectToTenant(_tenantSlug?: string) {

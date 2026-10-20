@@ -1,3 +1,5 @@
+import { ProviderReconnectRequiredError, throwProviderApiError } from './providerErrors';
+
 export interface EmailProviderStatus {
   provider: 'gmail' | 'outlook';
   email: string;
@@ -101,7 +103,7 @@ export async function fetchEmailMessagesAPI(
     });
 
     if (!res.ok) {
-      throw new Error(`Email messages request failed (${res.status})`);
+      await throwProviderApiError(res, `Email messages request failed (${res.status})`);
     }
 
     const data = await res.json();
@@ -126,13 +128,12 @@ export async function sendEmailMessageAPI(payload: {
       body: JSON.stringify(payload),
     });
 
-    if (!res.ok) {
-      return null;
-    }
+    if (!res.ok) await throwProviderApiError(res, `Email send failed (${res.status})`);
 
     return await res.json();
   } catch (error) {
     console.warn('Failed to send email message', error);
+    if (error instanceof ProviderReconnectRequiredError) throw error;
     return null;
   }
 }

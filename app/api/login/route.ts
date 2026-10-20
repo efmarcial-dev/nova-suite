@@ -21,24 +21,29 @@ export async function POST(request: Request) {
       );
     }
 
-    const response = NextResponse.json(data, { status: 200 });
+    const { access, refresh, ...userData } = data;
+    const response = NextResponse.json({ ...userData, authenticated: Boolean(access) }, { status: 200 });
 
     const isProduction = process.env.NODE_ENV === 'production';
-    if (data.access) {
-      response.cookies.set('access', data.access, {
+    if (access) {
+      response.cookies.set('access', access, {
         path: '/',
-        maxAge: 86400,
+        // Keep the expired JWT cookie present as a session marker so proxy.ts
+        // doesn't redirect before the refresh token can renew it.
+        maxAge: 14 * 24 * 60 * 60,
         sameSite: 'lax',
         secure: isProduction,
+        httpOnly: true,
       });
     }
 
-    if (data.refresh) {
-      response.cookies.set('refresh', data.refresh, {
+    if (refresh) {
+      response.cookies.set('refresh', refresh, {
         path: '/',
-        maxAge: 604800,
+        maxAge: 14 * 24 * 60 * 60,
         sameSite: 'lax',
         secure: isProduction,
+        httpOnly: true,
       });
     }
 

@@ -7,13 +7,10 @@ import {
   ExternalLink,
   CheckCircle2,
   AlertCircle,
-  Sparkles,
-  ArrowRight,
   RefreshCw,
   X,
   CreditCard,
-  Building2,
-  Check,
+  Tag,
 } from 'lucide-react';
 import SquareCheckout from './SquareCheckout';
 
@@ -152,14 +149,12 @@ export default function SquarePaymentPortal({
 
   if (paymentSuccess) {
     return (
-      <div className="bg-emerald-50/80 border border-emerald-200 rounded-2xl p-8 text-center shadow-xs">
-        <div className="w-14 h-14 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto mb-4">
+      <div className="rounded-3xl border border-emerald-200 bg-gradient-to-br from-emerald-50 to-white p-7 text-center shadow-sm">
+        <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-600">
           <CheckCircle2 className="w-8 h-8" />
         </div>
-        <h3 className="text-xl font-bold text-gray-900 mb-1">
-          Payment Confirmed via Square!
-        </h3>
-        <p className="text-sm text-gray-600 max-w-sm mx-auto mb-4">
+        <h3 className="mb-1 text-lg font-bold text-gray-900">Payment confirmed</h3>
+        <p className="mx-auto mb-3 max-w-sm text-sm text-gray-600">
           Your Founder Lifetime Pass is active. Redirecting to your executive suite...
         </p>
         <div className="inline-flex items-center gap-2 text-xs font-semibold text-emerald-700 bg-white px-3.5 py-1.5 rounded-full border border-emerald-200">
@@ -171,189 +166,116 @@ export default function SquarePaymentPortal({
   }
 
   return (
-    <div className="space-y-4">
-      {/* Official Square Portal Card */}
-      <div className="bg-white border-2 border-gray-900/10 rounded-2xl shadow-sm overflow-hidden">
-        {/* Square Portal Top Brand Header */}
-        <div className="bg-gray-950 text-white px-5 py-4 flex items-center justify-between flex-wrap gap-2">
-          <div className="flex items-center gap-3">
-            {/* Square Official Logo Mark */}
-            <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center p-1.5 shadow-xs">
-              <div className="w-full h-full bg-gray-950 rounded-[4px] flex items-center justify-center">
-                <div className="w-2.5 h-2.5 bg-white rounded-[2px]" />
-              </div>
+    <div>
+      <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-lg shadow-slate-200/60">
+        <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3 sm:px-5">
+          <div className="flex items-center gap-2.5">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-950 text-white">
+              <CreditCard className="h-4 w-4" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <span className="font-bold text-sm tracking-tight">Square</span>
-                <span className="text-[10px] uppercase font-semibold text-gray-400 bg-gray-800 px-2 py-0.5 rounded">
-                  Secure Checkout Portal
-                </span>
-              </div>
-              <p className="text-[11px] text-gray-400">
-                Official Hosted Checkout Gateway
-              </p>
+              <p className="text-sm font-bold leading-tight text-slate-900">Secure checkout</p>
+              <p className="text-[11px] text-slate-500">Payment processed by Square</p>
             </div>
           </div>
-
-          <div className="flex items-center gap-1.5 text-xs text-emerald-400 font-medium bg-emerald-950/60 px-2.5 py-1 rounded-full border border-emerald-800/40">
-            <Lock className="w-3 h-3 text-emerald-400" />
-            <span>256-Bit SSL Encrypted</span>
+          <div className="flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700">
+            <ShieldCheck className="h-3.5 w-3.5" /> One-time payment
           </div>
         </div>
 
-        {/* Order Details & Founder Discount Breakdown */}
-        <div className="p-5 sm:p-6 space-y-5">
-          <div>
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <h4 className="font-bold text-gray-900 text-base">
-                  {planName}
-                </h4>
-                <p className="text-xs text-gray-500 mt-0.5">
-                  Member #100 Milestone &bull; Lifetime Executive Access
-                </p>
-              </div>
-              <div className="text-right">
-                <div className="text-xs text-gray-400 line-through">
-                  ${originalPrice}.00 USD
-                </div>
-                <div className="text-2xl font-extrabold text-gray-900">
-                  ${finalPrice}.00 <span className="text-xs font-normal text-gray-500">USD</span>
-                </div>
-              </div>
+        <div className="grid sm:grid-cols-[1fr_190px]">
+          <div className="space-y-3 p-4 sm:p-5">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-indigo-600">Your plan</p>
+              <h3 className="mt-1 text-base font-bold leading-snug text-slate-900">{planName}</h3>
+              <p className="mt-0.5 text-xs text-slate-500">Lifetime access · No recurring charges</p>
             </div>
-          </div>
 
-          {/* Applied Promo Code Pill */}
-          <div className="bg-amber-50/70 border border-amber-200/80 rounded-xl p-3 flex items-center justify-between text-xs">
-            <div className="flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-amber-600 shrink-0" />
-              <div>
-                <span className="font-bold text-gray-900">Promo applied: </span>
-                <span className="font-mono font-semibold text-amber-700 bg-amber-100/80 px-1.5 py-0.5 rounded">
-                  {promoCode}
+            <div className="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50/80 px-3 py-2.5 text-xs">
+              <span className="text-slate-600">Standard price</span>
+              <span className="font-medium text-slate-500 line-through">${originalPrice}.00</span>
+            </div>
+
+            {promoCode && (
+              <div className="flex items-center justify-between rounded-xl border border-indigo-100 bg-indigo-50/70 px-3 py-2.5 text-xs">
+                <span className="flex items-center gap-2 text-indigo-900">
+                  <Tag className="h-3.5 w-3.5 text-indigo-600" />
+                  <span>Founder offer <span className="font-mono font-semibold">{promoCode}</span></span>
                 </span>
+                <span className="font-semibold text-emerald-700">-${Math.max(0, originalPrice - finalPrice)}.00</span>
               </div>
-            </div>
-            <span className="font-semibold text-emerald-600">-$100.00 OFF</span>
+            )}
           </div>
 
-          {/* Security & Accepted Methods Badges */}
-          <div className="border-t border-gray-100 pt-4">
-            <div className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2">
-              Accepted Square Payment Methods
-            </div>
-            <div className="flex items-center gap-2 flex-wrap">
-              {['Apple Pay', 'Google Pay', 'Visa', 'Mastercard', 'Amex', 'Cash App Pay'].map((method) => (
-                <span
-                  key={method}
-                  className="px-2.5 py-1 bg-gray-50 border border-gray-200 rounded-lg text-[11px] font-medium text-gray-700"
-                >
-                  {method}
-                </span>
-              ))}
-            </div>
-          </div>
-
-          {errorMessage && (
-            <div className="p-3 bg-red-50 border border-red-200 text-red-600 text-xs rounded-xl flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 shrink-0" />
-              <span>{errorMessage}</span>
-            </div>
-          )}
-
-          {/* Portal Action Buttons */}
-          <div className="space-y-2.5 pt-2">
+          <div className="flex flex-col justify-center border-t border-slate-100 bg-gradient-to-br from-slate-50 to-indigo-50/70 p-4 sm:border-l sm:border-t-0 sm:p-5">
+            <p className="text-xs font-medium text-slate-500">Due today</p>
+            <p className="mt-0.5 text-3xl font-extrabold tracking-tight text-slate-950">
+              ${finalPrice}<span className="ml-1 text-sm font-semibold text-slate-500">USD</span>
+            </p>
             <button
               type="button"
               disabled={isLoadingSession}
               onClick={handleOpenHostedPortal}
-              className="w-full flex items-center justify-center gap-2.5 bg-gray-900 hover:bg-black text-white font-semibold py-3 px-5 rounded-xl shadow-sm transition disabled:opacity-50"
+              className="mt-3 flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-indigo-200 transition hover:bg-indigo-700 disabled:cursor-wait disabled:opacity-70"
             >
               {isLoadingSession ? (
-                <>
-                  <RefreshCw className="w-4 h-4 animate-spin text-gray-300" />
-                  <span>Connecting to Square Portal...</span>
-                </>
+                <><RefreshCw className="h-4 w-4 animate-spin" /><span>Preparing checkout…</span></>
               ) : (
-                <>
-                  <Lock className="w-4 h-4 text-emerald-400" />
-                  <span>Pay $99 via Square Portal</span>
-                  <ExternalLink className="w-4 h-4 text-gray-400 ml-1" />
-                </>
+                <><Lock className="h-4 w-4" /><span>Continue to payment</span><ExternalLink className="h-3.5 w-3.5 opacity-70" /></>
               )}
             </button>
-
             <button
               type="button"
               onClick={() => setIsModalOpen(true)}
-              className="w-full text-center text-xs text-gray-500 hover:text-gray-900 py-1.5 font-medium transition"
+              className="mt-2 text-center text-[11px] font-medium text-slate-500 underline decoration-slate-300 underline-offset-2 transition hover:text-slate-900"
             >
-              Prefer embedded Square checkout? Click to open portal overlay
+              Enter card details here
             </button>
           </div>
         </div>
 
-        {/* Bottom Trust Footer */}
-        <div className="bg-gray-50 px-5 py-3 border-t border-gray-100 flex items-center justify-between text-[11px] text-gray-500">
-          <div className="flex items-center gap-1.5">
-            <ShieldCheck className="w-4 h-4 text-gray-600" />
-            <span>PCI-DSS Level 1 Certified</span>
+        {errorMessage && (
+          <div role="alert" className="mx-4 mb-4 flex items-start gap-2 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2.5 text-xs text-rose-700 sm:mx-5">
+            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+            <span>{errorMessage}</span>
           </div>
-          <span>Encrypted by Square, Inc.</span>
+        )}
+
+        <div className="flex items-center justify-center gap-1.5 border-t border-slate-100 px-4 py-2.5 text-[11px] text-slate-500">
+          <Lock className="h-3.5 w-3.5" /> Your card details are handled by Square
         </div>
-      </div>
+      </section>
 
       {/* Embedded Square Checkout Portal Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl shadow-2xl border border-gray-200 w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-3 backdrop-blur-sm animate-in fade-in duration-200 sm:p-5">
+          <div className="flex max-h-[92vh] w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl animate-in zoom-in-95 duration-200">
             {/* Modal Header */}
-            <div className="bg-gray-950 text-white p-4 flex items-center justify-between">
+            <div className="flex items-center justify-between bg-slate-950 p-4 text-white">
               <div className="flex items-center gap-2.5">
-                <div className="w-7 h-7 rounded-md bg-white flex items-center justify-center p-1">
-                  <div className="w-full h-full bg-gray-950 rounded-[3px] flex items-center justify-center">
-                    <div className="w-2 h-2 bg-white rounded-[1.5px]" />
-                  </div>
-                </div>
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white text-slate-950"><CreditCard className="h-4 w-4" /></div>
                 <div>
-                  <div className="font-bold text-sm">Square Checkout Portal</div>
-                  <div className="text-[10px] text-gray-400">Order ID: {portalSession?.orderId || 'sq_order_pending'}</div>
+                  <div className="text-sm font-bold">Complete your payment</div>
+                  <div className="text-[11px] text-slate-400">{planName}</div>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setIsModalOpen(false)}
-                className="text-gray-400 hover:text-white p-1 rounded-lg transition"
+                aria-label="Close checkout"
+                className="rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-800 hover:text-white"
               >
-                <X className="w-5 h-5" />
+                <X className="h-5 w-5" />
               </button>
             </div>
 
             {/* Modal Body */}
-            <div className="p-6 space-y-5">
-              <div className="bg-gray-50 rounded-xl p-4 border border-gray-200/80">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs text-gray-500 font-medium">Merchant</span>
-                  <span className="text-xs font-semibold text-gray-900">NovaSuite Technologies</span>
-                </div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs text-gray-500 font-medium">Plan</span>
-                  <span className="text-xs font-semibold text-gray-900">Founder Lifetime Pass (User #100)</span>
-                </div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs text-gray-500 font-medium">Promo Discount</span>
-                  <span className="text-xs font-semibold text-emerald-600">-$100.00 USD ({promoCode})</span>
-                </div>
-                <div className="flex items-center justify-between pt-2 border-t border-gray-200">
-                  <span className="text-sm font-bold text-gray-900">Total to Charge</span>
-                  <span className="text-lg font-extrabold text-gray-900">${finalPrice}.00 USD</span>
-                </div>
+            <div className="overflow-y-auto p-4 sm:p-5">
+              <div className="mb-3 flex items-center justify-between rounded-xl bg-slate-50 px-3.5 py-3 text-sm">
+                <span className="font-medium text-slate-600">Total due today</span>
+                <span className="font-bold text-slate-950">${finalPrice}.00 USD</span>
               </div>
-
-              {/* Square Official Web Payments SDK Form inside Modal */}
-              <div className="pt-2">
+              <div>
                 <SquareCheckout
                   planName={planName}
                   originalPrice={originalPrice}
@@ -367,19 +289,19 @@ export default function SquarePaymentPortal({
                   onCancel={() => setIsModalOpen(false)}
                 />
               </div>
-            </div>
+              </div>
 
             {/* Modal Footer */}
-            <div className="bg-gray-50 px-6 py-3 border-t border-gray-100 flex items-center justify-between text-[11px] text-gray-400">
-              <span className="flex items-center gap-1">
-                <Lock className="w-3 h-3" /> Powered by Square Payment Portal
+            <div className="flex items-center justify-between border-t border-slate-100 bg-slate-50 px-4 py-3 text-[11px] text-slate-500">
+              <span className="flex items-center gap-1.5">
+                <Lock className="h-3 w-3" /> Processed securely by Square
               </span>
               <button
                 type="button"
                 onClick={() => setIsModalOpen(false)}
-                className="text-gray-500 hover:text-gray-900 underline"
+                className="font-medium text-slate-600 underline underline-offset-2 hover:text-slate-950"
               >
-                Cancel
+                Close
               </button>
             </div>
           </div>

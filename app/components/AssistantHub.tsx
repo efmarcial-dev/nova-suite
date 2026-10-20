@@ -20,6 +20,7 @@ import {
   connectEmailProviderAPI,
   EmailProviderStatus
 } from '@/app/lib/api/email';
+import { ProviderReconnectRequiredError } from '@/app/lib/api/providerErrors';
 
 export type ChannelType = 'all' | 'email' | 'system';
 
@@ -55,6 +56,7 @@ export default function AssistantHub({ className = '' }: { className?: string })
   const [isDispatching, setIsDispatching] = useState(false);
   const [directiveError, setDirectiveError] = useState('');
   const [providerError, setProviderError] = useState('');
+  const [providerReconnectRequired, setProviderReconnectRequired] = useState(false);
 
   // Load email providers and live inbox messages
   const hydrateMessages = async () => {
@@ -91,8 +93,10 @@ export default function AssistantHub({ className = '' }: { className?: string })
       const combined = [...liveEmailItems, ...(Array.isArray(remoteDirectives) ? remoteDirectives : [])];
       setMessages(combined);
       setProviderError('');
+      setProviderReconnectRequired(false);
     } catch (e) {
       console.warn('Could not hydrate live email messages:', e);
+      setProviderReconnectRequired(e instanceof ProviderReconnectRequiredError);
       setProviderError(e instanceof Error ? e.message : 'Could not load live email data.');
     } finally {
       setIsRefreshing(false);
@@ -107,6 +111,7 @@ export default function AssistantHub({ className = '' }: { className?: string })
     setIsConnectingProvider(true);
     try {
       setProviderError('');
+      setProviderReconnectRequired(false);
       const result = await connectEmailProviderAPI(provider);
       const authUrl = result?.authorization_url || result?.auth_url || result?.url;
       if (authUrl) {
@@ -209,9 +214,19 @@ export default function AssistantHub({ className = '' }: { className?: string })
 
         {/* Message Feed Container */}
       {providerError && (
-        <p role="alert" className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2">
+        <div role="alert" className="flex flex-wrap items-center justify-between gap-2 text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2">
           {providerError}
-        </p>
+          {providerReconnectRequired && connectedEmailProvider && (
+            <button
+              type="button"
+              onClick={() => handleConnectProvider(connectedEmailProvider.provider)}
+              disabled={isConnectingProvider}
+              className="rounded-lg border border-amber-300 bg-white px-3 py-1.5 font-semibold text-amber-900 hover:bg-amber-100 disabled:opacity-50"
+            >
+              Reconnect {connectedEmailProvider.provider === 'outlook' ? 'Outlook' : 'Gmail'}
+            </button>
+          )}
+        </div>
       )}
         <div className="space-y-2.5 max-h-[300px] overflow-y-auto pr-1">
           {activeChannel !== 'system' && !connectedEmailProvider ? (

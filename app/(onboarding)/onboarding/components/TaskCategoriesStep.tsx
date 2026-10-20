@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { ArrowLeft, ArrowRight, Check } from 'lucide-react';
 
 type TaskCategoriesStep = {
     data: {
@@ -31,37 +32,46 @@ export default function TaskCategoriesStep({data, onNext, onBack}: TaskCategorie
     }
     
     return (
-    <div>
-      <h2 className="text-xl font-bold mb-4">Task Categories</h2>
-      <p className="mb-4">Select the types of tasks you typically handle. This helps your AI prioritize better.</p>
+      <div className="max-w-4xl">
+        <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <h2 className="text-2xl font-bold tracking-tight text-slate-950">What kind of work is on your plate?</h2>
+            <p className="mt-1 text-sm text-slate-500">Choose all the areas you handle. This helps Nova organize your tasks.</p>
+          </div>
+          <span className="rounded-full bg-indigo-50 px-3 py-1.5 text-xs font-semibold text-indigo-700">{selectedCategories.length} selected</span>
+        </div>
 
-      <div className="grid grid-cols-2 gap-2 mb-6">
-        {allCategories.map((cat) => (
+        <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-4">
+          {allCategories.map((cat) => {
+            const selected = selectedCategories.includes(cat);
+            return (
+              <button
+                key={cat}
+                type="button"
+                aria-pressed={selected}
+                onClick={() => toggleCategory(cat)}
+                className={`flex min-h-12 items-center justify-between gap-2 rounded-xl border px-3 py-2.5 text-left text-xs font-medium transition sm:text-sm ${selected ? 'border-indigo-400 bg-indigo-50 text-indigo-900 shadow-sm' : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50'}`}
+              >
+                <span>{cat}</span>
+                {selected && <Check className="h-4 w-4 shrink-0 text-indigo-600" />}
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="mt-8 flex items-center justify-between border-t border-slate-200 pt-5">
+          <button type="button" onClick={onBack} className="inline-flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-500 transition hover:bg-white hover:text-slate-900"><ArrowLeft className="h-4 w-4" /> Back</button>
           <button
-            key={cat}
             type="button"
-            onClick={() => toggleCategory(cat)}
-            className={`border px-3 py-2 rounded ${
-              selectedCategories.includes(cat) ? "bg-blue-500 text-white" : ""
-            }`}
+            onClick={() => onNext({ taskCategories: selectedCategories })}
+            className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-40"
+            disabled={selectedCategories.length === 0}
           >
-            {cat}
+            Continue <ArrowRight className="h-4 w-4" />
           </button>
-        ))}
+        </div>
       </div>
-
-      <div className="flex justify-between">
-        <button onClick={onBack} className="px-4 py-2 border rounded">Back</button>
-        <button
-          onClick={() => onNext({ taskCategories: selectedCategories })}
-          className="bg-blue-500 text-white px-4 py-2 rounded"
-          disabled={selectedCategories.length === 0}
-        >
-          Next
-        </button>
-      </div>
-    </div>
-  );
+    );
 
 
 

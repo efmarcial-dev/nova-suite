@@ -118,14 +118,43 @@ export default function OnboardingPage() {
     ];
 
     const currentStepIndex = Math.min(step, steps.length - 1);
+    const setupStepTitles = [
+        'Workspace',
+        'Work style',
+        'Priorities',
+        'Task categories',
+        'Task examples',
+        'Connect accounts',
+        'Product tour',
+        'Activate access',
+    ];
+    const isSetupComplete = currentStepIndex >= setupStepTitles.length;
 
     return (
-        <div className="max-w-2xl mx-auto p-6 sm:p-8 bg-white rounded-2xl border border-[--border] shadow-xs my-6">
-            <ProgressBar
-                currentStep={currentStepIndex}
-                totalSteps={steps.length}
-            />
-            {steps[currentStepIndex]}
+        <div className="mx-auto max-w-5xl">
+            {!isSetupComplete && (
+                <>
+                    <div className="mb-7 max-w-2xl">
+                        <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.18em] text-indigo-600">
+                            Personalize Nova
+                        </p>
+                        <h1 className="text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">
+                            Let&apos;s set up your workspace
+                        </h1>
+                        <p className="mt-2 text-sm leading-6 text-slate-500">
+                            A few quick choices will help tailor Nova to the way you work.
+                        </p>
+                    </div>
+                    <ProgressBar
+                        currentStep={currentStepIndex}
+                        totalSteps={setupStepTitles.length}
+                        titles={setupStepTitles}
+                    />
+                </>
+            )}
+            <div className={`mx-auto max-w-4xl ${isSetupComplete ? '' : 'pt-7 sm:pt-9'}`}>
+                {steps[currentStepIndex]}
+            </div>
         </div>
     );
 }
@@ -133,21 +162,28 @@ export default function OnboardingPage() {
 type ProgressBarProps = {
     currentStep: number;
     totalSteps: number;
+    titles: string[];
 };
 
-function ProgressBar({ currentStep, totalSteps }: ProgressBarProps) {
+function ProgressBar({ currentStep, totalSteps, titles }: ProgressBarProps) {
     const progress = Math.min(100, Math.round(((currentStep + 1) / totalSteps) * 100));
     return (
-        <div className="mb-8">
-            <div className="flex items-center justify-between text-[11px] font-semibold text-gray-400 mb-2">
-                <span>Step {currentStep + 1} of {totalSteps}</span>
-                <span>{progress}% Completed</span>
+        <div className="border-y border-slate-200/80 py-4">
+            <div className="mb-3 flex items-center justify-between gap-4">
+                <div>
+                    <p className="text-xs font-semibold text-slate-900">{titles[currentStep]}</p>
+                    <p className="mt-0.5 text-[11px] text-slate-500">Step {currentStep + 1} of {totalSteps}</p>
+                </div>
+                <span className="shrink-0 text-xs font-semibold tabular-nums text-slate-500">{progress}% complete</span>
             </div>
-            <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
-                <div
-                    className="bg-indigo-600 h-1.5 rounded-full transition-all duration-300 ease-out"
-                    style={{ width: `${progress}%` }}
-                />
+            <div className="grid grid-cols-8 gap-1.5" aria-label={`Onboarding progress: step ${currentStep + 1} of ${totalSteps}`}>
+                {titles.map((title, index) => (
+                    <div
+                        key={title}
+                        aria-hidden="true"
+                        className={`h-1.5 rounded-full transition-colors duration-300 ${index <= currentStep ? 'bg-indigo-600' : 'bg-slate-200'}`}
+                    />
+                ))}
             </div>
         </div>
     );

@@ -64,44 +64,53 @@ export default function FounderMilestoneCard({
 
   if (variant === 'banner') {
     return (
-      <div className="bg-gradient-to-r from-amber-500/10 via-indigo-500/10 to-emerald-500/10 border border-amber-300/60 rounded-2xl p-4 mb-6 shadow-xs relative overflow-hidden">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="flex items-start gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 to-amber-400 text-white flex items-center justify-center shrink-0 shadow-xs">
-              <Trophy className="w-5 h-5" />
-            </div>
+      <div className="relative isolate mb-6 overflow-hidden rounded-3xl border border-amber-300/30 bg-gradient-to-br from-[#161832] via-[#202452] to-[#171a35] p-4 text-white shadow-xl shadow-indigo-950/15 sm:p-5">
+        <div aria-hidden="true" className="pointer-events-none absolute -right-12 -top-20 h-52 w-52 rounded-full bg-amber-400/20 blur-3xl" />
+        <div aria-hidden="true" className="pointer-events-none absolute -bottom-24 left-1/3 h-44 w-64 rounded-full bg-indigo-400/20 blur-3xl" />
+        <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-amber-200/80 to-transparent" />
+
+        <div className="relative">
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-200/25 bg-amber-100/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.16em] text-amber-100 sm:text-[11px]">
+              <Trophy className="h-3.5 w-3.5 text-amber-300" /> A Nova milestone
+            </span>
+            <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-indigo-100/70 sm:text-[11px]">
+              <Sparkles className="h-3.5 w-3.5 text-amber-300" /> The founding 100
+            </span>
+          </div>
+
+          <div className="grid items-center gap-3 sm:grid-cols-[1fr_auto] sm:gap-5">
             <div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-xs font-bold uppercase tracking-wider text-amber-700 bg-amber-100/80 px-2.5 py-0.5 rounded-full">
-                  Milestone Unlocked &bull; Member #100
-                </span>
-                <span className="text-xs font-semibold text-emerald-700 bg-emerald-100/80 px-2 py-0.5 rounded-full">
-                  $100 OFF Applied
-                </span>
-              </div>
-              <h3 className="text-base font-bold text-gray-900 mt-1">
-                Congrats! You unlocked the $99 Lifetime Founder Pass
+              <h3 className="text-xl font-extrabold leading-tight tracking-tight text-white sm:text-2xl">
+                You&apos;re Nova&apos;s <span className="bg-gradient-to-r from-amber-200 via-yellow-100 to-amber-300 bg-clip-text text-transparent">100th member.</span>
               </h3>
-              <p className="text-xs text-gray-600 mt-0.5">
-                Original <span className="line-through text-gray-400 font-medium">$199</span> &rarr; now{' '}
-                <span className="font-bold text-gray-900">$99 one-time for life</span> as a thank you for signing up.
+              <p className="mt-1.5 max-w-md text-xs leading-5 text-indigo-100/80 sm:text-sm">
+                A milestone this big deserves a thank-you. Your Founder Lifetime Pass is unlocked for $99—with <strong className="font-bold text-white">$100 off</strong> and no recurring fees.
               </p>
+            </div>
+
+            <div className="flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/[0.07] px-3.5 py-2.5 sm:min-w-[156px] sm:flex-col sm:items-end sm:gap-0 sm:px-4 sm:py-3">
+              <div className="text-left sm:text-right">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-indigo-100/65">Founder lifetime price</p>
+                <p className="mt-0.5 text-xs text-indigo-100/65"><span className="line-through">$199</span><span className="mx-1.5">→</span><strong className="text-2xl font-black leading-none text-white">$99</strong></p>
+              </div>
+              <span className="shrink-0 rounded-full bg-emerald-300/15 px-2.5 py-1 text-[10px] font-bold text-emerald-200 ring-1 ring-emerald-200/20">50% OFF</span>
             </div>
           </div>
 
-          <button
-            type="button"
-            onClick={handleCopy}
-            className="inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-white hover:bg-gray-50 border border-gray-200 rounded-xl text-xs font-semibold text-gray-800 shadow-2xs transition self-start sm:self-auto shrink-0"
-          >
-            <Tag className="w-3.5 h-3.5 text-indigo-600" />
-            <span>Code: <code className="font-mono text-indigo-600">{promoCode}</code></span>
-            {copied ? (
-              <CheckCheck className="w-3.5 h-3.5 text-emerald-600 ml-1" />
-            ) : (
-              <Copy className="w-3.5 h-3.5 text-gray-400 ml-1" />
-            )}
-          </button>
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-white/10 pt-3">
+            <span className="text-[10px] font-medium text-indigo-100/65 sm:text-[11px]">One payment · No recurring fees · Lifetime access</span>
+            <button
+              type="button"
+              onClick={handleCopy}
+              aria-label={copied ? 'Founder code copied' : `Copy founder code ${promoCode}`}
+              className="inline-flex items-center gap-2 rounded-xl border border-amber-200/25 bg-amber-100/10 px-3 py-2 text-[11px] font-semibold text-amber-50 transition hover:border-amber-200/50 hover:bg-amber-100/15 focus:outline-none focus:ring-2 focus:ring-amber-200/60"
+            >
+              <Tag className="h-3.5 w-3.5 text-amber-300" />
+              <span>FOUNDER CODE <code className="ml-1 font-mono font-bold text-white">{promoCode}</code></span>
+              {copied ? <CheckCheck className="h-3.5 w-3.5 text-emerald-300" /> : <Copy className="h-3.5 w-3.5 text-amber-100/65" />}
+            </button>
+          </div>
         </div>
       </div>
     );

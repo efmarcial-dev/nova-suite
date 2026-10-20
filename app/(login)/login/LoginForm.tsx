@@ -1,7 +1,7 @@
 'use client';
 import { useState } from "react";
 import Link from "next/link";
-import { loginUser, setAuthCookies } from "@/app/lib/auth";
+import { loginUser } from "@/app/lib/auth";
 
 export default function LoginForm() {
   const [email, setEmail] = useState('')
@@ -17,11 +17,12 @@ export default function LoginForm() {
     try {
       const data = await loginUser(email, password)
       
-      // Set access and refresh token cookies
-      setAuthCookies(data.access, data.refresh)
-      
-      // Full redirect to dashboard so server components/middleware read new cookies
-      window.location.href = '/dashboard'
+      // Full navigation lets server components and proxy read the new cookies.
+      const requestedRedirect = new URLSearchParams(window.location.search).get('redirect');
+      const redirect = requestedRedirect?.startsWith('/') && !requestedRedirect.startsWith('//')
+        ? requestedRedirect
+        : '/dashboard';
+      window.location.href = redirect;
     } catch (err: any) {
       setError(err?.message || 'Invalid credentials. Please try again.')
       setLoading(false)

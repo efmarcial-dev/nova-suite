@@ -1,8 +1,6 @@
 'use client';
 import { useState } from 'react';
 import Link from 'next/link';
-import { setAuthCookies } from '@/app/lib/auth';
-import FounderMilestoneCard from '@/app/components/FounderMilestoneCard';
 import { Mail, Lock, User, Building, ArrowRight, CheckCircle2, ShieldCheck, Sparkles } from 'lucide-react';
 
 export default function RegisterForm() {
@@ -70,8 +68,7 @@ export default function RegisterForm() {
             const data = await res.json().catch(() => ({}));
 
             if (res.ok) {
-                if (data.access) {
-                    setAuthCookies(data.access, data.refresh);
+                if (data.authenticated) {
                     window.location.href = '/onboarding';
                 } else {
                     window.location.href = '/login';
@@ -90,8 +87,6 @@ export default function RegisterForm() {
 
     return (
         <div className="space-y-6">
-            <FounderMilestoneCard variant="card" showDetails={true} />
-
             <div className="bg-white p-7 sm:p-9 rounded-3xl shadow-sm border border-gray-200/80">
                 {/* Header */}
                 <div className="text-center mb-6">

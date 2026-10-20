@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { ArrowLeft, ArrowRight, Check } from 'lucide-react';
 
 type Props = {
     data: any;
@@ -19,7 +20,7 @@ type LocalData = {
 export default function PrioritizationPhilosophyStep({data, onNext, onBack}: Props) {
 
     const [localData, setLocalData] = useState<LocalData>({
-        prioritizationPhilosophy: data.prioritizatoinPhilosophy || { choice: "", details: "" },
+        prioritizationPhilosophy: data.prioritizationPhilosophy || { choice: "", details: "" },
         urgencyDefinition: data.urgencyDefinition || { choice: "", details: "" },
         importanceDefinition: data.importanceDefinition || { choice: "", details: "" },
     });
@@ -35,103 +36,53 @@ export default function PrioritizationPhilosophyStep({data, onNext, onBack}: Pro
         onNext(localData);
     }
 
+    const sections: { key: SectionKey; title: string; options: string[] }[] = [
+        { key: 'prioritizationPhilosophy', title: 'Your default approach', options: ['Do urgent tasks first', 'Do important tasks first', 'Balance urgency & importance'] },
+        { key: 'urgencyDefinition', title: 'What makes work urgent?', options: ['Deadline within 24h', 'Blocking another person', 'High external pressure'] },
+        { key: 'importanceDefinition', title: 'What makes work important?', options: ['High business impact', 'Aligned with long-term goals', 'Requested by leadership'] },
+    ];
+
     return (
-        <div className="space-y-6">
-            <h2 className="text-xl font-bold">How do you prioritize work?</h2>
-
-            {/* Prioritization Philosophy */}
+        <div className="max-w-4xl space-y-6">
             <div>
-                <p className="font-medium mb-2">Your prioritization philosophy:</p>
-                <div className="space-y-2">
-                    {["Do urgent tasks first", "Do important tasks first", "Balance urgency & importance"].map(opt => (
-                        <label key={opt} className="block">
-                            <input
-                                type="radio"
-                                name="philosophy"
-                                value={opt}
-                                checked={localData.prioritizationPhilosophy.choice === opt}
-                                onChange={(e) => handleChange("prioritizationPhilosophy", "choice", e.target.value)}
-                            />
-                            <span className="ml-2">{opt}</span>
-                        </label>
-                    ))}
-                    <input
-                        type="text"
-                        placeholder="Other (please specify)"
-                        className="border rounded px-2 py-1 mt-2 w-full"
-                        value={localData.prioritizationPhilosophy.details}
-                        onChange={(e) => handleChange("prioritizationPhilosophy", "details", e.target.value)}
-                    />
-                </div>
+                <h2 className="text-2xl font-bold tracking-tight text-slate-950">How should Nova prioritize?</h2>
+                <p className="mt-1 text-sm text-slate-500">Choose the signals that matter most. Add a little context if you like.</p>
             </div>
 
-            {/* Urgency Definition */}
-            <div>
-                <p className="font-medium mb-2">What makes a task urgent?</p>
-                <div className="space-y-2">
-                    {["Deadline within 24h", "Blocking another person", "High external pressure"].map(opt => (
-                        <label key={opt} className="block">
+            <div className="grid gap-4 lg:grid-cols-3">
+                {sections.map(({ key, title, options }) => (
+                    <fieldset key={key} className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5">
+                        <legend className="mb-3 text-sm font-semibold text-slate-900">{title}</legend>
+                        <div className="space-y-2">
+                            {options.map((option) => {
+                                const selected = localData[key].choice === option;
+                                return (
+                                    <label key={option} className={`flex min-h-11 cursor-pointer items-center justify-between gap-2 rounded-xl border px-3 py-2.5 text-xs leading-5 transition ${selected ? 'border-indigo-400 bg-indigo-50 text-indigo-950' : 'border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-50'}`}>
+                                        <span>{option}</span>
+                                        <input className="sr-only" type="radio" name={key} value={option} checked={selected} onChange={(e) => handleChange(key, 'choice', e.target.value)} />
+                                        {selected && <Check className="h-4 w-4 shrink-0 text-indigo-600" />}
+                                    </label>
+                                );
+                            })}
+                        </div>
+                        <label className="mt-3 block">
+                            <span className="sr-only">Additional context for {title}</span>
                             <input
-                                type="radio"
-                                name="urgency"
-                                value={opt}
-                                checked={localData.urgencyDefinition.choice === opt}
-                                onChange={(e) => handleChange("urgencyDefinition", "choice", e.target.value)}
+                                type="text"
+                                placeholder="Add your own context (optional)"
+                                className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-xs outline-none placeholder:text-slate-400 focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-100"
+                                value={localData[key].details}
+                                onChange={(e) => handleChange(key, 'details', e.target.value)}
                             />
-                            <span className="ml-2">{opt}</span>
                         </label>
-                    ))}
-                    <input
-                        type="text"
-                        placeholder="Other (please specify)"
-                        className="border rounded px-2 py-1 mt-2 w-full"
-                        value={localData.urgencyDefinition.details}
-                        onChange={(e) => handleChange("urgencyDefinition", "details", e.target.value)}
-                    />
-                </div>
+                    </fieldset>
+                ))}
             </div>
 
-            {/* Importance Definition */}
-            <div>
-                <p className="font-medium mb-2">What makes a task important?</p>
-                <div className="space-y-2">
-                    {["High business impact", "Aligned with long-term goals", "Requested by leadership"].map(opt => (
-                        <label key={opt} className="block">
-                            <input
-                                type="radio"
-                                name="importance"
-                                value={opt}
-                                checked={localData.importanceDefinition.choice === opt}
-                                onChange={(e) => handleChange("importanceDefinition", "choice", e.target.value)}
-                            />
-                            <span className="ml-2">{opt}</span>
-                        </label>
-                    ))}
-                    <input
-                        type="text"
-                        placeholder="Other (please specify)"
-                        className="border rounded px-2 py-1 mt-2 w-full"
-                        value={localData.importanceDefinition.details}
-                        onChange={(e) => handleChange("importanceDefinition", "details", e.target.value)}
-                    />
-                </div>
-            </div>
-
-            {/* Navigation */}
-            <div className="flex justify-between mt-6">
-                <button
-                    onClick={onBack}
-                    className="px-4 py-2 bg-gray-200 rounded"
-                >
-                    Back
-                </button>
-                <button
-                    onClick={handleNextClick}
-                    className="px-4 py-2 bg-blue-500 text-white rounded"
-                >
-                    Next
-                </button>
+            <div className="flex items-center justify-between border-t border-slate-200 pt-5">
+                <button type="button" onClick={onBack} className="inline-flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-500 transition hover:bg-white hover:text-slate-900"><ArrowLeft className="h-4 w-4" /> Back</button>
+                <button type="button" onClick={handleNextClick} className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700">Continue <ArrowRight className="h-4 w-4" /></button>
             </div>
         </div>
-    )
+    );
 }
