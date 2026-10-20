@@ -59,9 +59,13 @@ export function computeTaskAIScore(task: Partial<Task>): AIScoreResult {
   // 3. AI Backend Confidence factor (up to 20 pts)
   const confidenceScore = Math.round((Math.min(100, Math.max(0, confidence)) / 100) * 20);
 
-  // Total Score clamped 5 to 100
+  // Prefer the persisted Django score when available. The API stores this as 0–1;
+  // confidence is its legacy alias and may also contain that normalized value.
   const rawScore = priorityScore + urgencyScore + confidenceScore;
-  const score = Math.min(100, Math.max(5, rawScore));
+  const storedScore = typeof task.score === 'number' ? task.score : task.confidence;
+  const score = typeof storedScore === 'number'
+    ? Math.min(100, Math.max(0, Math.round(storedScore <= 1 ? storedScore * 100 : storedScore)))
+    : Math.min(100, Math.max(5, rawScore));
 
   // Determine Tier & Styling
   let tier: 'critical' | 'high' | 'medium' | 'low' = 'medium';
@@ -97,7 +101,7 @@ export function computeTaskAIScore(task: Partial<Task>): AIScoreResult {
   }
 
   // Reasoning summary
-  let reasonSummary = task.reasoning || '';
+  let reasonSummary = task.scoring_explanation || task.reasoning || '';
   if (!reasonSummary) {
     if (isOverdue) reasonSummary = 'Task passed its deadline. Elevated to top of assistant queue.';
     else if (isDueSoon) reasonSummary = 'Due within 24 hours with high impact on active project.';

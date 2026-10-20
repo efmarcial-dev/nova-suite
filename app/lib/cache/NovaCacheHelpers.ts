@@ -39,6 +39,17 @@ export async function saveTasksToCache(tasks: any[]) {
     await tx.done;
 }
 
+export async function replaceTasksInCache(tasks: any[]) {
+    const db = await initNovaCache();
+    const tx = db.transaction('tasks', 'readwrite');
+    await tx.store.clear();
+    for (const task of tasks) {
+        if (!task?.id) continue;
+        await tx.store.put(task);
+    }
+    await tx.done;
+}
+
 
 export async function getCachedTasks() {
     const db = await initNovaCache();

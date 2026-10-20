@@ -98,6 +98,18 @@ export async function PATCH(request: Request) {
     const body = await request.json();
     const { id, ...updates } = body;
 
+    if (updates.action === 'rescore' && id) {
+      const backendRes = await fetch(getDjangoApiUrl(`auth/tasks/${id}/rescore/`), {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      const data = await backendRes.json().catch(() => ({}));
+      return new Response(JSON.stringify(data), {
+        status: backendRes.status,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
     const targetUrl = id ? getDjangoApiUrl(`auth/tasks/${id}/`) : getDjangoApiUrl("auth/tasks/");
     const backendRes = await fetch(targetUrl, {
       method: "PATCH",
@@ -108,33 +120,9 @@ export async function PATCH(request: Request) {
       body: JSON.stringify(updates),
     });
 
-    if (!backendRes.ok) {
-      // Fallback to PUT
-      const fallbackRes = await fetch(getDjangoApiUrl("auth/tasks/"), {
-        method: "PUT",
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(body),
-      });
-
-      if (fallbackRes.ok) {
-        const data = await fallbackRes.json();
-        return new Response(JSON.stringify(data), {
-          status: 200,
-          headers: { 'Content-Type': 'application/json' },
-        });
-      }
-
-      return new Response(JSON.stringify({ message: "Backend API task update failed", ...body }), {
-        status: backendRes.status,
-      });
-    }
-
-    const data = await backendRes.json();
+    const data = await backendRes.json().catch(() => ({ message: 'Backend task update failed.' }));
     return new Response(JSON.stringify(data), {
-      status: 200,
+      status: backendRes.status,
       headers: { 'Content-Type': 'application/json' },
     });
   } catch (error) {

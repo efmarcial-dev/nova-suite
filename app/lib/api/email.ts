@@ -21,6 +21,16 @@ export interface EmailMessageItem {
   status: 'read' | 'unread' | 'delivered';
 }
 
+export interface EmailInsight {
+  summary: string;
+  priority: 'low' | 'normal' | 'high' | 'urgent';
+  priority_reason: string;
+  suggested_action: string | null;
+  action_items: Array<{ task: string; due_date: string | null }>;
+  reply_draft: string | null;
+  analyzed_at: string;
+}
+
 export async function fetchEmailProvidersAPI(): Promise<EmailProviderStatus[]> {
   try {
     const res = await fetch('/api/email/providers/', {
@@ -112,6 +122,25 @@ export async function fetchEmailMessagesAPI(
     console.warn('Failed to fetch live email messages', error);
     throw error;
   }
+}
+
+export async function analyzeEmailMessagesAPI(
+  provider: string,
+  messages: EmailMessageItem[]
+): Promise<Record<string, EmailInsight>> {
+  const res = await fetch('/api/email/messages/analyze/', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({ provider, messages }),
+  });
+
+  if (!res.ok) {
+    await throwProviderApiError(res, `Email analysis failed (${res.status})`);
+  }
+
+  const data = await res.json();
+  return data.insights && typeof data.insights === 'object' ? data.insights : {};
 }
 
 export async function sendEmailMessageAPI(payload: {

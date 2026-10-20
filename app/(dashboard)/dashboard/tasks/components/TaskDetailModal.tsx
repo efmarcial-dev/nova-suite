@@ -24,7 +24,8 @@ interface TaskDetailModalProps {
   isOpen: boolean;
   onClose: () => void;
   onUpdate: (updated: Task) => void;
-  onDelete?: (taskId: number) => void;
+  onDelete?: (taskId: Task['id']) => void;
+  onRescore?: (task: Task) => Promise<void>;
 }
 
 export default function TaskDetailModal({
@@ -33,6 +34,7 @@ export default function TaskDetailModal({
   onClose,
   onUpdate,
   onDelete,
+  onRescore,
 }: TaskDetailModalProps) {
   const { projects } = useCachedProjects();
 
@@ -45,6 +47,7 @@ export default function TaskDetailModal({
   const [tagInput, setTagInput] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [delegatedToast, setDelegatedToast] = useState(false);
+  const [isRescoring, setIsRescoring] = useState(false);
 
   useEffect(() => {
     if (task) {
@@ -141,7 +144,7 @@ export default function TaskDetailModal({
               </div>
               <div>
                 <h3 className="text-sm font-bold text-[--foreground]">Executive AI Scoring Diagnostic</h3>
-                <p className="text-xs text-[--muted-foreground]">Synthesized priority based on deadline & milestones</p>
+                <p className="text-xs text-[--muted-foreground]">Profile aware priority from your deadlines and task context</p>
               </div>
             </div>
             {/* Score circle */}
@@ -157,24 +160,24 @@ export default function TaskDetailModal({
             {aiScore.reasonSummary}
           </div>
 
-          {/* Breakdown bars */}
-          <div className="grid grid-cols-3 gap-2 pt-1 text-[11px]">
-            <div className="bg-white/80 rounded-lg p-2 border border-indigo-50">
-              <span className="text-[--muted-foreground] block">Priority Weight</span>
-              <span className="font-bold text-[--foreground]">{aiScore.breakdown.priorityScore} / 45 pts</span>
-            </div>
-            <div className="bg-white/80 rounded-lg p-2 border border-indigo-50">
-              <span className="text-[--muted-foreground] block">Urgency Factor</span>
-              <span className="font-bold text-[--foreground]">{aiScore.breakdown.urgencyScore} / 35 pts</span>
-            </div>
-            <div className="bg-white/80 rounded-lg p-2 border border-indigo-50">
-              <span className="text-[--muted-foreground] block">Model Confidence</span>
-              <span className="font-bold text-[--foreground]">{task.confidence ?? 85}% AI</span>
-            </div>
-          </div>
+          <p className="text-[11px] text-[--muted-foreground]">
+            The score is refreshed when task details change, when you update your priority profile, or when you choose Analyze again.
+          </p>
 
           {/* Quick delegate action */}
           <div className="pt-1 flex items-center justify-between">
+            <button
+              type="button"
+              disabled={isRescoring || !onRescore}
+              onClick={async () => {
+                if (!onRescore) return;
+                setIsRescoring(true);
+                try { await onRescore(task); } finally { setIsRescoring(false); }
+              }}
+              className="flex items-center gap-1.5 rounded-xl border border-indigo-200 bg-white px-3 py-1.5 text-xs font-semibold text-indigo-700 transition hover:bg-indigo-50 disabled:opacity-50"
+            >
+              <Sparkles size={12} /> {isRescoring ? 'Analyzing…' : 'Analyze again'}
+            </button>
             <button
               type="button"
               onClick={handleDelegate}

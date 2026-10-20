@@ -4,10 +4,6 @@ import ViewToggle from "./components/ViewToggle";
 import TasksBoard from "./components/TaskBoard";
 import ModalPanel from "@/app/components/ModalPanel";
 import NewTaskForm from "@/app/components/NewTaskForm";
-import PromptPanel from "@/app/components/PromptPanel";
-import PromptContent from "@/app/components/PromptContent";
-import { Sparkles } from "lucide-react";
-
 import { useEffect, useState } from "react";
 import TaskBoard from "./components/TaskBoard";
 
@@ -19,9 +15,9 @@ export default function TasksPage() {
   const [view, setView] = useState<'table' | 'list' | 'matrix'>('table');
 
   const [showNewTask, setShowNewTask] = useState(false);
-  const [showPrompt, setShowPrompt] = useState(false);
   const [hasPills, setHasPills] = useState(false);
   const [pendingOnly, setPendingOnly] = useState(false);
+  const [priorityFilter, setPriorityFilter] = useState<'all' | 'high' | 'important'>('all');
 
   const {projects: cachedProjects} = useCachedProjects();
 
@@ -37,16 +33,17 @@ export default function TasksPage() {
         <h1 className="text-2xl font-semibold text-[--foreground]">Tasks</h1>
         <div className="flex items-center gap-4">
           <ViewToggle view={view} setView={setView} />
-
-          <button
-            onClick={() => setShowPrompt(true)}
-            className="group p-2 rounded-xl hover:bg-indigo-50 transition-colors"
+          <label className="sr-only" htmlFor="task-priority-filter">Filter tasks by priority</label>
+          <select
+            id="task-priority-filter"
+            value={priorityFilter}
+            onChange={(event) => setPriorityFilter(event.target.value as typeof priorityFilter)}
+            className="rounded-xl border border-[--border] bg-white px-3 py-2 text-sm text-[--foreground] outline-none focus:ring-2 focus:ring-indigo-400"
           >
-            <Sparkles
-              size={20}
-              className="text-[--muted-foreground] group-hover:text-indigo-600 transition-colors"
-            />
-          </button>
+            <option value="all">All priorities</option>
+            <option value="high">High priority</option>
+            <option value="important">Important tasks</option>
+          </select>
           
           <button
             onClick={() => setShowNewTask(true)}
@@ -57,9 +54,9 @@ export default function TasksPage() {
       </div>
 
       {/* Tasks View */}
-      {view === 'table' && <TasksBoard view="table" statusFilter={pendingOnly ? 'pending' : 'all'} />}
-      {view === 'list' && <TasksBoard view="list" statusFilter={pendingOnly ? 'pending' : 'all'} />}
-      {view == 'matrix' && <TaskBoard view="matrix" statusFilter={pendingOnly ? 'pending' : 'all'} />}
+      {view === 'table' && <TasksBoard view="table" statusFilter={pendingOnly ? 'pending' : 'all'} priorityFilter={priorityFilter} />}
+      {view === 'list' && <TasksBoard view="list" statusFilter={pendingOnly ? 'pending' : 'all'} priorityFilter={priorityFilter} />}
+      {view == 'matrix' && <TaskBoard view="matrix" statusFilter={pendingOnly ? 'pending' : 'all'} priorityFilter={priorityFilter} />}
 
       {/* New Task Modal */}
       <ModalPanel isOpen={showNewTask} onClose={() => setShowNewTask(false)} hasPills={hasPills}>
@@ -70,11 +67,6 @@ export default function TasksPage() {
           setHasPills(false); // reset pills state
         }}/>
       </ModalPanel>
-
-      {/* AI Prompt Modal */}
-      <PromptPanel isOpen={showPrompt} onClose={() => setShowPrompt(false)}>
-        <PromptContent name="Eduardo" />
-      </PromptPanel>
     </div>
   );
 }

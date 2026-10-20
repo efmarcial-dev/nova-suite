@@ -18,16 +18,19 @@ import { useEffect, useMemo, useState } from 'react';
 import MatrixViewComponent from './MartixViewComponent';
 import { useCachedTasks } from '@/app/hooks/useCachedTasks';
 import { updateTaskInCache, deleteTaskInCache } from '@/app/lib/cache/NovaCacheHelpers';
-import { updateTaskAPI, deleteTaskAPI } from '@/app/lib/api/tasks';
+import { rescoreTaskAPI, updateTaskAPI, deleteTaskAPI } from '@/app/lib/api/tasks';
 import { emitTaskChangeEvent } from '@/app/lib/events/novaEvents';
 import { Task } from './task';
+import { computeTaskAIScore } from '@/app/lib/aiScoring';
 
 export default function TaskBoard({
   view,
   statusFilter = 'all',
+  priorityFilter = 'all',
 }: {
   view: 'table' | 'list' | 'matrix';
   statusFilter?: 'all' | 'pending';
+  priorityFilter?: 'all' | 'high' | 'important';
 }) {
   const { tasks: cacheTasks, isLoading } = useCachedTasks();
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -49,9 +52,14 @@ export default function TaskBoard({
     }
   }, [cacheTasks, isLoading]);
 
-  const visibleTasks = statusFilter === 'pending'
-    ? tasks.filter((task) => task.status !== 'done')
-    : tasks;
+  const visibleTasks = tasks.filter((task) => {
+    if (statusFilter === 'pending' && task.status === 'done') return false;
+    if (priorityFilter === 'high' && !['high', 'critical'].includes(task.priority?.toLowerCase() || '')) return false;
+    if (priorityFilter === 'important') {
+      if (computeTaskAIScore(task).score < 75) return false;
+    }
+    return true;
+  });
 
   const grouped = useMemo(() => ({
     todo: visibleTasks.filter((t) => t.status === 'todo'),
@@ -97,14 +105,29 @@ export default function TaskBoard({
     );
     await updateTaskInCache(updated);
     emitTaskChangeEvent({ action: 'update', task: updated });
-    await updateTaskAPI(updated.id, updated);
+    const saved = await updateTaskAPI(updated.id, updated);
+    if (saved) {
+      setTasks((prev) => prev.map((task) => task.id === saved.id ? saved : task));
+      setSelectedTask(saved);
+      await updateTaskInCache(saved);
+      emitTaskChangeEvent({ action: 'update', task: saved });
+    }
   };
 
-  const handleDeleteTask = async (taskId: number) => {
+  const handleDeleteTask = async (taskId: Task['id']) => {
     setTasks((prev) => prev.filter((t) => t.id !== taskId));
     await deleteTaskInCache(taskId);
     emitTaskChangeEvent({ action: 'delete', taskId });
     await deleteTaskAPI(taskId);
+  };
+
+  const handleRescoreTask = async (task: Task) => {
+    const rescored = await rescoreTaskAPI(task.id);
+    if (!rescored) throw new Error('Could not reanalyze this task.');
+    setTasks((prev) => prev.map((item) => item.id === task.id ? rescored : item));
+    setSelectedTask(rescored);
+    await updateTaskInCache(rescored);
+    emitTaskChangeEvent({ action: 'update', task: rescored });
   };
 
   if (isLoading) {
@@ -124,7 +147,9 @@ export default function TaskBoard({
   if (visibleTasks.length === 0) {
     return (
       <div className="p-12 text-center text-sm text-[--muted-foreground] bg-white rounded-2xl border border-[--border]">
-        No tasks found. Click &quot;+ Create Task&quot; above to add your first deliverable.
+        {priorityFilter !== 'all'
+          ? 'No tasks match this priority filter.'
+          : 'No tasks found. Click "+ Create Task" above to add your first deliverable.'}
       </div>
     );
   }
@@ -214,6 +239,7 @@ export default function TaskBoard({
         onClose={() => setSelectedTask(null)}
         onUpdate={handleUpdateTask}
         onDelete={handleDeleteTask}
+        onRescore={handleRescoreTask}
       />
     </>
   );

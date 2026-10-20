@@ -11,7 +11,8 @@ import {
   RefreshCw,
   ExternalLink,
   Lock,
-  Bot
+  Bot,
+  AlertTriangle,
 } from 'lucide-react';
 import { useCachedUser } from '@/app/hooks/useCachedUser';
 import ModalPanel from '@/app/components/ModalPanel';
@@ -38,6 +39,8 @@ interface CalendarEvent {
   location?: string;
   attendees?: string[];
   assistantBrief?: string;
+  priorityScore?: number;
+  priorityExplanation?: string;
   hasConflict?: boolean;
   startAt: string;
   endAt: string;
@@ -69,6 +72,8 @@ function mapBackendEvent(evt: any): CalendarEvent {
     location: evt.location || '',
     attendees: Array.isArray(evt.attendees) ? evt.attendees : [],
     assistantBrief: evt.assistant_brief || evt.assistantBrief || '',
+    priorityScore: typeof evt.priorityScore === 'number' ? evt.priorityScore : undefined,
+    priorityExplanation: evt.priorityExplanation || undefined,
     startAt: safeStart.toISOString(),
     endAt: safeEnd.toISOString(),
   };
@@ -98,8 +103,16 @@ export default function CalendarPage() {
   const [isSyncing, setIsSyncing] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [newEventTitle, setNewEventTitle] = useState('');
+  const [newEventDate, setNewEventDate] = useState(() => {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  });
   const [newEventTime, setNewEventTime] = useState('11:00');
   const [newEventType, setNewEventType] = useState<'meeting' | 'focus'>('meeting');
+  const [isSavingEvent, setIsSavingEvent] = useState(false);
+  const [eventConflicts, setEventConflicts] = useState<CalendarEvent[]>([]);
+  const [createdEventNotice, setCreatedEventNotice] = useState('');
+  const [agendaDate, setAgendaDate] = useState(() => new Date());
 
   // Load connection state from backend and sync real events
   useEffect(() => {
@@ -211,29 +224,76 @@ export default function CalendarPage() {
     }
   };
 
-  const handleAddEvent = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newEventTitle.trim()) return;
+  const handleAddEvent = async (e?: React.FormEvent, allowConflicts = false) => {
+    e?.preventDefault();
+    if (!newEventTitle.trim() || !newEventDate || !newEventTime || isSavingEvent) return;
 
+    const [year, month, day] = newEventDate.split('-').map(Number);
     const [hours, mins] = newEventTime.split(':').map(Number);
-    const today = new Date();
-    today.setHours(hours, mins || 0, 0, 0);
-    const startIso = today.toISOString();
-    const endIso = new Date(today.getTime() + 60 * 60 * 1000).toISOString();
+    const localStart = new Date(year, month - 1, day, hours, mins, 0, 0);
+    if (Number.isNaN(localStart.getTime())) {
+      setEventsError('Choose a valid event date and time.');
+      return;
+    }
+    const startIso = localStart.toISOString();
+    const endIso = new Date(localStart.getTime() + 60 * 60 * 1000).toISOString();
 
-    const startHour = hours + (mins || 0) / 60;
+    setIsSavingEvent(true);
     try {
       setEventsError('');
+      setEventConflicts([]);
+      setCreatedEventNotice('');
+
+      if (isConnected && autoConflictWarn && !allowConflicts) {
+        const syncResult = await syncCalendarEventsAPI(selectedProvider, startIso, endIso);
+        const syncedEvents = Array.isArray(syncResult?.events)
+          ? syncResult.events
+          : await fetchCalendarEventsAPI();
+        const conflicts = syncedEvents.filter((event: any) => {
+          const existingStart = new Date(event.start_time || event.start || event.startTime).getTime();
+          const existingEnd = new Date(event.end_time || event.end || event.endTime).getTime();
+          return Number.isFinite(existingStart) && Number.isFinite(existingEnd)
+            && existingStart < new Date(endIso).getTime()
+            && existingEnd > new Date(startIso).getTime();
+        }).map(mapBackendEvent);
+
+        if (conflicts.length > 0) {
+          setEventConflicts(conflicts);
+          return;
+        }
+      }
+
       const savedEvent = await saveCalendarEventAPI({
-        title: newEventTitle,
+        title: newEventTitle.trim(),
         start_time: startIso,
         end_time: endIso,
         event_type: newEventType,
-        sync_provider: selectedProvider,
+        ...(isConnected ? { sync_provider: selectedProvider } : {}),
       });
 
       if (savedEvent) {
-        setEvents((prev) => [...prev, mapBackendEvent(savedEvent)]);
+        const saved = mapBackendEvent(savedEvent);
+        setAgendaDate(localStart);
+        setViewMode('day');
+        setEvents((prev) => [...prev.filter((event) => event.id !== saved.id), saved]);
+        setCreatedEventNotice(`“${saved.title}” was added${isConnected ? ` to ${providerDetails[selectedProvider].name}` : ''}.`);
+        setEventConflicts([]);
+        setShowAddModal(false);
+        setNewEventTitle('');
+
+        if (isConnected) {
+          try {
+            await syncCalendarEventsAPI(selectedProvider, startIso, endIso);
+            const backendEvents = await fetchCalendarEventsAPI();
+            setEvents(backendEvents.map(mapBackendEvent));
+          } catch (syncError) {
+            console.warn('Event was saved but the calendar refresh did not finish:', syncError);
+            setEventsError('Event was created, but the calendar could not refresh. Use Sync Calendar to reload it.');
+          }
+        } else {
+          const backendEvents = await fetchCalendarEventsAPI();
+          setEvents(backendEvents.map(mapBackendEvent));
+        }
       } else {
         throw new Error('The backend did not save the calendar event.');
       }
@@ -241,11 +301,9 @@ export default function CalendarPage() {
       console.error('Error saving event', err);
       setReconnectRequired(err instanceof ProviderReconnectRequiredError);
       setEventsError(err instanceof Error ? err.message : 'Could not save the calendar event.');
-      return;
+    } finally {
+      setIsSavingEvent(false);
     }
-
-    setShowAddModal(false);
-    setNewEventTitle('');
   };
 
   const providerDetails = {
@@ -463,8 +521,7 @@ export default function CalendarPage() {
   // -------------------------------------------------------------
   const activeProvider = providerDetails[selectedProvider];
   const todayEvents = events.filter((event) => new Date(event.startAt).toDateString() === new Date().toDateString());
-  const now = new Date();
-  const weekStart = new Date(now);
+  const weekStart = new Date(agendaDate);
   weekStart.setHours(0, 0, 0, 0);
   weekStart.setDate(weekStart.getDate() - ((weekStart.getDay() + 6) % 7));
   const weekEnd = new Date(weekStart);
@@ -472,7 +529,7 @@ export default function CalendarPage() {
   const visibleEvents = events
     .filter((event) => {
       const eventDate = new Date(event.startAt);
-      if (viewMode === 'day') return eventDate.toDateString() === now.toDateString();
+      if (viewMode === 'day') return eventDate.toDateString() === agendaDate.toDateString();
       return eventDate >= weekStart && eventDate < weekEnd;
     })
     .sort((a, b) => new Date(a.startAt).getTime() - new Date(b.startAt).getTime());
@@ -480,6 +537,7 @@ export default function CalendarPage() {
   const meetingHours = todayMeetings.reduce((total, event) => total + Math.max(0, (new Date(event.endAt).getTime() - new Date(event.startAt).getTime()) / 3600000), 0);
   const focusHours = todayEvents.filter((event) => event.type === 'focus').reduce((total, event) => total + Math.max(0, (new Date(event.endAt).getTime() - new Date(event.startAt).getTime()) / 3600000), 0);
   const conflictsToday = todayEvents.filter((event) => event.hasConflict).length;
+  const importantEvents = visibleEvents.filter((event) => (event.priorityScore ?? 0) >= 0.8);
 
   return (
     <div className="space-y-5">
@@ -541,6 +599,11 @@ export default function CalendarPage() {
           )}
         </div>
       )}
+      {createdEventNotice && !eventsError && (
+        <div role="status" className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
+          <div className="flex items-center gap-2"><Check size={16} />{createdEventNotice}</div>
+        </div>
+      )}
 
       {/* Main Schedule View */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
@@ -551,10 +614,10 @@ export default function CalendarPage() {
             <div>
               <h2 className="text-base font-bold text-[--foreground] flex items-center gap-2">
                 <CalendarIcon size={16} className="text-indigo-600" />
-                Today&apos;s Executive Agenda
+                Executive Agenda
               </h2>
               <p className="text-xs text-[--muted-foreground]">
-                {new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
+                {agendaDate.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
               </p>
             </div>
 
@@ -652,6 +715,20 @@ export default function CalendarPage() {
                           >
                             {evt.type}
                           </span>
+                          {typeof evt.priorityScore === 'number' && evt.priorityScore > 0 && (
+                            <span
+                              title={evt.priorityExplanation || 'Scored using your priority profile'}
+                              className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                                evt.priorityScore >= 0.8
+                                  ? 'bg-rose-50 text-rose-700 border-rose-200'
+                                  : evt.priorityScore >= 0.65
+                                    ? 'bg-amber-50 text-amber-700 border-amber-200'
+                                    : 'bg-indigo-50 text-indigo-700 border-indigo-200'
+                              }`}
+                            >
+                              {evt.priorityScore >= 0.8 ? 'Priority reminder' : 'Profile scored'} · {Math.round(evt.priorityScore * 100)}
+                            </span>
+                          )}
                         </div>
                         <h3 className="text-sm font-bold text-[--foreground] leading-snug">
                           {evt.title}
@@ -681,6 +758,12 @@ export default function CalendarPage() {
                         <p className="leading-relaxed">{evt.assistantBrief}</p>
                       </div>
                     )}
+                    {evt.priorityExplanation && (
+                      <div className="flex items-start gap-2 rounded-xl border border-amber-100 bg-amber-50/70 p-2.5 text-xs text-amber-950">
+                        <Sparkles size={13} className="mt-0.5 shrink-0 text-amber-600" />
+                        <p className="leading-relaxed">Priority reminder: {evt.priorityExplanation}</p>
+                      </div>
+                    )}
                   </div>
                 );
               })
@@ -690,6 +773,25 @@ export default function CalendarPage() {
 
         {/* Right Column: Assistant Smart Schedule Sidebar */}
         <div className="space-y-4">
+          {importantEvents.length > 0 && (
+            <div className="rounded-2xl border border-rose-200 bg-gradient-to-br from-rose-50 to-orange-50 p-5 shadow-xs">
+              <h3 className="mb-3 flex items-center gap-2 text-sm font-bold text-rose-900">
+                <AlertTriangle size={16} className="text-rose-600" />
+                Important events
+              </h3>
+              <div className="space-y-2">
+                {importantEvents.slice(0, 3).map((event) => (
+                  <div key={`important-${event.id}`} className="rounded-xl border border-rose-100 bg-white/80 px-3 py-2">
+                    <p className="text-xs font-semibold text-rose-950">{event.title}</p>
+                    <p className="mt-0.5 text-[11px] text-rose-700">
+                      {new Date(event.startAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} · {event.startTime}
+                      {typeof event.priorityScore === 'number' ? ` · ${Math.round(event.priorityScore * 100)} priority` : ''}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
           {/* Daily Schedule Health Card */}
           <div className="bg-white rounded-2xl border border-[--border] p-5 space-y-3 shadow-xs">
             <div className="flex items-center justify-between">
@@ -750,10 +852,14 @@ export default function CalendarPage() {
 
       {/* Add Event Modal */}
       <ModalPanel isOpen={showAddModal} onClose={() => setShowAddModal(false)}>
-        <form onSubmit={handleAddEvent} className="space-y-4">
+        <form onSubmit={(event) => void handleAddEvent(event)} className="space-y-4">
           <div className="border-b border-[--border] pb-3">
             <h2 className="text-lg font-bold text-[--foreground]">Schedule New Event / Focus Block</h2>
-            <p className="text-xs text-[--muted-foreground]">Assistant will sync this with {activeProvider.name}</p>
+            <p className="text-xs text-[--muted-foreground]">
+              {isConnected
+                ? `This event will be created in ${activeProvider.name}. We’ll check for overlaps first.`
+                : 'Connect Google or Outlook to add this event to your provider calendar.'}
+            </p>
           </div>
 
           <div className="space-y-3">
@@ -771,13 +877,26 @@ export default function CalendarPage() {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div>
+                <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-[--foreground]">
+                  Date
+                </label>
+                <input
+                  type="date"
+                  required
+                  value={newEventDate}
+                  onChange={(e) => setNewEventDate(e.target.value)}
+                  className="w-full rounded-xl border border-[--border] bg-[--background] px-3.5 py-2 text-xs outline-none focus:ring-2 focus:ring-indigo-400"
+                />
+              </div>
               <div>
                 <label className="block text-xs font-semibold text-[--foreground] uppercase tracking-wide mb-1">
                   Start Time
                 </label>
                 <input
                   type="time"
+                  required
                   value={newEventTime}
                   onChange={(e) => setNewEventTime(e.target.value)}
                   className="w-full px-3.5 py-2 text-xs bg-[--background] border border-[--border] rounded-xl outline-none focus:ring-2 focus:ring-indigo-400"
@@ -800,21 +919,45 @@ export default function CalendarPage() {
             </div>
           </div>
 
+          {eventConflicts.length > 0 && (
+            <div role="alert" className="rounded-xl border border-amber-300 bg-amber-50 p-3 text-xs text-amber-950">
+              <div className="flex items-center gap-2 font-bold"><AlertTriangle size={14} />This time overlaps with your calendar</div>
+              <ul className="mt-2 space-y-1">
+                {eventConflicts.map((event) => (
+                  <li key={`conflict-${event.id}`}>
+                    {event.title} · {event.startTime}–{event.endTime}
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-2">Choose another time, or add the event anyway.</p>
+            </div>
+          )}
+
           <div className="flex items-center justify-end gap-2 pt-3 border-t border-[--border]">
             <button
               type="button"
-              onClick={() => setShowAddModal(false)}
+              onClick={() => { setShowAddModal(false); setEventConflicts([]); }}
               className="px-4 py-2 text-xs font-medium text-[--muted-foreground] hover:text-[--foreground] rounded-xl hover:bg-gray-100"
             >
               Cancel
             </button>
             <button
               type="submit"
-              disabled={!newEventTitle.trim()}
+              disabled={!newEventTitle.trim() || isSavingEvent}
               className="px-5 py-2 text-xs font-semibold gradient-brand text-white rounded-xl hover:opacity-90 disabled:opacity-50"
             >
-              Add to Schedule
+              {isSavingEvent ? 'Checking calendar…' : 'Add to Schedule'}
             </button>
+            {eventConflicts.length > 0 && (
+              <button
+                type="button"
+                disabled={isSavingEvent}
+                onClick={() => void handleAddEvent(undefined, true)}
+                className="px-4 py-2 text-xs font-semibold rounded-xl border border-amber-300 bg-amber-100 text-amber-900 hover:bg-amber-200 disabled:opacity-50"
+              >
+                Add anyway
+              </button>
+            )}
           </div>
         </form>
       </ModalPanel>

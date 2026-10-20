@@ -129,13 +129,21 @@ export async function saveCalendarEventAPI(payload: Record<string, any>): Promis
   }
 }
 
-export async function syncCalendarEventsAPI(provider: string = 'google'): Promise<any> {
+export async function syncCalendarEventsAPI(
+  provider: string = 'google',
+  timeMin?: string,
+  timeMax?: string,
+): Promise<any> {
   try {
     const res = await fetch('/api/calendar/events/sync/', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
-      body: JSON.stringify({ provider }),
+      body: JSON.stringify({
+        provider,
+        ...(timeMin ? { time_min: timeMin } : {}),
+        ...(timeMax ? { time_max: timeMax } : {}),
+      }),
     });
 
     if (!res.ok) {

@@ -1,23 +1,20 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { getCachedTasksWithMetadata, saveTasksToCache } from "../lib/cache/NovaCacheHelpers";
+import { useEffect, useRef, useState } from "react";
+import { getCachedTasksWithMetadata, replaceTasksInCache, saveTasksToCache } from "../lib/cache/NovaCacheHelpers";
 import { fetchTasksAPI } from "../lib/api/tasks";
-
-const CACHE_EXPIRY_MS = 1000 * 60 * 5; // 5 minutes 
 
 export function useCachedTasks() {
     const [tasks, setTasks] = useState<any[]>([]);
     const [isLoading, setIsLoading] =  useState(true);
     const [fromCache, setFromCache] = useState(false);
+    const taskChangeVersion = useRef(0);
 
     useEffect(()=> {
         let isMounted = true;
 
         async function load() {
-            const {tasks: cached, lastUpdated} = await getCachedTasksWithMetadata();
-            const now = Date.now();
-            const isStale = now - lastUpdated > CACHE_EXPIRY_MS;
+            const {tasks: cached} = await getCachedTasksWithMetadata();
 
             if (isMounted && cached.length > 0) {
                 
@@ -27,27 +24,27 @@ export function useCachedTasks() {
                 console.log("Found tasks in cache ")
             }
 
-            if (cached.length === 0 || isStale) {
-                try {
+            try {
+                // Render cached tasks quickly, then reconcile with Django on each
+                // mount so deleted or out-of-date local records cannot be edited.
+                const versionAtFetchStart = taskChangeVersion.current;
+                const fresh = await fetchTasksAPI();
+                const withTimestamps = fresh.map(task => ({
+                    ...task,
+                    lastUpdated: Date.now()
+                }));
 
-                    console.log("Calling Task API and updating cache")
-                    const fresh = await fetchTasksAPI();
-                    const withTimestamps = fresh.map(task => ({
-                        ...task,
-                        lastUpdated: Date.now()
-                    }));
+                if (taskChangeVersion.current !== versionAtFetchStart) return;
+                await replaceTasksInCache(withTimestamps);
 
-                    await saveTasksToCache(withTimestamps);
-
-                    if (isMounted) {
-                        setTasks(withTimestamps);
-                        setFromCache(false);
-                        setIsLoading(false);
-                    }
-
-                } catch(error){
-                    console.log(error)
+                if (isMounted) {
+                    setTasks(withTimestamps);
+                    setFromCache(false);
                 }
+            } catch(error){
+                console.log('Could not refresh tasks from Django; keeping cached tasks.', error);
+            } finally {
+                if (isMounted) setIsLoading(false);
             }
         }
 
@@ -56,6 +53,7 @@ export function useCachedTasks() {
         const handleTaskChange = (e: Event) => {
             const detail = (e as CustomEvent).detail;
             if (!detail) return;
+            taskChangeVersion.current += 1;
 
             if (detail.action === 'create' && detail.task) {
                 setTasks(prev => {
@@ -67,6 +65,8 @@ export function useCachedTasks() {
                 setTasks(prev => prev.map(t => t.id === detail.task.id ? { ...t, ...detail.task } : t));
             } else if (detail.action === 'delete' && detail.taskId) {
                 setTasks(prev => prev.filter(t => t.id !== detail.taskId));
+            } else if (detail.action === 'refresh' && Array.isArray(detail.tasks)) {
+                setTasks(detail.tasks);
             }
         };
 

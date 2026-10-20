@@ -22,9 +22,8 @@ export async function fetchTasksAPI(): Promise<Task[]> {
     return data.tasks || []; // Adjust based on backend
 
   }catch(error){
-    console.log(`Internal Error: ${error}`)
-
-    return [];
+    console.log(`Internal Error: ${error}`);
+    throw error;
   }
 }
 
@@ -89,5 +88,21 @@ export async function deleteTaskAPI(taskId: number | string): Promise<boolean> {
     } catch (e) {
         console.warn("Backend API task delete failed, deleted locally", e);
         return true;
+    }
+}
+
+export async function rescoreTaskAPI(taskId: number | string): Promise<Task | null> {
+    try {
+        const res = await fetch('/api/tasks/', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ id: taskId, action: 'rescore' }),
+        });
+        if (!res.ok) return null;
+        return await res.json();
+    } catch (error) {
+        console.warn('Task rescore request failed', error);
+        return null;
     }
 }

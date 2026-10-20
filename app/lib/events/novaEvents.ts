@@ -2,9 +2,10 @@
 'use client';
 
 type TaskEventDetail = {
-  action: 'create' | 'update' | 'delete';
+  action: 'create' | 'update' | 'delete' | 'refresh';
   task?: any;
   taskId?: number | string;
+  tasks?: any[];
 };
 
 type ProjectEventDetail = {
