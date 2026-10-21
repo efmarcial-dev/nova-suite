@@ -7,6 +7,7 @@ import { getCurrentUser, getTenant } from '@/app/lib/getTenant';
 
 import SubscriptionGuard from '@/app/components/SubscriptionGuard';
 import FirstRunTourModal from '@/app/components/FirstRunTourModal';
+import DashboardAnalytics from '@/app/components/DashboardAnalytics';
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   
@@ -15,6 +16,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   return (
       <div className='h-full bg-[--background] flex'>
+        <DashboardAnalytics />
         <Sidebar />
         <main className="flex-1 flex flex-col min-w-0 p-4 gap-4 overflow-hidden">
           <Header />
