@@ -8,6 +8,12 @@ import { useEffect, useState } from "react";
 import TaskBoard from "./components/TaskBoard";
 
 import { useCachedProjects } from "@/app/hooks/useCachedProjects";
+import { useCachedTasks } from "@/app/hooks/useCachedTasks";
+import { clearDemoTasksAPI } from "@/app/lib/api/tasks";
+import { replaceTasksInCache } from "@/app/lib/cache/NovaCacheHelpers";
+import { emitTaskChangeEvent } from "@/app/lib/events/novaEvents";
+import { isDemoTask } from "@/app/lib/constants/starterWorkspace";
+import { Trash2, CheckCircle2, Loader2 } from "lucide-react";
 
 
 export default function TasksPage() {
@@ -18,8 +24,33 @@ export default function TasksPage() {
   const [hasPills, setHasPills] = useState(false);
   const [pendingOnly, setPendingOnly] = useState(false);
   const [priorityFilter, setPriorityFilter] = useState<'all' | 'high' | 'important'>('all');
+  const [isRemovingDemo, setIsRemovingDemo] = useState(false);
+  const [demoRemovedSuccess, setDemoRemovedSuccess] = useState(false);
 
-  const {projects: cachedProjects} = useCachedProjects();
+  const { projects: cachedProjects } = useCachedProjects();
+  const { tasks } = useCachedTasks();
+
+  const hasDemoTasks = tasks.some(t => isDemoTask(t));
+
+  const handleRemoveDemoTasks = async () => {
+    if (isRemovingDemo) return;
+    setIsRemovingDemo(true);
+    try {
+      await clearDemoTasksAPI();
+      const remainingTasks = tasks.filter(t => !isDemoTask(t));
+      await replaceTasksInCache(remainingTasks);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('nova_demo_tasks_cleared', 'true');
+      }
+      emitTaskChangeEvent({ action: 'refresh', tasks: remainingTasks });
+      setDemoRemovedSuccess(true);
+      setTimeout(() => setDemoRemovedSuccess(false), 3000);
+    } catch (err) {
+      console.error('Failed to remove demo tasks:', err);
+    } finally {
+      setIsRemovingDemo(false);
+    }
+  };
 
   useEffect(() => {
     setPendingOnly(new URLSearchParams(window.location.search).get('filter') === 'pending');
@@ -31,7 +62,34 @@ export default function TasksPage() {
       {/* Header row */}
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-semibold text-[--foreground]">Tasks</h1>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
+          {hasDemoTasks && (
+            <button
+              type="button"
+              onClick={handleRemoveDemoTasks}
+              disabled={isRemovingDemo}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-rose-200 bg-rose-50/80 hover:bg-rose-100 text-rose-700 text-xs font-semibold transition shadow-sm disabled:opacity-50"
+              title="Remove all demo and placeholder tasks"
+            >
+              {isRemovingDemo ? (
+                <>
+                  <Loader2 size={13} className="animate-spin" />
+                  Removing...
+                </>
+              ) : demoRemovedSuccess ? (
+                <>
+                  <CheckCircle2 size={13} className="text-emerald-600" />
+                  Demo tasks removed
+                </>
+              ) : (
+                <>
+                  <Trash2 size={13} />
+                  Remove demo tasks
+                </>
+              )}
+            </button>
+          )}
+
           <ViewToggle view={view} setView={setView} />
           <label className="sr-only" htmlFor="task-priority-filter">Filter tasks by priority</label>
           <select

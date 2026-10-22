@@ -103,6 +103,16 @@ export async function clearCachedProjects() {
     return await db.clear('projects');
 }
 
+export async function replaceProjectsInCache(projects: any[]) {
+    const db = await initNovaCache();
+    const tx = db.transaction('projects', 'readwrite');
+    await tx.store.clear();
+    for (const project of projects) {
+        await tx.store.put(project);
+    }
+    await tx.done;
+}
+
 export async function updateProjectInCache(updatedProject: any) {
     const db = await initNovaCache();
     await db.put('projects', updatedProject);

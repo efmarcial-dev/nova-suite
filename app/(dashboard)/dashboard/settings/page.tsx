@@ -29,7 +29,6 @@ import {
   Trophy,
 } from 'lucide-react';
 import { useSubscription } from '@/app/hooks/useSubscription';
-import SquarePaymentPortal from '@/app/components/SquarePaymentPortal';
 
 type EmailProviderId = 'gmail' | 'microsoft';
 

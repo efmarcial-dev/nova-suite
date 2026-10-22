@@ -12,13 +12,7 @@ export async function POST(req: Request) {
 
   try {
     const body = await req.json();
-    const {
-      source_id,
-      amount,
-      plan = 'founder_lifetime',
-      promo_code = '',
-      buyer_verification_token = null,
-    } = body;
+    const { source_id, buyer_verification_token = null } = body;
 
     if (!source_id) {
       return NextResponse.json(
@@ -36,9 +30,9 @@ export async function POST(req: Request) {
       },
       body: JSON.stringify({
         source_id,
-        amount,
-        plan,
-        promo_code,
+        amount: 4900,
+        plan: 'founder_lifetime',
+        promo_code: '',
         buyer_verification_token,
       }),
     });

@@ -9,9 +9,10 @@ type TaskEventDetail = {
 };
 
 type ProjectEventDetail = {
-  action: 'create' | 'update' | 'delete';
+  action: 'create' | 'update' | 'delete' | 'refresh';
   project?: any;
   projectId?: number | string;
+  projects?: any[];
 };
 
 export const NOVA_TASK_EVENT = 'nova:task-change';

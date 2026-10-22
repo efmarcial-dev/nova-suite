@@ -106,3 +106,25 @@ export async function rescoreTaskAPI(taskId: number | string): Promise<Task | nu
         return null;
     }
 }
+
+export async function clearDemoTasksAPI(): Promise<{ success: boolean; deletedCount?: number; deletedIds?: string[] }> {
+    try {
+        const res = await fetch('/api/tasks/clear-demo', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+        });
+        if (!res.ok) {
+            throw new Error(`Failed to clear demo tasks (${res.status})`);
+        }
+        const data = await res.json();
+        return {
+            success: true,
+            deletedCount: data.deleted_count ?? 0,
+            deletedIds: data.deleted_ids ?? [],
+        };
+    } catch (error) {
+        console.warn('Failed to clear demo tasks on backend:', error);
+        return { success: false };
+    }
+}

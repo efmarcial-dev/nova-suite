@@ -68,6 +68,8 @@ export function useCachedProjects() {
                 setProjects(prev => prev.map(p => p.id === detail.project.id ? { ...p, ...detail.project } : p));
             } else if (detail.action === 'delete' && detail.projectId) {
                 setProjects(prev => prev.filter(p => p.id !== detail.projectId));
+            } else if (detail.action === 'refresh' && Array.isArray(detail.projects)) {
+                setProjects(detail.projects);
             }
         };
 

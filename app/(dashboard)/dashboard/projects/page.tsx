@@ -2,9 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { useCachedProjects } from "@/app/hooks/useCachedProjects";
-import { updateProjectAPI, createProject } from "@/app/lib/api/projects";
-import { Plus, Briefcase, CalendarDays, X, Check, Clock, AlertCircle } from "lucide-react";
+import { updateProjectAPI, createProject, clearDemoProjectsAPI } from "@/app/lib/api/projects";
+import { Plus, Briefcase, CalendarDays, X, Check, Clock, AlertCircle, Trash2, CheckCircle2, Loader2 } from "lucide-react";
 import ModalPanel from "@/app/components/ModalPanel";
+import { isDemoProject, isDemoTask } from "@/app/lib/constants/starterWorkspace";
+import { replaceProjectsInCache, replaceTasksInCache, getCachedTasks } from "@/app/lib/cache/NovaCacheHelpers";
+import { emitProjectChangeEvent, emitTaskChangeEvent } from "@/app/lib/events/novaEvents";
 
 const statusConfig: Record<string, { label: string; classes: string; dot: string }> = {
   completed:   { label: 'Completed',   classes: 'bg-emerald-50 text-emerald-700 border-emerald-200', dot: 'bg-emerald-500' },
@@ -38,6 +41,40 @@ export default function ProjectsPage() {
   const [newDesc, setNewDesc] = useState("");
   const [newStatus, setNewStatus] = useState("planning");
   const [isCreating, setIsCreating] = useState(false);
+  const [isRemovingDemo, setIsRemovingDemo] = useState(false);
+  const [demoRemovedSuccess, setDemoRemovedSuccess] = useState(false);
+
+  const hasDemoProjects = projects.some(p => isDemoProject(p));
+
+  const handleRemoveDemoProjects = async () => {
+    if (isRemovingDemo) return;
+    setIsRemovingDemo(true);
+    try {
+      await clearDemoProjectsAPI();
+      const remainingProjects = projects.filter(p => !isDemoProject(p));
+      await replaceProjectsInCache(remainingProjects);
+
+      // Also clean up any demo tasks in cache tied to demo projects
+      const allCachedTasks = await getCachedTasks();
+      const remainingTasks = allCachedTasks.filter(t => !isDemoTask(t));
+      await replaceTasksInCache(remainingTasks);
+
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('nova_demo_projects_cleared', 'true');
+        localStorage.setItem('nova_demo_tasks_cleared', 'true');
+      }
+
+      emitProjectChangeEvent({ action: 'refresh', projects: remainingProjects });
+      emitTaskChangeEvent({ action: 'refresh', tasks: remainingTasks });
+
+      setDemoRemovedSuccess(true);
+      setTimeout(() => setDemoRemovedSuccess(false), 3000);
+    } catch (err) {
+      console.error('Failed to remove demo projects:', err);
+    } finally {
+      setIsRemovingDemo(false);
+    }
+  };
 
   useEffect(() => {
     const status = new URLSearchParams(window.location.search).get("status");
@@ -140,12 +177,41 @@ export default function ProjectsPage() {
             {projects.length} project{projects.length !== 1 ? 's' : ''} total • Click any card to edit details and status
           </p>
         </div>
-        <button
-          onClick={() => setShowCreateModal(true)}
-          className="flex items-center gap-2 px-4 py-2 rounded-xl gradient-brand text-white text-sm font-medium hover:opacity-90 transition-opacity shadow-md shadow-indigo-200"
-        >
-          <Plus size={15} /> New Project
-        </button>
+        <div className="flex items-center gap-3">
+          {hasDemoProjects && (
+            <button
+              type="button"
+              onClick={handleRemoveDemoProjects}
+              disabled={isRemovingDemo}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-rose-200 bg-rose-50/80 hover:bg-rose-100 text-rose-700 text-xs font-semibold transition shadow-sm disabled:opacity-50"
+              title="Remove all demo and placeholder projects"
+            >
+              {isRemovingDemo ? (
+                <>
+                  <Loader2 size={13} className="animate-spin" />
+                  Removing...
+                </>
+              ) : demoRemovedSuccess ? (
+                <>
+                  <CheckCircle2 size={13} className="text-emerald-600" />
+                  Demo projects removed
+                </>
+              ) : (
+                <>
+                  <Trash2 size={13} />
+                  Remove demo projects
+                </>
+              )}
+            </button>
+          )}
+
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl gradient-brand text-white text-sm font-medium hover:opacity-90 transition-opacity shadow-md shadow-indigo-200"
+          >
+            <Plus size={15} /> New Project
+          </button>
+        </div>
       </div>
 
       {/* Filter tabs */}

@@ -2,8 +2,6 @@
 
 import { useState } from 'react';
 import SquarePaymentPortal from '@/app/components/SquarePaymentPortal';
-import FounderMilestoneCard from '@/app/components/FounderMilestoneCard';
-import { Trophy } from 'lucide-react';
 
 interface SubscribeStepProps {
   onNext: () => void;
@@ -24,29 +22,24 @@ export default function SubscribeStep({ onNext, onBack }: SubscribeStepProps) {
 
   return (
     <div className="space-y-4">
-      {/* 100th User Milestone Celebration Banner */}
-      <FounderMilestoneCard variant="banner" />
-
       <div className="text-center max-w-lg mx-auto">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-800 text-[11px] font-semibold mb-1.5">
-          <Trophy className="w-3.5 h-3.5 text-amber-600" />
-          <span>Final Step &bull; Activate Founder Account</span>
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-700 text-[11px] font-semibold mb-1.5">
+          <span>Final Step &bull; Founder lifetime access</span>
         </div>
         <h2 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight">
-          Secure Your Founder Lifetime Pass
+          Activate NovaSuite
         </h2>
         <p className="text-gray-500 text-xs mt-1">
-          One payment. Lifetime access. No recurring subscription.
+          One payment of $49. Lifetime access. No recurring subscription.
         </p>
       </div>
 
       {/* Square Payment Portal */}
       <div className="max-w-xl mx-auto">
         <SquarePaymentPortal
-          planName="Nova Executive Founder Lifetime Pass"
-          originalPrice={199}
-          finalPrice={99}
-          promoCode="FOUNDER100"
+          planName="NovaSuite Founder Lifetime Access"
+          originalPrice={49}
+          finalPrice={49}
           onSuccess={handlePaymentSuccess}
           onCancel={onBack}
         />

@@ -61,6 +61,9 @@ export default function PrivacyPolicyPage() {
                 <strong className="text-slate-800">Billing & Payment Tokens:</strong> Payment processing is handled directly via Square Web Payments SDK. Sensitive card details are tokenized securely directly on Square&apos;s servers. NovaSuite never stores raw credit card numbers or security CVVs.
               </li>
               <li>
+                <strong className="text-slate-800">AI Chat Content:</strong> Chat prompts and responses are saved to your account so you can return to prior conversations. To generate replies, the prompt and relevant conversation history are sent to configured AI providers in this order: Hugging Face, Groq, then OpenRouter when an earlier provider is unavailable.
+              </li>
+              <li>
                 <strong className="text-slate-800">Operational & Telemetry Logs:</strong> Device type, browser user agent, IP address, request timestamps, and system diagnostic logs to prevent fraud and ensure platform uptime.
               </li>
             </ul>

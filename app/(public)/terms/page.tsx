@@ -76,7 +76,7 @@ export default function TermsOfServicePage() {
                 <strong>Billing &amp; Processing:</strong> Payments are processed securely via Square Web Payments. By submitting payment details, you authorize our processing partner to charge the specified amount.
               </li>
               <li>
-                <strong>Founder 100 Lifetime Access:</strong> Promotional lifetime licenses (e.g., $99 one-time payment under code <code>FOUNDER100</code>) grant uninterrupted access to the standard NovaSuite platform tiers for the operational lifetime of the product without recurring renewal fees.
+                <strong>Founder Lifetime Access:</strong> The $49 one-time Founder purchase grants uninterrupted access to the standard NovaSuite platform tiers for the operational lifetime of the product without recurring renewal fees.
               </li>
               <li>
                 <strong>Refunds &amp; Cancellations:</strong> Monthly or annual subscription fees can be cancelled at any time from your Workspace Settings. Because digital access credentials and tokens are provisioned immediately, one-time lifetime license purchases are non-refundable after fourteen (14) days from the initial transaction date unless required by law.

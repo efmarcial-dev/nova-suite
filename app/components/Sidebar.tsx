@@ -1,6 +1,6 @@
 'use client'
 
-import { Home, ListTodo, CalendarDays, FolderKanban, Settings, HelpCircle, LogOut, Plus } from 'lucide-react';
+import { Home, ListTodo, CalendarDays, FolderKanban, Settings, HelpCircle, LogOut, Plus, MessageSquareText } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import ModalPanel from './ModalPanel';
@@ -27,6 +27,7 @@ export default function Sidebar() {
     { icon: <ListTodo size={17} />, text: 'Tasks', href: '/dashboard/tasks' },
     { icon: <FolderKanban size={17} />, text: 'Projects', href: '/dashboard/projects' },
     { icon: <CalendarDays size={17} />, text: 'Calendar', href: '/dashboard/calendar' },
+    { icon: <MessageSquareText size={17} />, text: 'AI Chat', href: '/dashboard/chat' },
   ];
 
   const bottomLinks = [

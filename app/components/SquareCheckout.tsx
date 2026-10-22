@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { CreditCard, PaymentForm } from 'react-square-web-payments-sdk';
-import { ShieldCheck, CheckCircle2, AlertCircle, Sparkles, Lock, Trophy, RefreshCw } from 'lucide-react';
+import { ShieldCheck, CheckCircle2, AlertCircle, Sparkles, Lock, RefreshCw } from 'lucide-react';
 import { fetchWithAuthRefresh } from '@/app/lib/api/fetchWithAuthRefresh';
 
 interface SquareCheckoutProps {
@@ -17,11 +17,11 @@ interface SquareCheckoutProps {
 }
 
 export default function SquareCheckout({
-  planName = 'Nova Executive Founder Lifetime Pass',
-  originalPrice = 199,
-  finalPrice = 99,
-  promoCode = 'FOUNDER100',
-  amountCents = 9900, // $99.00 in cents
+  planName = 'NovaSuite Founder Lifetime Access',
+  originalPrice = 49,
+  finalPrice = 49,
+  promoCode,
+  amountCents = 4900,
   plan = 'founder_lifetime',
   onSuccess,
   onCancel,
@@ -32,6 +32,9 @@ export default function SquareCheckout({
 
   const APPLICATION_ID = process.env.NEXT_PUBLIC_SQUARE_APP_ID || process.env.NEXT_PUBLIC_SQUARE_APPLICATION_ID || '';
   const LOCATION_ID = process.env.NEXT_PUBLIC_SQUARE_LOCATION_ID || '';
+  const squareEnvironment = process.env.NEXT_PUBLIC_SQUARE_ENVIRONMENT || 'sandbox';
+  const applicationIsSandbox = APPLICATION_ID.startsWith('sandbox-');
+  const environmentMatches = squareEnvironment === 'production' ? !applicationIsSandbox : applicationIsSandbox;
 
   const handlePaymentTokenReceived = async (tokenResult: any, buyer?: any) => {
     setIsProcessing(true);
@@ -112,21 +115,23 @@ export default function SquareCheckout({
       {/* Header */}
       <div className="bg-gradient-to-r from-amber-50 to-indigo-50/60 border border-amber-200/70 rounded-2xl p-4">
         <div className="flex items-start gap-3">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-amber-500 to-amber-400 text-white flex items-center justify-center shrink-0">
-            <Trophy className="w-4.5 h-4.5" />
+          <div className="w-9 h-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center shrink-0">
+            <ShieldCheck className="w-4.5 h-4.5" />
           </div>
           <div>
             <div className="font-bold text-gray-900 text-sm">{planName}</div>
             <div className="flex items-center gap-2 mt-0.5">
-              <span className="text-xs text-gray-400 line-through">${originalPrice}.00</span>
+              {originalPrice > finalPrice && (
+                <span className="text-xs text-gray-400 line-through">${originalPrice}.00</span>
+              )}
               <span className="text-base font-extrabold text-gray-900">${finalPrice}.00 USD</span>
               <span className="text-[11px] font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded border border-emerald-200">
-                One-time for life
+                Lifetime · one time
               </span>
             </div>
             {promoCode && (
               <div className="text-[11px] text-amber-700 mt-1 font-medium">
-                🎉 Promo <code className="font-mono font-semibold">{promoCode}</code> applied — $100 OFF
+                Promo <code className="font-mono font-semibold">{promoCode}</code> applied
               </div>
             )}
           </div>
@@ -156,7 +161,7 @@ export default function SquareCheckout({
 
         {/* PaymentForm from react-square-web-payments-sdk */}
         <div className="p-5">
-          {APPLICATION_ID && LOCATION_ID ? (
+          {APPLICATION_ID && LOCATION_ID && environmentMatches ? (
             <PaymentForm
               applicationId={APPLICATION_ID}
               locationId={LOCATION_ID}
@@ -180,19 +185,24 @@ export default function SquareCheckout({
                   },
                 }}
               >
-                {isProcessing ? 'Processing...' : `Pay $${finalPrice}.00 — Activate Founder Pass`}
+                {isProcessing ? 'Processing...' : `Pay $${finalPrice}.00 — Activate lifetime access`}
               </CreditCard>
             </PaymentForm>
           ) : (
             /* Env vars missing — show clear instructions */
             <div className="text-center py-8 px-4 bg-amber-50 rounded-xl border border-amber-200">
               <Sparkles className="w-8 h-8 text-amber-500 mx-auto mb-3" />
-              <h4 className="font-semibold text-gray-900 text-sm mb-1">Square Credentials Required</h4>
+              <h4 className="font-semibold text-gray-900 text-sm mb-1">
+                {!environmentMatches ? 'Square Environment Mismatch' : 'Square Credentials Required'}
+              </h4>
               <p className="text-xs text-gray-600 mb-3">
-                Add your Square sandbox keys to <code className="bg-gray-100 px-1 rounded">.env.local</code> to enable live card entry:
+                {!environmentMatches
+                  ? `The ${squareEnvironment} setting does not match the Square application ID. Use matching ${squareEnvironment} credentials.`
+                  : 'Configure matching Square application and location IDs for the selected environment.'}
               </p>
               <div className="text-left bg-gray-900 text-emerald-300 font-mono text-[11px] rounded-lg p-3 space-y-1">
-                <div>NEXT_PUBLIC_SQUARE_APP_ID=sandbox-sq0idb-...</div>
+                <div>NEXT_PUBLIC_SQUARE_ENVIRONMENT=sandbox | production</div>
+                <div>NEXT_PUBLIC_SQUARE_APP_ID=sq0idp-... or sandbox-sq0idb-...</div>
                 <div>NEXT_PUBLIC_SQUARE_LOCATION_ID=L...</div>
               </div>
             </div>

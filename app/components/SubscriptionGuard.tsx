@@ -1,98 +1,107 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { useSubscription } from '@/app/hooks/useSubscription';
 import SquareCheckout from '@/app/components/SquareCheckout';
-import FounderMilestoneCard from '@/app/components/FounderMilestoneCard';
-import { ShieldAlert, Sparkles, Lock, ArrowRight, Check } from 'lucide-react';
-import Link from 'next/link';
+import { Check, CreditCard, RefreshCw, ShieldAlert, Lock } from 'lucide-react';
 
 export default function SubscriptionGuard({ children }: { children: React.ReactNode }) {
-  const { subscription, hasAccess, isLoading, refreshSubscription } = useSubscription();
-  const [showPortal, setShowPortal] = useState(false);
+  const { hasAccess, isLoading, error, refreshSubscription } = useSubscription();
+  const [showCheckout, setShowCheckout] = useState(false);
 
-  // While checking subscription status or if user has active/lifetime access, render children
-  if (isLoading || hasAccess) {
-    return <>{children}</>;
+  // While loading and not yet verified: render a clean, sleek background.
+  // No tacky spinner or "Checking your subscription..." text.
+  // The dashboard stays hidden so unpaid users NEVER see any dashboard pages.
+  if (isLoading && !hasAccess) {
+    return (
+      <div className="min-h-screen bg-slate-950 transition-colors" aria-busy="true" />
+    );
   }
 
-  // Paywall: user can log in, but can NOT use the dashboard until payment is confirmed
+  // Error verifying subscription: show a clean message card on the dark background.
+  if (error && !hasAccess) {
+    return (
+      <div className="min-h-screen grid place-items-center bg-slate-950 p-4 text-white">
+        <div className="w-full max-w-md rounded-3xl border border-white/10 bg-white p-8 text-center text-slate-900 shadow-2xl">
+          <ShieldAlert className="mx-auto mb-4 h-9 w-9 text-amber-500" />
+          <h1 className="text-xl font-bold">We couldn't verify your subscription</h1>
+          <p className="mt-2 text-sm text-slate-600">
+            Your dashboard stays locked until we can confirm your account status.
+          </p>
+          <button
+            type="button"
+            onClick={() => void refreshSubscription()}
+            className="mt-6 inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-5 py-3 text-sm font-semibold text-white hover:bg-indigo-700"
+          >
+            <RefreshCw className="h-4 w-4" /> Try again
+          </button>
+          <Link href="/logout" className="mt-4 block text-sm text-slate-500 underline underline-offset-4">
+            Sign out
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  // Confirmed access — show dashboard.
+  if (hasAccess) return <>{children}</>;
+
+  // Confirmed NO access — hard paywall. No way around it.
   return (
-    <div className="min-h-[80vh] flex flex-col items-center justify-center p-4 sm:p-8">
-      <div className="max-w-xl w-full bg-white rounded-3xl border border-gray-200 shadow-xl p-6 sm:p-10 space-y-6">
-        
-        {/* Milestone Card */}
-        <FounderMilestoneCard variant="banner" />
-
-        <div className="text-center space-y-2">
-          <div className="w-14 h-14 rounded-2xl bg-amber-50 text-amber-600 border border-amber-200 flex items-center justify-center mx-auto shadow-xs">
-            <Lock className="w-7 h-7" />
+    <div className="min-h-screen grid place-items-center bg-slate-950 p-4 sm:p-8">
+      <div className="w-full max-w-xl space-y-6 rounded-3xl border border-white/10 bg-white p-6 shadow-2xl sm:p-10">
+        <div className="text-center">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl border border-indigo-100 bg-indigo-50 text-indigo-600">
+            <Lock className="h-7 w-7" />
           </div>
-
-          <h2 className="text-2xl font-extrabold text-gray-900 tracking-tight">
-            Account Activation Required
-          </h2>
-          <p className="text-xs sm:text-sm text-gray-500 max-w-md mx-auto leading-relaxed">
-            Welcome to NovaSuite! You are logged in, but your workspace requires an active license before accessing executive email intelligence, meeting briefings, and task boards.
+          <h1 className="mt-4 text-2xl font-extrabold tracking-tight text-slate-950">
+            Activate NovaSuite
+          </h1>
+          <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-slate-600">
+            An active Founder subscription is required to use the dashboard and connected services.
           </p>
         </div>
 
-        {/* Feature summary */}
-        <div className="p-4 bg-gray-50 rounded-2xl border border-gray-200/80 space-y-2">
-          <p className="text-[11px] font-bold uppercase tracking-wider text-gray-500">
-            Included in your Founder Lifetime Access:
-          </p>
-          <div className="grid grid-cols-2 gap-2 text-xs text-gray-700">
-            <span className="flex items-center gap-1.5"><Check size={13} className="text-emerald-600" /> Email triage &amp; drafts</span>
-            <span className="flex items-center gap-1.5"><Check size={13} className="text-emerald-600" /> Calendar conflict sync</span>
-            <span className="flex items-center gap-1.5"><Check size={13} className="text-emerald-600" /> AI task delegation</span>
-            <span className="flex items-center gap-1.5"><Check size={13} className="text-emerald-600" /> Executive briefings</span>
-          </div>
+        <div className="grid grid-cols-2 gap-3 rounded-2xl border border-slate-100 bg-slate-50 p-4 text-xs text-slate-700">
+          <span className="flex items-center gap-2"><Check size={14} className="text-emerald-600" /> Email intelligence</span>
+          <span className="flex items-center gap-2"><Check size={14} className="text-emerald-600" /> Calendar sync</span>
+          <span className="flex items-center gap-2"><Check size={14} className="text-emerald-600" /> AI chat and task planning</span>
+          <span className="flex items-center gap-2"><Check size={14} className="text-emerald-600" /> Projects and reminders</span>
         </div>
 
-        {/* Square Embedded Portal */}
-        {showPortal ? (
-          <div className="space-y-3">
-            <SquareCheckout
-              planName="Nova Executive Founder Lifetime Pass"
-              originalPrice={199}
-              finalPrice={99}
-              promoCode="FOUNDER100"
-              amountCents={9900}
-              plan="founder_lifetime"
-              onSuccess={() => {
-                refreshSubscription();
-              }}
-              onCancel={() => setShowPortal(false)}
-            />
-          </div>
+        <div className="rounded-2xl border border-indigo-100 bg-indigo-50/70 p-4 text-center">
+          <p className="text-xs font-semibold uppercase tracking-widest text-indigo-700">Founder lifetime access</p>
+          <p className="mt-1 text-3xl font-black text-slate-950">$49 <span className="text-sm font-semibold text-slate-500">USD · one time</span></p>
+          <p className="mt-1 text-xs text-slate-600">Pay once. Keep access for the life of NovaSuite.</p>
+        </div>
+
+        {showCheckout ? (
+          <SquareCheckout
+            planName="NovaSuite Founder Lifetime Access"
+            originalPrice={49}
+            finalPrice={49}
+            amountCents={4900}
+            plan="founder_lifetime"
+            onSuccess={() => void refreshSubscription()}
+            onCancel={() => setShowCheckout(false)}
+          />
         ) : (
-          <div className="space-y-3 pt-2">
-            <button
-              type="button"
-              onClick={() => setShowPortal(true)}
-              className="w-full flex items-center justify-center gap-2 py-3.5 px-6 rounded-2xl gradient-brand text-white text-sm font-bold shadow-lg shadow-indigo-100 hover:opacity-95 transition cursor-pointer"
-            >
-              <Sparkles size={16} />
-              <span>Activate Lifetime Access ($99 One-Time)</span>
-              <ArrowRight size={16} />
-            </button>
-
-            <div className="text-center">
-              <Link
-                href="/onboarding"
-                className="text-xs text-gray-400 hover:text-indigo-600 underline transition"
-              >
-                Or review your onboarding preferences &rarr;
-              </Link>
-            </div>
-          </div>
+          <button
+            type="button"
+            onClick={() => setShowCheckout(true)}
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-6 py-4 text-sm font-bold text-white shadow-lg shadow-indigo-200 transition hover:bg-indigo-700"
+          >
+            <CreditCard className="h-4 w-4" /> Continue to secure payment
+          </button>
         )}
 
-        <div className="pt-2 border-t border-gray-100 flex items-center justify-center gap-2 text-[11px] text-gray-400">
-          <ShieldAlert size={12} className="text-gray-400" />
-          <span>Encrypted payment processed directly by Square &bull; 100% Secure</span>
+        <div className="flex items-center justify-center gap-2 border-t border-slate-100 pt-4 text-[11px] text-slate-500">
+          <ShieldAlert className="h-3.5 w-3.5" /> Card details are handled securely by Square
         </div>
+        <Link href="/logout" className="block text-center text-xs text-slate-500 underline underline-offset-4">
+          Sign out
+        </Link>
       </div>
     </div>
   );

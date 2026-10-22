@@ -76,4 +76,26 @@ export async function updateProjectAPI(id: string | number, updates: {
     }
 }
 
+export async function clearDemoProjectsAPI(): Promise<{ success: boolean; deletedCount?: number; deletedIds?: any[] }> {
+    try {
+        const res = await fetch('/api/projects/clear-demo', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+        });
+        if (!res.ok) {
+            throw new Error(`Failed to clear demo projects (${res.status})`);
+        }
+        const data = await res.json();
+        return {
+            success: true,
+            deletedCount: data.deleted_count ?? 0,
+            deletedIds: data.deleted_ids ?? [],
+        };
+    } catch (error) {
+        console.warn('Failed to clear demo projects on backend:', error);
+        return { success: false };
+    }
+}
+
 export { updateProjectAPI as updateProject };
