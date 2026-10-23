@@ -20,6 +20,7 @@
     "@radix-ui/react-dialog": "^1.1.14",
     "@radix-ui/react-popover": "^1.1.14",
     "@radix-ui/react-slot": "^1.2.3",
+    "@vercel/analytics": "^2.0.1",
     "aos": "^2.3.4",
     "axios": "^1.10.0",
     "class-variance-authority": "^0.7.1",
@@ -59,5 +60,10 @@
     "tailwindcss": "^4.1.6",
     "tw-animate-css": "^1.3.5",
     "typescript": "^5"
+  },
+  "allowScripts": {
+    "@firebase/util@1.15.3": true,
+    "protobufjs@7.6.6": true,
+    "unrs-resolver@1.7.2": true
   }
 }
