@@ -31,6 +31,13 @@ export interface EmailInsight {
   suggested_action: string | null;
   action_items: Array<{ task: string; due_date: string | null }>;
   reply_draft: string | null;
+  proposed_actions: Array<{
+    id: string;
+    kind: 'task' | 'project' | 'calendar_create' | 'calendar_update' | 'calendar_cancel';
+    payload: Record<string, any>;
+    explanation: string;
+    status: 'pending' | 'approved' | 'dismissed';
+  }>;
   analyzed_at: string;
 }
 
@@ -155,6 +162,22 @@ export async function analyzeEmailMessagesAPI(
   return data.insights && typeof data.insights === 'object' ? data.insights : {};
 }
 
+export async function decideEmailActionAPI(payload: {
+  action_id: string;
+  decision: 'approve' | 'dismiss';
+  grant_id?: string;
+  calendar_id?: string;
+}): Promise<{ id: string; status: string; result_id?: string }> {
+  const res = await fetch('/api/email/messages/actions/', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) await throwProviderApiError(res, `Email action failed (${res.status})`);
+  return res.json();
+}
+
 export async function draftEmailReplyAPI(payload: {
   provider: string;
   instruction: string;
@@ -175,6 +198,7 @@ export async function sendEmailReplyAPI(payload: {
   provider: string;
   message_id: string;
   content: string;
+  grant_id?: string;
 }): Promise<any> {
   const res = await fetch('/api/email/messages/reply/', {
     method: 'POST',

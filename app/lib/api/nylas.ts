@@ -16,6 +16,11 @@ export interface NylasStatus {
   total_connected: number;
   has_email: boolean;
   has_calendar: boolean;
+  is_unified: boolean;
+  email_account_count: number;
+  calendar_account_count: number;
+  is_email_unified: boolean;
+  is_calendar_unified: boolean;
   providers: string[];
   accounts: NylasGrant[];
 }
@@ -86,13 +91,35 @@ export async function fetchNylasStatusAPI(): Promise<NylasStatus> {
     });
 
     if (!res.ok) {
-      return { total_connected: 0, has_email: false, has_calendar: false, providers: [], accounts: [] };
+      return {
+        total_connected: 0,
+        has_email: false,
+        has_calendar: false,
+        is_unified: false,
+        email_account_count: 0,
+        calendar_account_count: 0,
+        is_email_unified: false,
+        is_calendar_unified: false,
+        providers: [],
+        accounts: [],
+      };
     }
 
     return await res.json();
   } catch (error) {
     console.warn('Failed to fetch Nylas status', error);
-    return { total_connected: 0, has_email: false, has_calendar: false, providers: [], accounts: [] };
+    return {
+      total_connected: 0,
+      has_email: false,
+      has_calendar: false,
+      is_unified: false,
+      email_account_count: 0,
+      calendar_account_count: 0,
+      is_email_unified: false,
+      is_calendar_unified: false,
+      providers: [],
+      accounts: [],
+    };
   }
 }
 

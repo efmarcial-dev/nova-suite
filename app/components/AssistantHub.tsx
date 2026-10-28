@@ -5,23 +5,21 @@ import Link from 'next/link';
 import {
   Sparkles,
   Mail,
-  Send,
   Zap,
   RefreshCw,
   AlertTriangle,
   CheckCircle2,
+  Check,
+  X,
 } from 'lucide-react';
-import ModalPanel from '@/app/components/ModalPanel';
 import { useCachedUser } from '../hooks/useCachedUser';
-import { fetchMessagesAPI, createMessageAPI } from '@/app/lib/api/messages';
+import { fetchMessagesAPI } from '@/app/lib/api/messages';
 import {
   analyzeEmailMessagesAPI,
-  draftEmailReplyAPI,
+  decideEmailActionAPI,
   fetchEmailProvidersAPI,
   fetchEmailMessagesAPI,
   connectEmailProviderAPI,
-  sendEmailReplyAPI,
-  EmailReplyDraft,
   EmailInsight,
   EmailMessageItem,
   EmailProviderStatus
@@ -58,12 +56,13 @@ export default function AssistantHub({ className = '' }: { className?: string })
   const [inboxEmails, setInboxEmails] = useState<EmailMessageItem[]>([]);
   const [connectedEmailProvider, setConnectedEmailProvider] = useState<EmailProviderStatus | null>(null);
   const [nylasGrants, setNylasGrants] = useState<NylasGrant[]>([]);
+  const [calendarGrants, setCalendarGrants] = useState<NylasGrant[]>([]);
   const [selectedGrantId, setSelectedGrantId] = useState<string>('all');
   const [isConnectingProvider, setIsConnectingProvider] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [directiveInput, setDirectiveInput] = useState('');
-  const [isDispatching, setIsDispatching] = useState(false);
-  const [directiveError, setDirectiveError] = useState('');
+  const [actionBusyId, setActionBusyId] = useState('');
+  const [actionError, setActionError] = useState('');
+  const [actionGrantIds, setActionGrantIds] = useState<Record<string, string>>({});
   const [providerError, setProviderError] = useState('');
   const [providerReconnectRequired, setProviderReconnectRequired] = useState(false);
   const [isAnalyzingAI, setIsAnalyzingAI] = useState(false);
@@ -71,37 +70,7 @@ export default function AssistantHub({ className = '' }: { className?: string })
   const [aiAnalysisComplete, setAiAnalysisComplete] = useState(false);
   const [aiError, setAiError] = useState('');
   const [emailFilter, setEmailFilter] = useState<'all' | 'important' | 'high'>('all');
-  const [replyCommand, setReplyCommand] = useState('');
-  const [isDraftingReply, setIsDraftingReply] = useState(false);
-  const [isSendingReply, setIsSendingReply] = useState(false);
-  const [replyError, setReplyError] = useState('');
-  const [replySentNotice, setReplySentNotice] = useState('');
-  const [replyReview, setReplyReview] = useState<{
-    email: EmailMessageItem;
-    insight: EmailInsight;
-    draft: EmailReplyDraft;
-    instruction: string;
-    content: string;
-  } | null>(null);
   const aiAnalysisInFlight = useRef(false);
-
-  const priorityRank: Record<EmailInsight['priority'], number> = {
-    urgent: 4,
-    high: 3,
-    normal: 2,
-    low: 1,
-  };
-
-  const topPriorityMessage = messages
-    .filter((message) => message.channel === 'email' && message.direction === 'inbound' && message.aiInsight)
-    .sort((first, second) => {
-      const priorityDifference = priorityRank[second.aiInsight!.priority] - priorityRank[first.aiInsight!.priority];
-      if (priorityDifference !== 0) return priorityDifference;
-      const firstEmail = inboxEmails.find((email) => email.id === first.id);
-      const secondEmail = inboxEmails.find((email) => email.id === second.id);
-      return new Date(secondEmail?.timestamp || 0).getTime() - new Date(firstEmail?.timestamp || 0).getTime();
-    })[0];
-  const topPriorityEmail = inboxEmails.find((email) => email.id === topPriorityMessage?.id);
 
   const filteredMessages = messages.filter((message) => {
     if (emailFilter === 'all') return true;
@@ -111,7 +80,7 @@ export default function AssistantHub({ className = '' }: { className?: string })
   });
 
   // Load email providers and live inbox messages
-  const hydrateMessages = async () => {
+  const hydrateMessages = async (grantIdOverride = selectedGrantId) => {
     setIsRefreshing(true);
     setAiError('');
     setAiProgress(0);
@@ -122,11 +91,13 @@ export default function AssistantHub({ className = '' }: { className?: string })
         fetchNylasGrantsAPI().catch(() => []),
       ]);
       const activeGrants = grants.filter((g) => g.is_connected !== false);
-      setNylasGrants(activeGrants);
+      const emailGrants = activeGrants.filter((g) => g.scope?.includes('email'));
+      setNylasGrants(emailGrants);
+      setCalendarGrants(activeGrants.filter((g) => g.scope?.includes('calendar')));
 
-      const connected = activeGrants.length > 0 ? ({
+      const connected = emailGrants.length > 0 ? ({
         provider: 'nylas',
-        email: activeGrants[0].email,
+        email: emailGrants[0].email,
         is_connected: true,
         connected_at: activeGrants[0].connected_at,
       } as any) : (providers.find((p) => p.is_connected) || null);
@@ -135,8 +106,8 @@ export default function AssistantHub({ className = '' }: { className?: string })
 
       let remoteEmails: EmailMessageItem[] = [];
 
-      if (activeGrants.length > 0) {
-        const grantIdParam = selectedGrantId === 'all' ? undefined : selectedGrantId;
+      if (emailGrants.length > 0) {
+        const grantIdParam = grantIdOverride === 'all' ? undefined : grantIdOverride;
         remoteEmails = await fetchEmailMessagesAPI('nylas', '', 25, grantIdParam);
       } else if (connected) {
         remoteEmails = await fetchEmailMessagesAPI(connected.provider, '', 25);
@@ -253,90 +224,17 @@ export default function AssistantHub({ className = '' }: { className?: string })
     }
   };
 
-  const handleDraftTopPriorityReply = async (event: React.FormEvent) => {
-    event.preventDefault();
-    if (!connectedEmailProvider || !topPriorityEmail || !topPriorityMessage?.aiInsight || !replyCommand.trim()) return;
-
-    setIsDraftingReply(true);
-    setReplyError('');
-    setReplySentNotice('');
+  const handleActionDecision = async (actionId: string, decision: 'approve' | 'dismiss', grantId?: string) => {
+    setActionBusyId(actionId);
+    setActionError('');
     try {
-      const draft = await draftEmailReplyAPI({
-        provider: connectedEmailProvider.provider,
-        instruction: replyCommand.trim(),
-        email: {
-          id: topPriorityEmail.id,
-          subject: topPriorityEmail.subject,
-          sender: topPriorityEmail.sender,
-          content: topPriorityEmail.content,
-        },
-      });
-      setReplyReview({
-        email: topPriorityEmail,
-        insight: topPriorityMessage.aiInsight,
-        draft,
-        instruction: replyCommand.trim(),
-        content: draft.reply_draft,
-      });
-    } catch (error) {
-      setProviderReconnectRequired(error instanceof ProviderReconnectRequiredError);
-      setReplyError(error instanceof Error ? error.message : 'Could not prepare the reply.');
-    } finally {
-      setIsDraftingReply(false);
-    }
-  };
-
-  const handleSendApprovedReply = async (event: React.FormEvent) => {
-    event.preventDefault();
-    if (!connectedEmailProvider || !replyReview?.content.trim() || isSendingReply) return;
-
-    setIsSendingReply(true);
-    setReplyError('');
-    try {
-      await sendEmailReplyAPI({
-        provider: connectedEmailProvider.provider,
-        message_id: replyReview.email.id,
-        content: replyReview.content.trim(),
-      });
-      setReplySentNotice(`Reply sent to ${replyReview.email.sender} in the original thread.`);
-      setReplyReview(null);
+      await decideEmailActionAPI({ action_id: actionId, decision, ...(grantId ? { grant_id: grantId } : {}) });
       await hydrateMessages();
     } catch (error) {
-      setProviderReconnectRequired(error instanceof ProviderReconnectRequiredError);
-      setReplyError(error instanceof Error ? error.message : 'Could not send the reply.');
+      setActionError(error instanceof Error ? error.message : 'Could not apply this action.');
     } finally {
-      setIsSendingReply(false);
+      setActionBusyId('');
     }
-  };
-
-  const handleSendDirective = async (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    if (!directiveInput.trim() || isDispatching) return;
-
-    setIsDispatching(true);
-    setDirectiveError('');
-
-    try {
-      const saved = await createMessageAPI({
-        channel: 'system',
-        direction: 'inbound',
-        sender: currentUser ? `${currentUser.first_name} (Executive)` : 'Executive',
-        recipient: 'Nova Assistant',
-        subject: `Directive: ${directiveInput.slice(0, 32)}`,
-        content: directiveInput,
-      });
-      if (!saved) throw new Error('The backend did not save this directive.');
-      setDirectiveInput('');
-      await hydrateMessages();
-    } catch (error) {
-      setDirectiveError(error instanceof Error ? error.message : 'Could not save the directive.');
-    } finally {
-      setIsDispatching(false);
-    }
-  };
-
-  const handleQuickChip = (promptText: string) => {
-    setDirectiveInput(promptText);
   };
 
   const handleRefreshFeed = () => {
@@ -354,7 +252,7 @@ export default function AssistantHub({ className = '' }: { className?: string })
               Executive Email &amp; Assistant Stream
             </h2>
             <p className="text-xs text-[--muted-foreground]">
-              Real-time feed of parsed emails, client action items, and assistant responses
+              Email triage with suggested tasks, projects, and calendar changes for your approval
             </p>
           </div>
 
@@ -364,8 +262,9 @@ export default function AssistantHub({ className = '' }: { className?: string })
                 id="email-account-filter"
                 value={selectedGrantId}
                 onChange={(event) => {
-                  setSelectedGrantId(event.target.value);
-                  setTimeout(() => { void hydrateMessages(); }, 0);
+                  const grantId = event.target.value;
+                  setSelectedGrantId(grantId);
+                  void hydrateMessages(grantId);
                 }}
                 className="rounded-xl border border-[#BFE7FF] bg-[#F0F9FF] px-3 py-2 text-xs font-semibold text-[#0088EE] outline-none focus:ring-2 focus:ring-[#1EA0FF] shadow-2xs"
                 title="Filter by connected account"
@@ -422,8 +321,34 @@ export default function AssistantHub({ className = '' }: { className?: string })
           <div
             role="status"
             aria-live="polite"
-            className="rounded-xl border border-[#BFE7FF] bg-gradient-to-r from-[#F0F9FF] via-white to-violet-50 px-3.5 py-3 shadow-sm shadow-blue-500/10"
+            className="ai-working-glow rounded-xl border border-[#BFE7FF] bg-gradient-to-r from-[#F0F9FF] via-white to-violet-50 px-3.5 py-3 shadow-sm shadow-blue-500/10"
           >
+            <svg
+              aria-hidden="true"
+              className="ai-orbit-trace pointer-events-none absolute inset-0 h-full w-full"
+              preserveAspectRatio="none"
+            >
+              <defs>
+                <linearGradient id="assistant-orbit-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stopColor="#1EA0FF" stopOpacity="0" />
+                  <stop offset="55%" stopColor="#1EA0FF" stopOpacity="0.85" />
+                  <stop offset="100%" stopColor="#A855F7" stopOpacity="0.75" />
+                </linearGradient>
+              </defs>
+              <rect
+                x="1"
+                y="1"
+                width="calc(100% - 2px)"
+                height="calc(100% - 2px)"
+                rx="12"
+                fill="none"
+                stroke="url(#assistant-orbit-gradient)"
+                strokeWidth="2"
+                strokeLinecap="round"
+                pathLength="100"
+                className="ai-orbit-stroke"
+              />
+            </svg>
             <div className="mb-2 flex items-center justify-between gap-3">
               <div className="flex min-w-0 items-center gap-2">
                 <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#1EA0FF] text-white shadow-sm shadow-blue-500/30">
@@ -431,7 +356,7 @@ export default function AssistantHub({ className = '' }: { className?: string })
                 </span>
                 <div className="min-w-0">
                   <p className="text-xs font-bold text-[#0D1B2A]">AI is working on your inbox</p>
-                  <p className="text-[10px] text-[#0088EE]">Finding priorities, action items, and suggested replies</p>
+                  <p className="text-[10px] text-[#0088EE]">Finding priorities and changes you can approve</p>
                 </div>
               </div>
               <span className="shrink-0 text-xs font-bold tabular-nums text-[#0088EE]">{aiProgress}%</span>
@@ -476,79 +401,6 @@ export default function AssistantHub({ className = '' }: { className?: string })
           <p role="status" className="text-[11px] text-amber-700">
             Inbox loaded, but AI analysis could not finish. {aiError}
           </p>
-        )}
-        {connectedEmailProvider && (
-          <section className="overflow-hidden rounded-2xl border border-[#BFE7FF] bg-gradient-to-br from-[#F0F9FF] via-white to-violet-50 shadow-sm shadow-blue-500/10">
-            <div className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex min-w-0 items-start gap-3">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#1EA0FF] text-white shadow-md shadow-blue-500/20">
-                  <Sparkles size={18} />
-                </div>
-                <div className="min-w-0">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <h3 className="text-sm font-bold text-[#0D1B2A]">Priority Reply Studio</h3>
-                    <span className="rounded-full border border-[#BFE7FF] bg-white/80 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[#0088EE]">
-                      Draft first · you approve
-                    </span>
-                  </div>
-                  <p className="mt-1 text-xs leading-relaxed text-[#0D1B2A]">
-                    Give Nova your direction. It will draft a reply to the top-priority message in this inbox.
-                  </p>
-                </div>
-              </div>
-              {topPriorityMessage?.aiInsight && (
-                <div className={`shrink-0 rounded-xl border px-3 py-2 text-xs ${
-                  topPriorityMessage.aiInsight.priority === 'urgent'
-                    ? 'border-rose-200 bg-rose-50 text-rose-800'
-                    : topPriorityMessage.aiInsight.priority === 'high'
-                      ? 'border-orange-200 bg-orange-50 text-orange-800'
-                      : 'border-[#BFE7FF] bg-white text-[#0D1B2A]'
-                }`}>
-                  <p className="font-bold">{topPriorityMessage.aiInsight.priority.toUpperCase()} · selected email</p>
-                  <p className="mt-0.5 max-w-xs truncate">{topPriorityEmail?.subject || topPriorityMessage.subject}</p>
-                </div>
-              )}
-            </div>
-            <form onSubmit={handleDraftTopPriorityReply} className="flex flex-col gap-2 border-t border-[#BFE7FF] bg-white/70 p-3 sm:flex-row">
-              <label className="sr-only" htmlFor="priority-reply-command">Instructions for the reply</label>
-              <input
-                id="priority-reply-command"
-                type="text"
-                value={replyCommand}
-                onChange={(event) => setReplyCommand(event.target.value)}
-                maxLength={1000}
-                placeholder="How should Nova handle it? e.g. Confirm receipt and ask to meet Friday."
-                className="min-w-0 flex-1 rounded-xl border border-[#BFE7FF] bg-white px-3.5 py-2.5 text-xs outline-none transition placeholder:text-slate-400 focus:border-[#1EA0FF] focus:ring-2 focus:ring-[#BFE7FF]"
-              />
-              <button
-                type="submit"
-                disabled={!replyCommand.trim() || !topPriorityEmail || isDraftingReply || isAnalyzingAI || isRefreshing}
-                className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-[#1EA0FF] px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-blue-500/20 transition hover:bg-[#0088EE] disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                {isDraftingReply ? <RefreshCw size={14} className="animate-spin" /> : <Sparkles size={14} />}
-                {isDraftingReply ? 'Preparing draft…' : 'Draft top-priority reply'}
-              </button>
-            </form>
-            <div className="flex flex-wrap items-center justify-between gap-2 px-4 pb-3 text-[10px] text-[#0088EE]">
-              <span>{isAnalyzingAI ? 'Priorities are still being analyzed…' : topPriorityEmail ? `Replying to ${topPriorityEmail.sender}` : 'Waiting for inbox priority analysis.'}</span>
-              <span>Nothing sends until you review and approve it.</span>
-            </div>
-            {(replyError || replySentNotice) && (
-              <div className={`mx-3 mb-3 rounded-xl border px-3 py-2 text-xs ${replyError ? 'border-rose-200 bg-rose-50 text-rose-800' : 'border-emerald-200 bg-emerald-50 text-emerald-800'}`}>
-                {replyError || replySentNotice}
-                {replyError && providerReconnectRequired && (
-                  <button
-                    type="button"
-                    onClick={() => handleConnectProvider(connectedEmailProvider.provider)}
-                    disabled={isConnectingProvider}
-                    className="ml-2 rounded-lg border border-rose-200 bg-white px-2 py-1 font-semibold hover:bg-rose-100 disabled:opacity-50"
-                  >
-                    Reconnect provider
-                  </button>
-                )}
-              </div>
-            )}
-          </section>
         )}
         <div className="space-y-2.5 max-h-[300px] overflow-y-auto pr-1">
           {!connectedEmailProvider ? (
@@ -689,11 +541,63 @@ export default function AssistantHub({ className = '' }: { className?: string })
                           ))}
                         </ul>
                       )}
-                      {msg.aiInsight.reply_draft && (
-                        <details className="text-[11px]">
-                          <summary className="cursor-pointer font-semibold text-[#0088EE]">View reply draft</summary>
-                          <p className="mt-1 whitespace-pre-wrap rounded-lg bg-slate-50 p-2 text-slate-700">{msg.aiInsight.reply_draft}</p>
-                        </details>
+                      {msg.aiInsight.proposed_actions?.length > 0 && (
+                        <div className="space-y-2 border-t border-slate-100 pt-2">
+                          <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">Suggested changes · approval required</p>
+                          {msg.aiInsight.proposed_actions.map((action) => {
+                            const kindLabels = {
+                              task: 'Create task', project: 'Create project', calendar_create: 'Create calendar event',
+                              calendar_update: 'Update calendar event', calendar_cancel: 'Cancel calendar event',
+                            };
+                            const selectedGrant = actionGrantIds[action.id] || '';
+                            const isPending = action.status === 'pending';
+                            return (
+                              <div key={action.id} className="rounded-lg border border-slate-200 bg-slate-50 p-2.5">
+                                <div className="flex items-start justify-between gap-2">
+                                  <div className="min-w-0">
+                                    <p className="text-[11px] font-semibold text-slate-800">{kindLabels[action.kind]}</p>
+                                    <p className="mt-0.5 text-[11px] text-slate-700">
+                                      {action.payload.title || action.payload.event_title || action.payload.event_id}
+                                      {(action.payload.start || action.payload.event_start) && ` · ${new Date(action.payload.start || action.payload.event_start).toLocaleString()}`}
+                                      {action.payload.due_date && ` · due ${action.payload.due_date}`}
+                                    </p>
+                                    {action.explanation && <p className="mt-1 text-[10px] text-slate-500">{action.explanation}</p>}
+                                  </div>
+                                  {!isPending && <span className="text-[10px] font-semibold capitalize text-slate-500">{action.status}</span>}
+                                </div>
+                                {isPending && action.kind === 'calendar_create' && (
+                                  <select
+                                    aria-label="Choose calendar account for proposed event"
+                                    value={selectedGrant}
+                                    onChange={(event) => setActionGrantIds((current) => ({ ...current, [action.id]: event.target.value }))}
+                                    className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-2.5 py-2 text-[11px] text-slate-700 outline-none focus:ring-2 focus:ring-[#1EA0FF]"
+                                  >
+                                    <option value="">Choose a calendar account…</option>
+                                    {calendarGrants.map((grant) => (
+                                      <option key={grant.grant_id} value={grant.grant_id}>{grant.email} · {grant.provider}</option>
+                                    ))}
+                                  </select>
+                                )}
+                                {isPending && (
+                                  <div className="mt-2 flex items-center justify-end gap-2">
+                                    <button
+                                      type="button"
+                                      disabled={actionBusyId === action.id}
+                                      onClick={() => void handleActionDecision(action.id, 'dismiss')}
+                                      className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-2.5 py-1.5 text-[10px] font-semibold text-slate-600 hover:bg-slate-100 disabled:opacity-50"
+                                    ><X size={12} /> Dismiss</button>
+                                    <button
+                                      type="button"
+                                      disabled={actionBusyId === action.id || (action.kind === 'calendar_create' && !selectedGrant)}
+                                      onClick={() => void handleActionDecision(action.id, 'approve', selectedGrant || undefined)}
+                                      className="inline-flex items-center gap-1 rounded-md bg-[#1EA0FF] px-2.5 py-1.5 text-[10px] font-semibold text-white hover:bg-[#0088EE] disabled:cursor-not-allowed disabled:opacity-50"
+                                    ><Check size={12} /> {actionBusyId === action.id ? 'Applying…' : 'Approve'}</button>
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
                       )}
                     </div>
                   )}
@@ -709,141 +613,8 @@ export default function AssistantHub({ className = '' }: { className?: string })
         </div>
       </div>
 
-      {/* 3. Executive Directive Bar (Prompt / Dispatch Input) */}
-      <div className="pt-2 border-t border-[--border] space-y-2.5">
-        <form onSubmit={handleSendDirective} className="relative flex items-center gap-2">
-          {/* Directive Channel Badge (Email only) */}
-          <div className="flex items-center gap-1.5 px-3 py-2.5 bg-[--background] border border-[--border] rounded-xl text-xs font-medium text-[--foreground] shrink-0">
-            <Mail size={13} className="text-[#1EA0FF]" />
-            <span>Directive</span>
-          </div>
+      {actionError && <p role="alert" className="text-xs text-rose-700">{actionError}</p>}
 
-          {/* Directive text input */}
-          <div className="relative flex-1">
-            <Sparkles size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#1EA0FF] pointer-events-none" />
-            <input
-              type="text"
-              value={directiveInput}
-              onChange={(e) => setDirectiveInput(e.target.value)}
-              placeholder="Write a directive to save to your assistant stream..."
-              className="w-full pl-9 pr-4 py-2.5 text-xs sm:text-sm bg-[--background] border border-[--border] rounded-xl outline-none focus:ring-2 focus:ring-[#1EA0FF] focus:border-[#1EA0FF] transition-all placeholder:text-[--muted-foreground]"
-            />
-          </div>
-
-          {/* Dispatch button */}
-          <button
-            type="submit"
-            disabled={!directiveInput.trim() || isDispatching}
-            className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl gradient-brand text-white text-xs sm:text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed shrink-0 shadow-md shadow-blue-500/10"
-          >
-            {isDispatching ? (
-              <span className="flex items-center gap-1">
-                <span className="w-2 h-2 rounded-full bg-white animate-ping" />
-                Dispatching...
-              </span>
-            ) : (
-              <>
-                <Send size={13} />
-                <span className="hidden sm:inline">Dispatch</span>
-              </>
-            )}
-          </button>
-        </form>
-        <p className="text-[11px] text-[--muted-foreground]">Directives are saved to your backend stream. They are not automatically executed.</p>
-        {directiveError && <p role="alert" className="text-xs text-rose-600">{directiveError}</p>}
-
-        {/* 1-Click Directive Chips */}
-        <div className="flex items-center gap-1.5 flex-wrap text-xs">
-          <span className="text-[11px] font-medium text-[--muted-foreground] mr-1">Quick Directives:</span>
-          {[
-            '✉️ Email me my top 3 priorities for today',
-            '📅 Reschedule any overlapping meetings',
-            '✉️ Draft milestone status email to client',
-          ].map((chip) => (
-            <button
-              key={chip}
-              type="button"
-              onClick={() => handleQuickChip(chip.replace(/^[^\s]+\s/, ''))}
-              className="text-[11px] font-medium px-2.5 py-1 rounded-lg bg-[--background] hover:bg-[#F0F9FF] text-[--muted-foreground] hover:text-[#1EA0FF] border border-[--border] hover:border-[#BFE7FF] transition-all cursor-pointer"
-            >
-              {chip}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <ModalPanel
-        isOpen={Boolean(replyReview)}
-        onClose={() => { if (!isSendingReply) { setReplyReview(null); setReplyError(''); } }}
-      >
-        {replyReview && (
-          <div className="space-y-5">
-            <div className="border-b border-[--border] pb-4">
-              <div className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-[#0088EE]">
-                <Sparkles size={14} /> AI reply · review required
-              </div>
-              <h2 className="text-lg font-bold text-slate-950">Review your reply</h2>
-              <p className="mt-1 text-xs leading-relaxed text-slate-600">
-                This will reply in the existing thread. The original sender and subject are read from your connected mailbox when sending.
-              </p>
-            </div>
-
-            <div className="rounded-xl border border-rose-100 bg-rose-50/70 p-3">
-              <div className="mb-2 flex items-center justify-between gap-2">
-                <span className="rounded-full bg-rose-600 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-white">
-                  {replyReview.insight.priority} priority
-                </span>
-                <span className="text-[10px] font-medium text-rose-800">{replyReview.email.timestamp ? new Date(replyReview.email.timestamp).toLocaleString() : ''}</span>
-              </div>
-              <p className="text-xs font-bold text-slate-900">{replyReview.email.subject || '(No subject)'}</p>
-              <p className="mt-1 text-[11px] text-slate-600">From: {replyReview.email.sender}</p>
-              <p className="mt-2 line-clamp-4 whitespace-pre-wrap text-xs leading-relaxed text-slate-700">
-                {replyReview.email.snippet || replyReview.email.content}
-              </p>
-              <p className="mt-2 border-t border-rose-100 pt-2 text-[11px] text-rose-900">
-                <span className="font-semibold">Why this email:</span> {replyReview.insight.priority_reason || replyReview.insight.summary}
-              </p>
-            </div>
-
-            <div className="rounded-xl border border-[#BFE7FF] bg-[#F0F9FF] p-3 text-xs leading-relaxed text-[#0D1B2A]">
-              <span className="font-bold">Your direction:</span> {replyReview.instruction}
-              {replyReview.draft.rationale && <p className="mt-1 text-[11px] text-[#0D1B2A]">Draft rationale: {replyReview.draft.rationale}</p>}
-            </div>
-
-            <form onSubmit={handleSendApprovedReply} className="space-y-3">
-              <label htmlFor="approved-email-reply" className="block text-xs font-semibold text-slate-800">Reply text</label>
-              <textarea
-                id="approved-email-reply"
-                required
-                rows={9}
-                maxLength={5000}
-                value={replyReview.content}
-                onChange={(event) => setReplyReview((current) => current ? { ...current, content: event.target.value } : current)}
-                className="w-full resize-y rounded-xl border border-slate-200 bg-white p-3 text-sm leading-relaxed text-slate-800 outline-none focus:border-[#1EA0FF] focus:ring-2 focus:ring-[#E8F6FF]"
-              />
-              {replyError && <p role="alert" className="text-xs text-rose-700">{replyError}</p>}
-              <div className="flex flex-wrap items-center justify-between gap-2 border-t border-[--border] pt-3">
-                <button
-                  type="button"
-                  disabled={isSendingReply}
-                  onClick={() => { setReplyReview(null); setReplyError(''); }}
-                  className="rounded-xl px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 disabled:opacity-50"
-                >
-                  Discard draft
-                </button>
-                <button
-                  type="submit"
-                  disabled={!replyReview.content.trim() || isSendingReply}
-                  className="inline-flex items-center gap-2 rounded-xl bg-[#1EA0FF] px-5 py-2.5 text-xs font-bold text-white shadow-md shadow-blue-500/20 transition hover:bg-[#0088EE] disabled:cursor-wait disabled:opacity-50"
-                >
-                  {isSendingReply ? <RefreshCw size={14} className="animate-spin" /> : <Send size={14} />}
-                  {isSendingReply ? 'Sending reply…' : 'Approve & send reply'}
-                </button>
-              </div>
-            </form>
-          </div>
-        )}
-      </ModalPanel>
     </div>
   );
 }

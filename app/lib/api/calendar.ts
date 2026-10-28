@@ -129,6 +129,17 @@ export async function saveCalendarEventAPI(payload: Record<string, any>): Promis
   }
 }
 
+export async function createNylasCalendarEventAPI(payload: Record<string, any>): Promise<any> {
+  const res = await fetch('/api/calendar/events/nylas/', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) await throwProviderApiError(res, `Nylas event creation failed (${res.status})`);
+  return res.json();
+}
+
 export async function syncCalendarEventsAPI(
   provider: string = 'nylas',
   timeMin?: string,

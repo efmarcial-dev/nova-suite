@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   Calendar as CalendarIcon,
   Check,
@@ -23,6 +23,7 @@ import {
   connectCalendarProviderAPI,
   disconnectCalendarProviderAPI,
   saveCalendarEventAPI,
+  createNylasCalendarEventAPI,
   syncCalendarEventsAPI,
 } from '@/app/lib/api/calendar';
 import {
@@ -129,6 +130,7 @@ export default function CalendarPage() {
   const [eventConflicts, setEventConflicts] = useState<CalendarEvent[]>([]);
   const [createdEventNotice, setCreatedEventNotice] = useState('');
   const [agendaDate, setAgendaDate] = useState(() => new Date());
+  const calendarSyncInFlight = useRef(false);
 
   // Load connection state from backend and sync real events
   useEffect(() => {
@@ -138,21 +140,24 @@ export default function CalendarPage() {
       let paramProvider: ProviderId | null = null;
       if (typeof window !== 'undefined') {
         const params = new URLSearchParams(window.location.search);
-        if (params.get('connected') === 'calendar' || params.get('connected') === 'nylas') {
+        if (
+          params.get('nylas') === 'connected' ||
+          params.get('connected') === 'calendar' ||
+          params.get('connected') === 'nylas'
+        ) {
           isSuccessRedirect = true;
           const prov = params.get('provider');
-          if (prov === 'outlook' || prov === 'google') {
-            paramProvider = prov;
-          }
+          if (prov === 'outlook' || prov === 'microsoft') paramProvider = 'outlook';
+          else if (prov === 'google') paramProvider = 'google';
         }
       }
 
       let grants: NylasGrant[] = [];
       try {
         grants = await fetchNylasGrantsAPI();
-        const activeGrants = grants.filter((g) => g.is_connected !== false);
+        const activeGrants = grants.filter((g) => g.is_connected !== false && g.scope?.includes('calendar'));
         setNylasGrants(activeGrants);
-        if (activeGrants.length > 0 && !targetAddEventGrantId) {
+        if (activeGrants.length === 1 && !targetAddEventGrantId) {
           setTargetAddEventGrantId(activeGrants[0].grant_id);
         }
       } catch (e) {
@@ -167,7 +172,7 @@ export default function CalendarPage() {
         setConnectionError('Could not load calendar connection status. Please refresh or try again.');
       }
 
-      const activeGrants = grants.filter((g) => g.is_connected !== false);
+      const activeGrants = grants.filter((g) => g.is_connected !== false && g.scope?.includes('calendar'));
       const isConnectedProvider = Boolean(connection?.isConnected) || activeGrants.length > 0;
 
       if (isConnectedProvider) {
@@ -179,13 +184,20 @@ export default function CalendarPage() {
         if (activeGrants.length > 0) {
           setSelectedProvider('nylas');
           setConnectedEmail(activeGrants.map((g) => g.email).join(', '));
-          try {
-            await syncCalendarEventsAPI('nylas');
-            setReconnectRequired(false);
-          } catch (e) {
-            console.warn('Nylas initial calendar sync skipped:', e);
-            setReconnectRequired(e instanceof ProviderReconnectRequiredError);
-            setEventsError(e instanceof Error ? e.message : 'Calendar sync failed.');
+          if (!calendarSyncInFlight.current) {
+            calendarSyncInFlight.current = true;
+            setIsSyncing(true);
+            try {
+              await syncCalendarEventsAPI('nylas');
+              setReconnectRequired(false);
+            } catch (e) {
+              console.warn('Nylas initial calendar sync skipped:', e);
+              setReconnectRequired(e instanceof ProviderReconnectRequiredError);
+              setEventsError(e instanceof Error ? e.message : 'Calendar sync failed.');
+            } finally {
+              calendarSyncInFlight.current = false;
+              setIsSyncing(false);
+            }
           }
         } else {
           const activeProv: ProviderId = connection?.provider === 'outlook' ? 'outlook' : (paramProvider || 'google');
@@ -217,23 +229,31 @@ export default function CalendarPage() {
     void hydrateCalendar();
   }, [currentUser]);
 
-  const handleSyncCalendar = async () => {
+  const handleSyncCalendar = async (grantIdOverride?: string) => {
+    if (calendarSyncInFlight.current) return;
+    calendarSyncInFlight.current = true;
     setIsSyncing(true);
     try {
       setEventsError('');
       const providerToSync = nylasGrants.length > 0 ? 'nylas' : selectedProvider;
-      const grantIdToSync = selectedGrantId !== 'all' ? selectedGrantId : undefined;
+      const activeGrantSelection = grantIdOverride ?? selectedGrantId;
+      const grantIdToSync = activeGrantSelection !== 'all' ? activeGrantSelection : undefined;
       await syncCalendarEventsAPI(providerToSync, undefined, undefined, grantIdToSync);
       setReconnectRequired(false);
       const backendEvents = await fetchCalendarEventsAPI();
       if (Array.isArray(backendEvents)) {
-        setEvents(backendEvents.map(mapBackendEvent));
+        const selectedAccount = nylasGrants.find((grant) => grant.grant_id === activeGrantSelection);
+        const visibleEvents = selectedAccount
+          ? backendEvents.filter((event: any) => event.account_email === selectedAccount.email)
+          : backendEvents;
+        setEvents(visibleEvents.map(mapBackendEvent));
       }
     } catch (err) {
       console.error('Failed to sync calendar events from provider', err);
       setReconnectRequired(err instanceof ProviderReconnectRequiredError);
       setEventsError(err instanceof Error ? err.message : 'Calendar sync failed.');
     } finally {
+      calendarSyncInFlight.current = false;
       setIsSyncing(false);
     }
   };
@@ -252,7 +272,6 @@ export default function CalendarPage() {
           provider: nylasProv,
           product: 'calendar',
           origin: 'calendar',
-          login_hint: currentUser?.email,
         });
         if (authUrl) {
           window.location.href = authUrl;
@@ -334,6 +353,10 @@ export default function CalendarPage() {
 
       const syncProv = nylasGrants.length > 0 ? 'nylas' : (isConnected ? selectedProvider : undefined);
       const grantIdToUse = targetAddEventGrantId || (selectedGrantId !== 'all' ? selectedGrantId : undefined);
+      if (nylasGrants.length > 1 && !grantIdToUse) {
+        setEventsError('Choose which connected account should receive this event.');
+        return;
+      }
 
       if (isConnected && autoConflictWarn && !allowConflicts) {
         const syncResult = await syncCalendarEventsAPI(syncProv || selectedProvider, startIso, endIso, grantIdToUse);
@@ -354,14 +377,16 @@ export default function CalendarPage() {
         }
       }
 
-      const savedEvent = await saveCalendarEventAPI({
+      const eventPayload = {
         title: newEventTitle.trim(),
         start_time: startIso,
         end_time: endIso,
         event_type: newEventType,
-        ...(syncProv ? { sync_provider: syncProv } : {}),
         ...(grantIdToUse ? { grant_id: grantIdToUse } : {}),
-      });
+      };
+      const savedEvent = syncProv === 'nylas'
+        ? await createNylasCalendarEventAPI(eventPayload)
+        : await saveCalendarEventAPI({ ...eventPayload, ...(syncProv ? { sync_provider: syncProv } : {}) });
 
       if (savedEvent) {
         const saved = mapBackendEvent(savedEvent);
@@ -686,7 +711,12 @@ export default function CalendarPage() {
             {hasMultipleAccounts && (
               <select
                 value={selectedGrantId}
-                onChange={(e) => setSelectedGrantId(e.target.value)}
+                onChange={(e) => {
+                  const grantId = e.target.value;
+                  setSelectedGrantId(grantId);
+                  setTargetAddEventGrantId(grantId === 'all' ? nylasGrants[0]?.grant_id || '' : grantId);
+                  void handleSyncCalendar(grantId);
+                }}
                 className="px-2.5 py-1.5 rounded-xl border border-[--border] bg-[--background] text-xs font-medium text-[--foreground] outline-none focus:ring-2 focus:ring-[#1EA0FF]"
               >
                 <option value="all">🌐 All Accounts (Unified)</option>
@@ -698,7 +728,7 @@ export default function CalendarPage() {
               </select>
             )}
             <button
-              onClick={handleSyncCalendar}
+              onClick={() => void handleSyncCalendar()}
               disabled={isSyncing}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[--border] bg-white hover:bg-gray-50 text-xs font-semibold text-[--foreground] shadow-xs transition-colors disabled:opacity-50"
             >
@@ -829,7 +859,7 @@ export default function CalendarPage() {
                 </div>
                 {isConnected ? (
                   <button
-                    onClick={handleSyncCalendar}
+                    onClick={() => void handleSyncCalendar()}
                     disabled={isSyncing}
                     className="mt-2 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#1EA0FF] hover:bg-[#0088EE] text-white text-xs font-semibold shadow-xs disabled:opacity-50 transition-all cursor-pointer"
                   >
@@ -1024,12 +1054,30 @@ export default function CalendarPage() {
             <h2 className="text-lg font-bold text-[--foreground]">Schedule New Event / Focus Block</h2>
             <p className="text-xs text-[--muted-foreground]">
               {isConnected
-                ? `This event will be created in ${activeProvider.name}. We’ll check for overlaps first.`
+                ? nylasGrants.length > 0
+                  ? 'Choose a connected account. Nova will create the event through Nylas and sync it into this calendar.'
+                  : `This event will be created in ${activeProvider.name}. We’ll check for overlaps first.`
                 : 'Connect Google or Outlook to add this event to your provider calendar.'}
             </p>
           </div>
 
           <div className="space-y-3">
+            {nylasGrants.length > 0 && (
+              <div>
+                <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-[--foreground]">Calendar account</label>
+                <select
+                  required
+                  value={targetAddEventGrantId}
+                  onChange={(event) => setTargetAddEventGrantId(event.target.value)}
+                  className="w-full rounded-xl border border-[--border] bg-[--background] px-3.5 py-2 text-xs outline-none focus:ring-2 focus:ring-[#1EA0FF]"
+                >
+                  <option value="">Choose a connected account…</option>
+                  {nylasGrants.filter((grant) => grant.scope?.includes('calendar')).map((grant) => (
+                    <option key={grant.grant_id} value={grant.grant_id}>{grant.email} · {grant.provider}</option>
+                  ))}
+                </select>
+              </div>
+            )}
             <div>
               <label className="block text-xs font-semibold text-[--foreground] uppercase tracking-wide mb-1">
                 Event Title

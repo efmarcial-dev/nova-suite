@@ -7,7 +7,7 @@ import './globals.css'
 import Script from 'next/script'
 import AuthRefreshManager from './components/AuthRefreshManager'
 import { Analytics } from '@vercel/analytics/next';
-
+import DashboardAnalytics from './components/DashboardAnalytics';
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
@@ -44,6 +44,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name="testmybuild-site-verification" content="tmb-aek25sicztph"></meta>
       </head>
       <body className="h-full">
+        <DashboardAnalytics />
         <AuthRefreshManager />
         {children}
         <Analytics />

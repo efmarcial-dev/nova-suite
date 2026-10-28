@@ -12,9 +12,11 @@ import {
 } from '@/app/lib/api/settings';
 import {
   fetchNylasGrantsAPI,
+  fetchNylasStatusAPI,
   startNylasConnectAPI,
   disconnectNylasGrantAPI,
   NylasGrant,
+  NylasStatus,
 } from '@/app/lib/api/nylas';
 import {
   User,
@@ -128,6 +130,7 @@ function SettingsContent() {
 
   // Nylas Unified Multi-Account states
   const [nylasGrants, setNylasGrants] = useState<NylasGrant[]>([]);
+  const [nylasStatus, setNylasStatus] = useState<NylasStatus | null>(null);
   const [isConnectingNylas, setIsConnectingNylas] = useState<string | null>(null);
   const [connectSuccessMessage, setConnectSuccessMessage] = useState('');
 
@@ -155,6 +158,7 @@ function SettingsContent() {
     const nylas = searchParams.get('nylas');
     const reason = searchParams.get('reason');
     const provider = searchParams.get('provider');
+    const errorCode = searchParams.get('error_code');
     const connected = searchParams.get('connected');
     const emailParam = searchParams.get('email');
     const tabParam = searchParams.get('tab');
@@ -174,8 +178,9 @@ function SettingsContent() {
       setIntegrationError('');
 
       // Refresh connection status from API
-      fetchNylasGrantsAPI().then((grants) => {
+      Promise.all([fetchNylasGrantsAPI(), fetchNylasStatusAPI()]).then(([grants, status]) => {
         setNylasGrants(grants.filter((g) => g.is_connected !== false));
+        setNylasStatus(status);
       }).catch(console.warn);
 
       // Clean query parameters so refresh does not repeat the message
@@ -185,6 +190,7 @@ function SettingsContent() {
       currentParams.delete('provider');
       currentParams.delete('email');
       currentParams.delete('reason');
+      currentParams.delete('error_code');
       const newQuery = currentParams.toString();
       router.replace(newQuery ? `${pathname}?${newQuery}` : pathname);
     } else if (nylas === 'error') {
@@ -195,17 +201,22 @@ function SettingsContent() {
         save_failed: 'Failed to save account integration record in database.',
         user_not_found: 'User account session not found. Please log in again.',
         access_denied: 'Account connection was cancelled or denied.',
+        invalid_authentication: 'The email provider rejected those credentials. For IMAP, check the username, password or app password, and server settings.',
+        provider_not_responding: 'The email provider did not respond. Check the provider status and IMAP host/port settings, then try again.',
+        auth_limit_reached: 'Too many sign-in attempts were rejected. Wait before trying again, and verify the credentials first.',
+        nylas_error: 'Nylas could not complete this provider sign-in. Check that this provider is enabled for the Nylas application and try again.',
       };
       setIntegrationError(
         reason && reasonMessages[reason]
-          ? reasonMessages[reason]
-          : `Connection error: ${reason || 'Failed to connect provider.'}`
+          ? `${provider ? `${provider.toUpperCase()}: ` : ''}${reasonMessages[reason]}${errorCode ? ` (${errorCode})` : ''}`
+          : `Connection error${provider ? ` for ${provider.toUpperCase()}` : ''}: ${reason || 'Failed to connect provider.'}${errorCode ? ` (${errorCode})` : ''}`
       );
       setConnectSuccessMessage('');
 
       // Refresh connection status from API
-      fetchNylasGrantsAPI().then((grants) => {
+      Promise.all([fetchNylasGrantsAPI(), fetchNylasStatusAPI()]).then(([grants, status]) => {
         setNylasGrants(grants.filter((g) => g.is_connected !== false));
+        setNylasStatus(status);
       }).catch(console.warn);
 
       // Clean query parameters so refresh does not repeat the message
@@ -213,6 +224,7 @@ function SettingsContent() {
       currentParams.delete('nylas');
       currentParams.delete('reason');
       currentParams.delete('provider');
+      currentParams.delete('error_code');
       const newQuery = currentParams.toString();
       router.replace(newQuery ? `${pathname}?${newQuery}` : pathname);
     }
@@ -228,8 +240,9 @@ function SettingsContent() {
     const hydrateSettings = async () => {
       // Check live Nylas grants (unified multi-accounts)
       try {
-        const grants = await fetchNylasGrantsAPI();
+        const [grants, status] = await Promise.all([fetchNylasGrantsAPI(), fetchNylasStatusAPI()]);
         setNylasGrants(grants.filter((g) => g.is_connected !== false));
+        setNylasStatus(status);
       } catch (err) {
         console.warn('Could not fetch Nylas grants in settings', err);
       }
@@ -315,7 +328,7 @@ function SettingsContent() {
     }
   };
 
-  const handleConnectNylas = async (provider?: 'google' | 'microsoft' | 'icloud' | 'imap') => {
+  const handleConnectNylas = async (provider?: 'google' | 'microsoft' | 'icloud' | 'imap' | 'other') => {
     setIsConnectingNylas(provider || 'all');
     setIntegrationError('');
     try {
@@ -323,7 +336,6 @@ function SettingsContent() {
         provider,
         product: 'all',
         origin: 'settings',
-        login_hint: currentUser?.email,
       });
       if (authUrl) {
         window.location.href = authUrl;
@@ -342,6 +354,7 @@ function SettingsContent() {
       const ok = await disconnectNylasGrantAPI(grantId);
       if (ok) {
         setNylasGrants((prev) => prev.filter((g) => g.grant_id !== grantId));
+        setNylasStatus(await fetchNylasStatusAPI());
         setIntegrationError('');
       } else {
         throw new Error('Failed to disconnect account');
@@ -751,20 +764,22 @@ function SettingsContent() {
               <div>
                 <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#F0F9FF] border border-[#BFE7FF] text-[#0088EE] text-xs font-semibold mb-1">
                   <Sparkles size={12} />
-                  <span>Unified Multi-Account Engine</span>
+                  <span>{nylasStatus?.is_email_unified ? 'Unified Multi-Account Inbox' : 'Nylas Connected Accounts'}</span>
                 </div>
                 <h2 className="text-base font-bold text-[--foreground]">
                   Connected Inboxes &amp; Calendars
                 </h2>
                 <p className="text-xs text-[--muted-foreground] mt-0.5">
-                  Link multiple Google, Microsoft, and iCloud accounts. Nova unifies emails, schedule availability, and AI triage actions in one place.
+                  Connect Google, Microsoft, iCloud, Yahoo, and IMAP accounts. Nova combines connected inboxes and supported calendars in one place.
                 </p>
               </div>
 
               {nylasGrants.length > 0 && (
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-semibold self-start sm:self-auto">
                   <CheckCircle2 size={13} />
-                  {nylasGrants.length} {nylasGrants.length === 1 ? 'Account' : 'Accounts'} Active
+                  {nylasStatus
+                    ? `${nylasStatus.email_account_count} inbox${nylasStatus.email_account_count === 1 ? '' : 'es'}${nylasStatus.is_email_unified ? ' unified' : ''} · ${nylasStatus.calendar_account_count} calendar${nylasStatus.calendar_account_count === 1 ? '' : 's'}`
+                    : `${nylasGrants.length} ${nylasGrants.length === 1 ? 'Account' : 'Accounts'} Active`}
                 </span>
               )}
             </div>
@@ -810,12 +825,16 @@ function SettingsContent() {
                           </div>
 
                           <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                            <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-700 bg-white px-2 py-0.5 rounded-full border border-emerald-200 shadow-2xs">
-                              <Mail size={10} /> Email Active
-                            </span>
-                            <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-700 bg-white px-2 py-0.5 rounded-full border border-emerald-200 shadow-2xs">
-                              <CalendarIcon size={10} /> Calendar Active
-                            </span>
+                            {grant.scope?.includes('email') && (
+                              <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-700 bg-white px-2 py-0.5 rounded-full border border-emerald-200 shadow-2xs">
+                                <Mail size={10} /> Email Active
+                              </span>
+                            )}
+                            {grant.scope?.includes('calendar') && (
+                              <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-700 bg-white px-2 py-0.5 rounded-full border border-emerald-200 shadow-2xs">
+                                <CalendarIcon size={10} /> Calendar Active
+                              </span>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -849,7 +868,7 @@ function SettingsContent() {
               Connect an Email &amp; Calendar Account
             </h3>
             <p className="text-xs text-[--muted-foreground]">
-              Foxly uses secure OAuth 2.0 via Nylas. You can link multiple accounts to manage personal and work mailboxes together.
+              Nylas handles provider sign-in securely. Link multiple accounts to combine mailboxes and supported calendars.
             </p>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
@@ -919,10 +938,10 @@ function SettingsContent() {
                 </span>
               </button>
 
-              {/* Other Providers (iCloud / IMAP) */}
+              {/* Other Providers (iCloud / Yahoo / IMAP) */}
               <button
                 type="button"
-                onClick={() => handleConnectNylas()}
+                onClick={() => handleConnectNylas('other')}
                 disabled={!!isConnectingNylas}
                 className="p-4 rounded-xl border border-gray-200 hover:border-gray-400 bg-white hover:bg-gray-50 text-left transition flex flex-col justify-between space-y-3 cursor-pointer group shadow-2xs disabled:opacity-50"
               >
@@ -939,11 +958,11 @@ function SettingsContent() {
                     iCloud, Yahoo or IMAP
                   </p>
                   <p className="text-[11px] text-gray-500 mt-0.5">
-                    Connect any other email or calendar
+                    IMAP accounts may require an app password. Generic IMAP lets you enter custom server settings.
                   </p>
                 </div>
                 <span className="text-xs font-semibold text-gray-700 flex items-center gap-1 pt-1">
-                  {isConnectingNylas === 'all' ? 'Connecting...' : 'Choose Provider'}
+                  {isConnectingNylas === 'other' ? 'Connecting...' : 'Choose Provider'}
                   <ExternalLink size={11} />
                 </span>
               </button>
