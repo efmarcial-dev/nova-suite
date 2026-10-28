@@ -41,6 +41,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300..800;1,300..800&display=swap"
           rel="stylesheet"
         />
+        <meta name="testmybuild-site-verification" content="tmb-aek25sicztph"></meta>
       </head>
       <body className="h-full">
         <AuthRefreshManager />
