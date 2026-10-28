@@ -9,7 +9,6 @@ import { useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { useCachedUser } from '../hooks/useCachedUser';
 import { useCachedProjects } from '../hooks/useCachedProjects';
-import { motion } from 'framer-motion';
 
 export default function Sidebar() {
   const [showNewTask, setShowNewTask] = useState(false);
@@ -38,20 +37,21 @@ export default function Sidebar() {
 
   return (
    <>
-     <aside className="bg-[--sidebar] w-60 shrink-0 flex flex-col justify-between h-full p-4">
+     <aside className="bg-[#0D1B2A] w-60 shrink-0 flex flex-col justify-between h-full p-4 border-r border-[#1E232C]">
       <div>
         {/* Logo */}
         <div className="flex items-center gap-2.5 mb-8 px-2">
-          <div className="w-8 h-8 rounded-lg gradient-brand flex items-center justify-center">
-            <Image src={'/images/nova_logo.png'} alt="Nova Suite" width={20} height={20} />
+          <Image src={'/images/foxly_mascot_transparent.png'} alt="Foxly" width={32} height={32} className="object-contain" />
+          <div className="flex flex-col">
+            <span className="text-xl font-bold text-white tracking-tight leading-none lowercase">foxly</span>
+            <span className="text-[10px] text-slate-400 font-medium tracking-tight mt-0.5">Your life. In flow.</span>
           </div>
-          <span className="text-xl font-semibold text-white tracking-tight">Nova Suite</span>
         </div>
 
         {/* New Task button */}
         <button
           onClick={() => setShowNewTask(true)}
-          className="w-full mb-6 flex items-center justify-center gap-2 py-2 px-4 rounded-xl gradient-brand text-white text-sm font-medium hover:opacity-90 transition-opacity shadow-lg shadow-indigo-900/30"
+          className="w-full mb-6 flex items-center justify-center gap-2 py-2 px-4 rounded-xl bg-[#1EA0FF] text-white text-sm font-semibold hover:bg-[#0088EE] transition shadow-lg shadow-blue-500/20 cursor-pointer"
         >
           <Plus size={15} /> New Task
         </button>
@@ -73,7 +73,7 @@ export default function Sidebar() {
         </nav>
 
         {/* Bottom Nav */}
-        <div className="mt-8 pt-4 border-t border-[--sidebar-border] space-y-1">
+        <div className="mt-8 pt-4 border-t border-white/10 space-y-1">
           {bottomLinks.map((link) => (
             <SidebarLink
               key={link.href}
@@ -87,7 +87,7 @@ export default function Sidebar() {
       </div>
 
       {/* User Avatar */}
-      <div className="flex items-center gap-3 px-2 py-3 rounded-xl bg-[--sidebar-accent] mt-4">
+      <div className="flex items-center gap-3 px-2 py-3 rounded-xl bg-white/5 border border-white/10 mt-4">
         <div className="w-8 h-8 rounded-full gradient-brand flex items-center justify-center text-white text-xs font-bold shrink-0">
           {initials}
         </div>
@@ -95,7 +95,7 @@ export default function Sidebar() {
           <p className="text-sm font-medium text-white truncate">
             {currentUser ? `${currentUser.first_name} ${currentUser.last_name}` : 'Loading...'}
           </p>
-          <p className="text-xs text-[--sidebar-foreground] truncate opacity-70">
+          <p className="text-xs text-slate-300 truncate opacity-80">
             {currentUser?.email ?? ''}
           </p>
         </div>
@@ -128,21 +128,24 @@ function SidebarLink({
   return (
     <Link
       href={href}
-      className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 relative
-        ${isActive
-          ? 'bg-[--sidebar-accent] text-white'
-          : 'text-[--sidebar-foreground] hover:bg-[--sidebar-accent] hover:text-white'
-        }`}
+      className={`group flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 relative ${
+        isActive
+          ? 'bg-white/10 text-white font-semibold'
+          : 'text-white hover:bg-white/10 hover:text-white'
+      }`}
     >
-      {isActive && (
-        <motion.span
-          layoutId="sidebar-active-indicator"
-          className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 rounded-r-full bg-indigo-400"
-          transition={{ type: 'spring', stiffness: 500, damping: 35 }}
-        />
-      )}
-      <span className={isActive ? 'text-indigo-400' : ''}>{icon}</span>
-      {text}
+      <span className={`shrink-0 transition-colors ${isActive ? 'text-[#1EA0FF]' : 'text-white/80 group-hover:text-white'}`}>
+        {icon}
+      </span>
+      <span
+        className={`transition-all ${
+          isActive
+            ? 'border-b-2 border-[#1EA0FF] pb-0.5 text-white font-semibold inline-block'
+            : 'text-white group-hover:text-white'
+        }`}
+      >
+        {text}
+      </span>
     </Link>
   )
 }

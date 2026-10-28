@@ -8,14 +8,18 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
 
     <div className="min-h-screen flex flex-col bg-gray-50">
       {/* Top-left logo */}
-      <Link href="/" className="absolute top-6 left-6 flex items-center space-x-2">
+      <Link href="/" className="absolute top-6 left-6 flex items-center space-x-2.5">
         <Image
-          src="/images/nova_logo.png"
-          alt="Logo"
-          width={40}
-          height={40}
+          src="/images/foxly_mascot_transparent.png"
+          alt="Foxly"
+          width={38}
+          height={38}
+          className="object-contain"
         />
-        <span className="text-2xl font-medium text-gray-900">Login</span>
+        <div className="flex flex-col">
+          <span className="text-2xl font-black text-gray-900 tracking-tight lowercase">foxly</span>
+          <span className="text-[10px] text-gray-400 font-semibold tracking-tight -mt-1">Your life. In flow.</span>
+        </div>
       </Link>
 
       {/* Main content area */}

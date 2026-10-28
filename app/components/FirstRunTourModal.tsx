@@ -34,7 +34,7 @@ function FirstRunTourContent() {
   useEffect(() => {
     // Check if URL specifies ?tour=true or if this is the user's first visit after checkout
     const forceTour = searchParams.get('tour') === 'true';
-    const hasSeen = localStorage.getItem('nova_has_seen_tour');
+    const hasSeen = localStorage.getItem('foxly_has_seen_tour');
 
     if (forceTour || !hasSeen) {
       setIsOpen(true);
@@ -48,12 +48,16 @@ function FirstRunTourContent() {
       setDirectiveResponse(null);
     };
 
+    window.addEventListener('foxly:open-tour', handleReplayEvent);
     window.addEventListener('nova:open-tour', handleReplayEvent);
-    return () => window.removeEventListener('nova:open-tour', handleReplayEvent);
+    return () => {
+      window.removeEventListener('foxly:open-tour', handleReplayEvent);
+      window.removeEventListener('nova:open-tour', handleReplayEvent);
+    };
   }, [searchParams]);
 
   const handleClose = () => {
-    localStorage.setItem('nova_has_seen_tour', 'true');
+    localStorage.setItem('foxly_has_seen_tour', 'true');
     setIsOpen(false);
     // If ?tour=true is in the URL, cleanly strip it without full reload
     if (searchParams.get('tour')) {
@@ -99,7 +103,7 @@ function FirstRunTourContent() {
       id: 'task-scoring',
       title: '0–100 AI Task Prioritization',
       subtitle: 'Never question what to work on next. Nova evaluates urgency, client impact, and executive alignment in real-time.',
-      icon: <ListTodo className="w-5 h-5 text-indigo-600" />,
+      icon: <ListTodo className="w-5 h-5 text-[#1EA0FF]" />,
       content: (
         <div className="space-y-4">
           <div className="bg-white border border-[--border] rounded-xl p-4 shadow-sm">
@@ -123,7 +127,7 @@ function FirstRunTourContent() {
 
             <div className="bg-gray-50 p-2.5 rounded-lg border border-gray-100 space-y-1.5 text-[11px]">
               <div className="text-gray-700 font-semibold flex items-center gap-1">
-                <Sparkles className="w-3 h-3 text-indigo-500" />
+                <Sparkles className="w-3 h-3 text-[#1EA0FF]" />
                 <span>Why Nova scored this 94:</span>
               </div>
               <div className="flex justify-between text-gray-600">
@@ -151,7 +155,7 @@ function FirstRunTourContent() {
       id: 'email-assistant',
       title: 'AI Email Intelligence & Action Items',
       subtitle: 'Connect Gmail or Outlook to eliminate inbox zero friction. Nova extracts deliverables and prepares context-aware drafts.',
-      icon: <Mail className="w-5 h-5 text-indigo-600" />,
+      icon: <Mail className="w-5 h-5 text-[#1EA0FF]" />,
       content: (
         <div className="space-y-4">
           <div className="bg-white border border-[--border] rounded-xl p-4 shadow-sm space-y-3">
@@ -168,17 +172,17 @@ function FirstRunTourContent() {
               </span>
             </div>
 
-            <div className="bg-indigo-50/60 border border-indigo-100 rounded-lg p-3 text-xs space-y-2">
-              <div className="flex items-center gap-1.5 font-semibold text-indigo-900">
-                <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
+            <div className="bg-[#F0F9FF] border border-[#BFE7FF] rounded-lg p-3 text-xs space-y-2">
+              <div className="flex items-center gap-1.5 font-semibold text-[#0D1B2A]">
+                <Sparkles className="w-3.5 h-3.5 text-[#1EA0FF]" />
                 <span>Nova AI Email Extraction:</span>
               </div>
               <ul className="list-disc list-inside text-gray-700 text-[11px] space-y-1">
                 <li>Marcus requested the finalized architecture diagram by Thursday 2 PM.</li>
                 <li>Budget approval is pending your signoff on Scope Doc v2.</li>
               </ul>
-              <div className="pt-2 border-t border-indigo-100 flex items-center justify-between">
-                <span className="text-[11px] text-indigo-700 font-medium">Ready: 1-Click AI Response Drafted</span>
+              <div className="pt-2 border-t border-[#BFE7FF] flex items-center justify-between">
+                <span className="text-[11px] text-[#0088EE] font-medium">Ready: 1-Click AI Response Drafted</span>
                 <span className="text-[10px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
                   Pre-screened
                 </span>
@@ -196,13 +200,13 @@ function FirstRunTourContent() {
       id: 'calendar-focus',
       title: 'Smart Calendar & Focus Guarding',
       subtitle: 'Nova syncs with Google Calendar & Outlook to protect 2-hour deep-work blocks and prevent meeting burnout.',
-      icon: <Calendar className="w-5 h-5 text-indigo-600" />,
+      icon: <Calendar className="w-5 h-5 text-[#1EA0FF]" />,
       content: (
         <div className="space-y-4">
           <div className="bg-white border border-[--border] rounded-xl p-4 shadow-sm space-y-2.5">
             <div className="flex items-center justify-between text-xs font-semibold text-gray-700 pb-2 border-b border-gray-100">
               <span>Today&apos;s AI Optimized Schedule</span>
-              <span className="text-indigo-600 flex items-center gap-1">
+              <span className="text-[#1EA0FF] flex items-center gap-1">
                 <Shield className="w-3.5 h-3.5" /> Guard Active
               </span>
             </div>
@@ -243,7 +247,7 @@ function FirstRunTourContent() {
       id: 'directives-hub',
       title: 'Executive Directive Bar & Quick Execution',
       subtitle: 'Instruct Nova in plain English. Click a sample below to test instant directive processing right now.',
-      icon: <Zap className="w-5 h-5 text-indigo-600" />,
+      icon: <Zap className="w-5 h-5 text-[#1EA0FF]" />,
       content: (
         <div className="space-y-4">
           <div className="bg-white border border-[--border] rounded-xl p-4 shadow-sm space-y-3">
@@ -253,14 +257,14 @@ function FirstRunTourContent() {
               <button
                 type="button"
                 onClick={() => handleTestDirective('Draft reply to Sarah approving contract proposal')}
-                className="text-xs px-3 py-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-medium border border-indigo-200 transition text-left"
+                className="text-xs px-3 py-1.5 rounded-lg bg-[#F0F9FF] hover:bg-[#E8F6FF] text-[#0088EE] font-medium border border-[#BFE7FF] transition text-left"
               >
                 &ldquo;Draft reply to Sarah approving contract&rdquo;
               </button>
               <button
                 type="button"
                 onClick={() => handleTestDirective('Reschedule 2pm meeting to protect focus block')}
-                className="text-xs px-3 py-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-medium border border-indigo-200 transition text-left"
+                className="text-xs px-3 py-1.5 rounded-lg bg-[#F0F9FF] hover:bg-[#E8F6FF] text-[#0088EE] font-medium border border-[#BFE7FF] transition text-left"
               >
                 &ldquo;Reschedule 2pm meeting to protect focus&rdquo;
               </button>
@@ -273,7 +277,7 @@ function FirstRunTourContent() {
                 value={interactiveDirective}
                 onChange={(e) => setInteractiveDirective(e.target.value)}
                 placeholder="Or type any instruction for Nova..."
-                className="w-full text-xs pl-3 pr-10 py-2.5 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-400"
+                className="w-full text-xs pl-3 pr-10 py-2.5 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-[#1EA0FF]"
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && interactiveDirective.trim()) {
                     handleTestDirective(interactiveDirective);
@@ -288,7 +292,7 @@ function FirstRunTourContent() {
                   }
                 }}
                 disabled={isSimulatingDirective || !interactiveDirective.trim()}
-                className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-indigo-600 hover:text-indigo-800 disabled:opacity-30"
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-[#1EA0FF] hover:text-[#0088EE] disabled:opacity-30"
               >
                 <Send className="w-3.5 h-3.5" />
               </button>
@@ -296,7 +300,7 @@ function FirstRunTourContent() {
 
             {/* Live Response Box */}
             {isSimulatingDirective && (
-              <div className="p-3 rounded-lg bg-indigo-50 border border-indigo-100 flex items-center gap-2 text-xs text-indigo-700 animate-pulse">
+              <div className="p-3 rounded-lg bg-[#F0F9FF] border border-[#BFE7FF] flex items-center gap-2 text-xs text-[#0088EE] animate-pulse">
                 <Sparkles className="w-3.5 h-3.5" />
                 <span>Nova is processing your directive...</span>
               </div>
@@ -329,12 +333,12 @@ function FirstRunTourContent() {
         {/* Top Header */}
         <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gradient-to-r from-gray-50 to-white">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-indigo-50 border border-indigo-200 flex items-center justify-center">
+            <div className="w-9 h-9 rounded-xl bg-[#F0F9FF] border border-[#BFE7FF] flex items-center justify-center">
               {currentStepData.icon}
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-[#1EA0FF] bg-[#F0F9FF] px-2 py-0.5 rounded">
                   Tour: Step {currentStep + 1} of {steps.length}
                 </span>
               </div>
@@ -357,7 +361,7 @@ function FirstRunTourContent() {
         {/* Step Progress Bar */}
         <div className="w-full bg-gray-100 h-1">
           <div
-            className="bg-indigo-600 h-1 transition-all duration-300 ease-out"
+            className="bg-[#1EA0FF] h-1 transition-all duration-300 ease-out"
             style={{ width: `${((currentStep + 1) / steps.length) * 100}%` }}
           />
         </div>
@@ -379,7 +383,7 @@ function FirstRunTourContent() {
                 type="button"
                 onClick={() => setCurrentStep(idx)}
                 className={`h-2 rounded-full transition-all ${
-                  idx === currentStep ? 'w-6 bg-indigo-600' : 'w-2 bg-gray-300 hover:bg-gray-400'
+                  idx === currentStep ? 'w-6 bg-[#1EA0FF]' : 'w-2 bg-gray-300 hover:bg-gray-400'
                 }`}
                 aria-label={`Go to step ${idx + 1}`}
               />
@@ -401,7 +405,7 @@ function FirstRunTourContent() {
             <button
               type="button"
               onClick={handleNext}
-              className="px-4 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow-sm transition flex items-center gap-1.5"
+              className="px-4 py-1.5 rounded-xl bg-[#1EA0FF] hover:bg-[#0088EE] text-white text-xs font-semibold shadow-sm transition flex items-center gap-1.5"
             >
               <span>{currentStep === steps.length - 1 ? 'Enter Workspace' : 'Next'}</span>
               <ArrowRight className="w-3.5 h-3.5" />

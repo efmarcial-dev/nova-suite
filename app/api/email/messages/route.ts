@@ -10,11 +10,15 @@ export async function GET(request: Request) {
 
   try {
     const url = new URL(request.url);
-    const provider = url.searchParams.get('provider') || 'gmail';
+    const provider = url.searchParams.get('provider') || 'nylas';
     const q = url.searchParams.get('q') || '';
     const maxResults = url.searchParams.get('max_results') || '25';
+    const grantId = url.searchParams.get('grant_id') || '';
 
-    const targetUrl = `auth/email/messages/?provider=${encodeURIComponent(provider)}&q=${encodeURIComponent(q)}&max_results=${encodeURIComponent(maxResults)}`;
+    let targetUrl = `auth/email/messages/?provider=${encodeURIComponent(provider)}&q=${encodeURIComponent(q)}&max_results=${encodeURIComponent(maxResults)}`;
+    if (grantId) {
+      targetUrl += `&grant_id=${encodeURIComponent(grantId)}`;
+    }
 
     const res = await fetch(getDjangoApiUrl(targetUrl), {
       method: 'GET',

@@ -15,7 +15,7 @@ export default function Header() {
     : 'U';
 
   const handleLaunchTour = () => {
-    window.dispatchEvent(new CustomEvent('nova:open-tour'));
+    window.dispatchEvent(new CustomEvent('foxly:open-tour'));
   };
 
   return (
@@ -26,9 +26,12 @@ export default function Header() {
           {isLoading ? (
             <div className="skeleton h-5 w-44" />
           ) : (
-            <p className="text-sm font-semibold text-[--foreground]">
-              {greeting}, {currentUser?.first_name ?? 'there'} 👋
-            </p>
+            <div>
+              <p className="text-sm font-bold text-slate-900">
+                {greeting}, {currentUser?.first_name ?? 'there'} 👋
+              </p>
+              <p className="text-[11px] text-slate-400 font-medium">Here&apos;s what&apos;s happening today.</p>
+            </div>
           )}
         </div>
 
@@ -39,7 +42,7 @@ export default function Header() {
             type="text"
             id="header-search"
             placeholder="Search…"
-            className="w-full pl-9 pr-12 py-2 text-sm bg-[--background] border border-[--border] rounded-xl outline-none focus:ring-2 focus:ring-indigo-400/50 focus:border-indigo-400 transition-all placeholder:text-[--muted-foreground]"
+            className="w-full pl-9 pr-12 py-2 text-sm bg-[--background] border border-[--border] rounded-xl outline-none focus:ring-2 focus:ring-[#1EA0FF]/40 focus:border-[#1EA0FF] transition-all placeholder:text-[--muted-foreground]"
           />
           <kbd className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-[--muted-foreground] bg-[--muted] px-1.5 py-0.5 rounded font-mono border border-[--border]">
             ⌘K
@@ -54,9 +57,9 @@ export default function Header() {
           type="button"
           onClick={handleLaunchTour}
           title="Product Tour & AI Guide"
-          className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200/80 rounded-xl transition-all shadow-sm"
+          className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-[#1EA0FF] bg-blue-50 hover:bg-blue-100 border border-blue-200/80 rounded-xl transition-all shadow-2xs"
         >
-          <Sparkles size={14} className="text-indigo-600 animate-pulse" />
+          <Sparkles size={14} className="text-[#1EA0FF] animate-pulse" />
           <span>Product Tour</span>
         </button>
 
@@ -66,7 +69,7 @@ export default function Header() {
           className="relative w-9 h-9 flex items-center justify-center rounded-xl hover:bg-[--muted] transition-colors"
         >
           <Bell size={17} className="text-[--muted-foreground]" />
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-indigo-500 border-2 border-white" />
+          <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[#1EA0FF] border-2 border-white" />
         </button>
 
         {/* Avatar */}

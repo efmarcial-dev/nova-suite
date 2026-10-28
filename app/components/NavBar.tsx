@@ -1,216 +1,133 @@
-'use client'
+'use client';
 
-import { useState } from "react";
-import Link from "next/link";
-import Image from "next/image";
-import { useRouter } from "next/navigation";
-import { ChevronDown } from "lucide-react";
-
-
+import { useState } from 'react';
+import Link from 'next/link';
+import Image from 'next/image';
+import { useRouter } from 'next/navigation';
+import { ArrowRight } from 'lucide-react';
 
 export default function NavBar() {
-    const [menuOpen, setMenuOpen] = useState(false);
-    const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const router = useRouter();
 
-    const router = useRouter();
+  const navLinks = [
+    { name: 'Features', href: '#features' },
+    { name: 'How It Works', href: '#how-it-works' },
+    { name: 'Security & Trust', href: '#security' },
+    { name: 'FAQ', href: '#faq' },
+  ];
 
-    const industries = [
-                    {
-                        name: 'Healthcare',
-                        href: '/industries/healthcare'
-                    },,
-                    {
-                        name: 'Legal',
-                        href: '/industries/legal'
-                    },
-                    {
-                        name: '(AEC)',
-                        href: '/industries/aec'
-                    },
-                    {
-                        name: 'Government',
-                        href: '/industries/government'
-                    },
-                    {
-                        name: 'Other',
-                        href: '/industries/other'
-                    },
+  return (
+    <nav className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-slate-100 w-full px-6 py-3.5 transition-all">
+      <div className="max-w-7xl mx-auto flex items-center justify-between">
+        {/* Brand Logo */}
+        <Link href="/" className="flex items-center space-x-2.5 group">
+          <Image
+            src="/images/foxly_mascot_transparent.png"
+            alt="Foxly"
+            width={38}
+            height={38}
+            className="object-contain transition-transform duration-200 group-hover:scale-105"
+            priority
+          />
+          <div className="flex flex-col">
+            <span className="text-2xl font-black text-gray-950 tracking-tight lowercase">foxly</span>
+            <span className="text-[10px] text-gray-400 font-semibold tracking-tight -mt-1 hidden sm:inline">
+              Your life. In flow.
+            </span>
+          </div>
+        </Link>
 
-                ]
-    
-    const what_section = [
-        {
-            name: 'Fix Operational Systems',
-            href: '/services/custom-enterprise-software'
-        },
-        {
-            name: "Simiplify Workflows",
-            href: '/services/digital-experience'
-        },
-        {
-            name: "Reduce Manual Work",
-            href: '/services/ai-automation'
-        },
-        {
-            name: 'Improve Visibility & Control',
-            href: '/services/enterprise-portal'
-        }
-    ]
-
-    const how_section = [
-        {
-            name: 'Our Approach',
-            href: '/how-we-work/approach',
-
-        },
-        {
-            name: 'Clarity Before Code',
-            href: '/how-we-work/clarity-before-code'
-
-        },
-        {
-            name: 'Security & Complaince',
-            href: '/how-we-work/security-and-complaince'
-        }
-    ]
-
-    const company = [
-        {
-            name: 'About Us',
-            href: '/about'
-        },{
-            name: 'Blogs',
-            href: '/blogs'
-        },
-        {
-            name: 'Contact Us',
-            href: '/contact'
-        }
-    ]
-
-    const Dropdown = ({ label, items }: { label: string; items: any[] }) => (
-            <div
-            className="relative"
-            onMouseEnter={() => setOpenDropdown(label)}
-            onMouseLeave={() => setOpenDropdown(null)}
+        {/* Desktop Product Navigation */}
+        <div className="hidden md:flex items-center space-x-8">
+          {navLinks.map((link) => (
+            <a
+              key={link.name}
+              href={link.href}
+              className="text-sm font-medium text-slate-600 hover:text-[#1EA0FF] transition-colors"
             >
-            <button className="flex flex-inline items-center justify-center text-sm text-gray-700 transition-transform duration-200 hover:scale-105 hover:text-blue-600 transition">
-                {label} <ChevronDown className="w-4 h-4" />
-            </button>
-
-            {openDropdown === label && (
-                <div className="absolute top-full mt-2 w-64 bg-white shadow-lg rounded-lg py-2 z-50">
-                {items.map((item) => (
-                    <Link
-                    key={item.name}
-                    href={item.href}
-                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    >
-                    {item.name}
-                    </Link>
-                ))}
-                </div>
-            )}
-            </div>
-        );
-    return (
-    <nav className="sticky top-0 z-50 bg-white w-full px-6 py-4 relative">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-            {/* Logo */}
-            <div className="flex items-center space-x-2">
-                <Image src={'/images/nova_logo.png'} alt="Nova Suite" width={34} height={34} />
-                <span className="text-2xl font-medium text-gray-900">Nova IT Solutions</span>
-            </div>
-
-            {/* Burger Icon */}
-            <button
-            className="md:hidden flex flex-col justify-center space-y-1.5 z-20"
-            onClick={() => setMenuOpen(!menuOpen)}
-            aria-label="Toggle Menu"
-            >
-            <div
-                className={`h-0.5 w-6 bg-black transition-transform duration-300 ${
-                menuOpen ? 'rotate-45 translate-y-[6px]' : ''
-                }`}
-            />
-            <div
-                className={`h-0.5 w-6 bg-black transition-all duration-300 ${
-                menuOpen ? 'opacity-0' : ''
-                }`}
-            />
-            <div
-                className={`h-0.5 w-6 bg-black transition-transform duration-300 ${
-                menuOpen ? '-rotate-45 -translate-y-[10px]' : ''
-                }`}
-            />
-            </button>
-
-            {/* Desktop Nav Links */}
-            <div className="hidden md:flex items-center space-x-8">
-                <Dropdown label="What We Do" items={what_section} />
-                <Dropdown label="Industries" items={industries} />
-                <Dropdown label="How We Work" items={how_section} />
-                <Dropdown label="Company" items={company} />
-                <Link href="/case-studies" className="flex flex-inline items-center justify-center text-sm text-gray-700 transition-transform duration-200 hover:scale-105 hover:text-blue-600 transition">
-                    Case Studies
-                </Link>
-                <Link
-                    href="/login"
-                    className="bg-blue-600 text-white text-sm font-medium px-4 py-2 rounded-full transform transition-transform duration-200 hover:scale-105 hover:opacity-80 "
-                >
-                    Login
-                </Link>
-                <Link
-                    href="/contact"
-                    className="bg-black text-white text-sm font-medium px-4 py-2 rounded-full transform transition-transform duration-200 hover:scale-105 hover:opacity-80 "
-                >
-                    Contact Us
-                </Link>
-            </div>
+              {link.name}
+            </a>
+          ))}
         </div>
 
-        {/* Mobile Dropdown */}
-        <div
-            className={`md:hidden absolute left-0 top-full w-full bg-white px-6 overflow-hidden transition-all duration-300 ${
-            menuOpen ? 'max-h-[900px] py-6' : 'max-h-0 py-0'
-            }`}
+        {/* Desktop Auth CTAs */}
+        <div className="hidden md:flex items-center space-x-4">
+          <Link
+            href="/login"
+            className="text-sm font-semibold text-slate-700 hover:text-[#1EA0FF] transition-colors px-3 py-2"
+          >
+            Sign In
+          </Link>
+          <Link
+            href="/register"
+            className="inline-flex items-center gap-1.5 bg-[#1EA0FF] hover:bg-[#0088EE] text-white text-sm font-bold px-5 py-2.5 rounded-full shadow-md shadow-blue-500/20 transform transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
+          >
+            <span>Start 3-Day Free Trial</span>
+            <ArrowRight size={14} />
+          </Link>
+        </div>
+
+        {/* Mobile Menu Button */}
+        <button
+          className="md:hidden flex flex-col justify-center space-y-1.5 z-20 p-2 focus:outline-none"
+          onClick={() => setMenuOpen(!menuOpen)}
+          aria-label="Toggle Menu"
         >
-            <div className="flex flex-col items-center text-center space-y-4">
+          <div
+            className={`h-0.5 w-6 bg-slate-900 transition-transform duration-300 ${
+              menuOpen ? 'rotate-45 translate-y-[8px]' : ''
+            }`}
+          />
+          <div
+            className={`h-0.5 w-6 bg-slate-900 transition-opacity duration-300 ${
+              menuOpen ? 'opacity-0' : ''
+            }`}
+          />
+          <div
+            className={`h-0.5 w-6 bg-slate-900 transition-transform duration-300 ${
+              menuOpen ? '-rotate-45 -translate-y-[8px]' : ''
+            }`}
+          />
+        </button>
+      </div>
 
-                {[{ label: 'What We Do', items: what_section },
-                    { label: 'Industries', items: industries },
-                    { label: 'How We Work', items: how_section },
-                    { label: 'Company', items: company }
-                ].map(section => (
-                    <div key={section.label}>
-                    <p className=" font-bold text-lg text-gray-900 mb-2">{section.label}</p>
-                    {section.items.map(item => (
-                        <Link
-                        key={item?.name}
-                        href={item?.href || '#'}
-                        onClick={() => setMenuOpen(false)}
-                        className="block text-md text-gray-700 py-1"
-                        >
-                        {item?.name}
-                        </Link>
-                    ))}
-                    </div>
-                ))}
-                <Link href="/case-studies" onClick={() => setMenuOpen(false)} className="text-lg font-medium text-gray-900">
-                    Case Studies
-                </Link>
-                <button
-                    onClick={() => {
-                        setMenuOpen(false)
-                        router.push('/contact')
-                    }}
-                    className="bg-black text-white text-sm font-medium px-4 py-2 rounded-full hover:opacity-90 transition"
-                >
-                    Get Started
-                </button>
-            </div>
+      {/* Mobile Drawer */}
+      <div
+        className={`md:hidden absolute left-0 top-full w-full bg-white border-b border-slate-200 px-6 shadow-xl overflow-hidden transition-all duration-300 ${
+          menuOpen ? 'max-h-[400px] py-6' : 'max-h-0 py-0'
+        }`}
+      >
+        <div className="flex flex-col space-y-4">
+          {navLinks.map((link) => (
+            <a
+              key={link.name}
+              href={link.href}
+              onClick={() => setMenuOpen(false)}
+              className="text-base font-semibold text-slate-800 hover:text-[#1EA0FF] py-1 transition-colors"
+            >
+              {link.name}
+            </a>
+          ))}
+          <div className="pt-3 border-t border-slate-100 flex flex-col space-y-3">
+            <Link
+              href="/login"
+              onClick={() => setMenuOpen(false)}
+              className="text-center py-2.5 text-sm font-semibold text-slate-700 hover:text-[#1EA0FF] border border-slate-200 rounded-xl"
+            >
+              Sign In
+            </Link>
+            <Link
+              href="/register"
+              onClick={() => setMenuOpen(false)}
+              className="flex items-center justify-center gap-2 bg-[#1EA0FF] text-white text-sm font-bold py-3 rounded-xl shadow-md shadow-blue-500/20"
+            >
+              <span>Start 3-Day Free Trial</span>
+              <ArrowRight size={14} />
+            </Link>
+          </div>
         </div>
+      </div>
     </nav>
-    )
-
+  );
 }

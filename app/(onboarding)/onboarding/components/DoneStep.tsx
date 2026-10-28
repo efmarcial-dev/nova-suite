@@ -28,8 +28,8 @@ export default function DoneStep() {
         Your payment was successful and your workspace is ready. We&apos;re taking you to your dashboard now.
       </p>
 
-      <div className="flex items-center gap-2 text-xs text-indigo-600 font-medium bg-indigo-50 px-4 py-2 rounded-full mb-6">
-        <span className="w-2 h-2 rounded-full bg-indigo-600 animate-ping" />
+      <div className="flex items-center gap-2 text-xs text-[#1EA0FF] font-medium bg-[#F0F9FF] px-4 py-2 rounded-full mb-6">
+        <span className="w-2 h-2 rounded-full bg-[#1EA0FF] animate-ping" />
         <span>Launching your executive dashboard...</span>
       </div>
 

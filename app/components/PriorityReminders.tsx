@@ -120,7 +120,7 @@ export default function PriorityReminders({
 
       {reminders.length === 0 ? (
         <div className="flex items-center gap-3 px-5 py-6 text-sm text-slate-600">
-          <Sparkles size={18} className="text-indigo-500" />
+          <Sparkles size={18} className="text-[#1EA0FF]" />
           You’re clear for now. High priority and urgent tasks will show up here.
         </div>
       ) : (
@@ -138,7 +138,7 @@ export default function PriorityReminders({
                       {overdue ? 'Overdue' : task.priority?.toLowerCase() === 'critical' ? 'Critical priority' : 'High priority'}
                     </span>
                     <span className="text-xs font-medium text-slate-500">{dueLabel(task.due_date)}</span>
-                    {score > 0 && <span className="text-xs font-semibold text-indigo-600">{score} priority score</span>}
+                    {score > 0 && <span className="text-xs font-semibold text-[#1EA0FF]">{score} priority score</span>}
                   </div>
                   <h3 className="truncate font-semibold text-slate-900">{task.title}</h3>
                   <p className="mt-1 line-clamp-2 text-sm text-slate-600">
@@ -152,7 +152,7 @@ export default function PriorityReminders({
                     onClick={() => rescore(task)}
                     aria-label={`Reanalyze ${task.title}`}
                     title="Reanalyze using your priority profile"
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-indigo-200 px-3 py-2 text-xs font-semibold text-indigo-700 transition hover:bg-indigo-50 disabled:opacity-50"
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-[#BFE7FF] px-3 py-2 text-xs font-semibold text-[#0088EE] transition hover:bg-[#F0F9FF] disabled:opacity-50"
                   >
                     <RotateCw size={14} /> Analyze
                   </button>
@@ -168,7 +168,7 @@ export default function PriorityReminders({
                     type="button"
                     disabled={busy}
                     onClick={() => applyAction(task, { status: 'done' })}
-                    className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-3 py-2 text-xs font-semibold text-white transition hover:bg-indigo-700 disabled:opacity-50"
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-3 py-2 text-xs font-semibold text-white transition hover:bg-[#0088EE] disabled:opacity-50"
                   >
                     <Check size={14} /> Complete
                   </button>

@@ -23,13 +23,13 @@ export function Button({
   const baseStyles = 'inline-flex items-center justify-center transition-all rounded-lg relative overflow-hidden group';
   
   const variants = {
-    primary: `bg-gradient-to-r from-[#4E7BFF] to-[#6B8FFF] text-white hover:shadow-lg hover:shadow-[#4E7BFF]/30 ${
+    primary: `bg-gradient-to-r from-[#1EA0FF] to-[#007CE8] text-white hover:shadow-lg hover:shadow-[#1EA0FF]/30 ${
       disabled ? 'opacity-50 cursor-not-allowed' : ''
     }`,
-    secondary: `bg-white/5 text-blue-600 border border-[#4E7BFF]/20 hover:bg-white/10 hover:border-[#4E7BFF]/40 ${
+    secondary: `bg-white/5 text-[#1EA0FF] border border-[#1EA0FF]/20 hover:bg-white/10 hover:border-[#1EA0FF]/40 ${
       disabled ? 'opacity-50 cursor-not-allowed' : ''
     }`,
-    outline: `border-2 border-[#4E7BFF] text-[#4E7BFF] hover:bg-[#4E7BFF]/10 ${
+    outline: `border-2 border-[#1EA0FF] text-[#1EA0FF] hover:bg-[#1EA0FF]/10 ${
       disabled ? 'opacity-50 cursor-not-allowed' : ''
     }`,
     subtle: `text-[#A9B3C9] hover:text-white hover:bg-white/5 ${

@@ -6,8 +6,9 @@ import {format} from 'date-fns';
 import TagInput from "./TagInput";
 import {X, CalendarPlus, CloudUpload, Plus} from 'lucide-react'
 import NewProjectForm from "./NewProjectForm";
-import { createTask } from "../lib/api/tasks";
+import { createTask, rescoreTaskAPI } from "../lib/api/tasks";
 import { useCachedTasks } from "../hooks/useCachedTasks";
+import { updateTaskInCache } from "../lib/cache/NovaCacheHelpers";
 import { emitTaskChangeEvent } from "../lib/events/novaEvents";
 import ProjectSelect from "./ProjectSelect";
 import StatusSelect from "./StatusSelect";
@@ -54,7 +55,7 @@ export default function NewTaskForm({
         setLoading(true);
 
         try {
-            const newTask = await createTask({
+            const created = await createTask({
                 title,
                 status,
                 selectedProjectId,
@@ -64,17 +65,45 @@ export default function NewTaskForm({
                 attachment,
             });
 
-            console.log("Task Created ");
-            console.log(project);
+            const unwrapped = (created as any)?.task ?? created;
+            const validTask = {
+                ...unwrapped,
+                id: unwrapped?.id || `local-${Date.now()}`,
+                title: unwrapped?.title || title,
+                status: unwrapped?.status || status || 'todo',
+                project: unwrapped?.project ?? selectedProjectId,
+                tags: unwrapped?.tags ?? tags,
+                due_date: unwrapped?.due_date ?? (dueDate ? format(dueDate, 'yyyy-MM-dd') : ''),
+                // Preserve AI score fields returned from backend on creation
+                confidence: unwrapped?.confidence ?? unwrapped?.score ?? 0,
+                score: unwrapped?.score ?? unwrapped?.confidence ?? 0,
+                reasoning: unwrapped?.reasoning ?? unwrapped?.scoring_explanation ?? '',
+                lastUpdated: Date.now(),
+            };
 
             // Add to cache database
-            await addTaskToCache(newTask);
+            await addTaskToCache(validTask);
 
             // Emit task change event so TaskBoard and all components update instantly
-            emitTaskChangeEvent({ action: 'create', task: newTask });
+            emitTaskChangeEvent({ action: 'create', task: validTask });
 
             // Reset form or call parent close
             onSubmitSuccess?.();
+
+            // Fire-and-forget background rescore: backend already scored on create()
+            // but we trigger a fresh Groq LLM rescore in the background once we have the real ID.
+            // This updates confidence/reasoning in cache without blocking the user.
+            const realId = validTask.id;
+            if (realId && !String(realId).startsWith('local-')) {
+                rescoreTaskAPI(realId).then((rescored) => {
+                    if (rescored) {
+                        updateTaskInCache(rescored);
+                        emitTaskChangeEvent({ action: 'update', task: rescored });
+                    }
+                }).catch(() => {
+                    // Silent — rescore is best-effort, local score is already shown
+                });
+            }
         } catch(err) {
             console.error('Failed to create task', err)
             alert("Failed to save task");

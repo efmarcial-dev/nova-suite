@@ -17,14 +17,14 @@ const features = [
     color: 'text-blue-600',
     bg: 'bg-blue-50',
     border: 'border-blue-100',
-    title: 'Email Intelligence',
+    title: 'Multiple Inboxes (Google & Outlook)',
     description:
-      'NovaSuite connects to your Gmail or Microsoft Outlook inbox and automatically classifies incoming messages, surfaces high-priority client correspondence, and prepares AI-drafted replies for you to review and approve before anything is sent.',
+      'Foxly connects to multiple Gmail and Microsoft Outlook inboxes simultaneously. It automatically aggregates and classifies incoming correspondence, detects urgent client inquiries, and prepares AI-drafted replies across all accounts.',
     bullets: [
-      'Inbox triage & urgency scoring',
-      'Action item extraction from emails',
-      'AI-drafted reply preparation',
-      'Daily morning email briefing',
+      'Multi-inbox support (Google Workspace & Outlook 365)',
+      'Cross-account triage & unified priority stream',
+      'One-click AI-drafted reply approvals',
+      'Daily consolidated morning email digest',
     ],
   },
   {
@@ -32,14 +32,14 @@ const features = [
     color: 'text-violet-600',
     bg: 'bg-violet-50',
     border: 'border-violet-100',
-    title: 'Calendar Intelligence',
+    title: 'Multi-Calendar Intelligence',
     description:
-      'Connect your Google Calendar or Microsoft Outlook calendar and get a live view of your schedule. NovaSuite detects conflicts, extracts meeting agendas, and generates pre-meeting briefings so you arrive fully prepared.',
+      'Connect multiple Google Calendars and Microsoft Outlook calendars into one unified schedule. Foxly detects scheduling conflicts across providers, extracts agendas, and generates pre-meeting briefings.',
     bullets: [
-      'Live calendar sync (Google & Microsoft)',
-      'Conflict detection & schedule health score',
-      'Pre-meeting AI briefing cards',
-      'Deep-work time protection',
+      'Multi-calendar sync (Google & Microsoft Exchange)',
+      'Cross-provider conflict detection & buffer scoring',
+      'Pre-meeting briefing cards with attendees',
+      'Focus block and deep-work protection',
     ],
   },
   {
@@ -49,7 +49,7 @@ const features = [
     border: 'border-emerald-100',
     title: 'Task & Project Delegation',
     description:
-      'Turn emails, meetings, and voice directives into structured tasks. Assign them to projects, track progress across your team, and let NovaSuite automatically update task status as work moves forward.',
+      'Turn emails, meetings, and voice directives into structured tasks. Assign them to projects, track progress across your team, and let Foxly automatically update task status as work moves forward.',
     bullets: [
       'Natural language task creation',
       'Project boards with priority scoring',
@@ -64,7 +64,7 @@ const features = [
     border: 'border-amber-100',
     title: 'AI Executive Briefings',
     description:
-      "Every morning, NovaSuite compiles a personalized briefing from your inbox, calendar, and open tasks. You see exactly what needs your attention — before you've opened a single email.",
+      "Every morning, Foxly compiles a personalized briefing from your inbox, calendar, and open tasks. You see exactly what needs your attention — before you've opened a single email.",
     bullets: [
       'Morning executive summary',
       'Top 3 priorities surfaced automatically',
@@ -74,12 +74,12 @@ const features = [
   },
   {
     icon: BrainCircuit,
-    color: 'text-indigo-600',
-    bg: 'bg-indigo-50',
-    border: 'border-indigo-100',
+    color: 'text-[#1EA0FF]',
+    bg: 'bg-[#F0F9FF]',
+    border: 'border-[#BFE7FF]',
     title: 'Meeting Intelligence',
     description:
-      'After every meeting NovaSuite extracts decisions, action items, and follow-ups from your calendar events and notes — so nothing slips through the cracks between your inbox and your task board.',
+      'After every meeting Foxly extracts decisions, action items, and follow-ups from your calendar events and notes — so nothing slips through the cracks between your inbox and your task board.',
     bullets: [
       'Post-meeting action item capture',
       'Decision logging per project',
@@ -92,14 +92,14 @@ const features = [
     color: 'text-rose-600',
     bg: 'bg-rose-50',
     border: 'border-rose-100',
-    title: 'Security & Privacy by Design',
+    title: 'Strict SOC II Compliance & Privacy',
     description:
-      'Every provider connection uses OAuth 2.0 — your password is never shared. Your email and calendar data is processed only within your private workspace and is never sold or used to train external AI models.',
+      'Engineered following strict SOC II compliance rules. Connected via Nylas Auth, deployed on Vercel with real-time Supabase and Firestore caching. Your data is isolated per tenant and never used to train public AI models.',
     bullets: [
-      'OAuth 2.0 secure authorization',
-      'Isolated per-tenant workspace',
-      'Disconnect any provider in Settings',
-      'Google & Microsoft Limited Use Policy compliant',
+      'Strict SOC II compliance rules & TLS 1.3 encryption',
+      'Universal Nylas Auth OAuth 2.0 integration',
+      'Backed by Vercel, Supabase & Firestore infrastructure',
+      'Full data deletion and provider disconnect on demand',
     ],
   },
 ];
@@ -117,7 +117,7 @@ export default function FeatureSection() {
           transition={{ duration: 0.6 }}
           className="text-center space-y-4"
         >
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-700 text-xs font-semibold uppercase tracking-wider">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#F0F9FF] border border-[#BFE7FF] text-[#0088EE] text-xs font-semibold uppercase tracking-wider">
             <Zap size={13} />
             Platform Features
           </div>
@@ -125,7 +125,7 @@ export default function FeatureSection() {
             Everything an executive needs — in one intelligent workspace
           </h2>
           <p className="text-lg text-gray-500 max-w-2xl mx-auto">
-            NovaSuite replaces your scattered inboxes, calendar apps, and task tools with a single AI-powered command center built around how executive work actually flows.
+            Foxly replaces your scattered inboxes, calendar apps, and task tools with a single AI-powered command center built around how executive work actually flows.
           </p>
         </motion.div>
 

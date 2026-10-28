@@ -51,7 +51,7 @@ return (
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+            className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-[#1EA0FF] focus:border-[#1EA0FF]"
           />
         </div>
         <div>
@@ -65,13 +65,13 @@ return (
             required
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+            className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-[#1EA0FF] focus:border-[#1EA0FF]"
           />
         </div>
         <button
           type="submit"
           disabled={loading}
-          className={`w-full flex items-center justify-center bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 rounded-md transition ${
+          className={`w-full flex items-center justify-center bg-[#1EA0FF] hover:bg-[#0088EE] text-white py-2.5 px-4 rounded-xl font-bold shadow-md shadow-blue-500/20 transition ${
             loading ? 'opacity-60 cursor-not-allowed' : ''
           }`}
         >
@@ -107,7 +107,7 @@ return (
 
       <div className="mt-6 text-center text-sm text-gray-600">
         Don&apos;t have an account?{' '}
-        <Link href="/register" className="font-medium text-indigo-600 hover:text-indigo-500">
+        <Link href="/register" className="font-medium text-[#1EA0FF] hover:text-[#0088EE]">
           Create an account
         </Link>
       </div>

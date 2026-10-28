@@ -26,6 +26,7 @@ import {
   EmailMessageItem,
   EmailProviderStatus
 } from '@/app/lib/api/email';
+import { fetchNylasGrantsAPI, startNylasConnectAPI, NylasGrant } from '@/app/lib/api/nylas';
 import { ProviderReconnectRequiredError } from '@/app/lib/api/providerErrors';
 
 interface MessageItem {
@@ -40,6 +41,8 @@ interface MessageItem {
   timestamp: string;
   status: 'delivered' | 'pending' | 'resolved';
   aiInsight?: EmailInsight;
+  account_email?: string;
+  provider?: string;
 }
 
 const channelConfig = {
@@ -54,6 +57,8 @@ export default function AssistantHub({ className = '' }: { className?: string })
   const [messages, setMessages] = useState<MessageItem[]>([]);
   const [inboxEmails, setInboxEmails] = useState<EmailMessageItem[]>([]);
   const [connectedEmailProvider, setConnectedEmailProvider] = useState<EmailProviderStatus | null>(null);
+  const [nylasGrants, setNylasGrants] = useState<NylasGrant[]>([]);
+  const [selectedGrantId, setSelectedGrantId] = useState<string>('all');
   const [isConnectingProvider, setIsConnectingProvider] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [directiveInput, setDirectiveInput] = useState('');
@@ -112,13 +117,28 @@ export default function AssistantHub({ className = '' }: { className?: string })
     setAiProgress(0);
     setAiAnalysisComplete(false);
     try {
-      const providers = await fetchEmailProvidersAPI();
-      const connected = providers.find((p) => p.is_connected);
-      setConnectedEmailProvider(connected || null);
+      const [providers, grants] = await Promise.all([
+        fetchEmailProvidersAPI().catch(() => []),
+        fetchNylasGrantsAPI().catch(() => []),
+      ]);
+      const activeGrants = grants.filter((g) => g.is_connected !== false);
+      setNylasGrants(activeGrants);
+
+      const connected = activeGrants.length > 0 ? ({
+        provider: 'nylas',
+        email: activeGrants[0].email,
+        is_connected: true,
+        connected_at: activeGrants[0].connected_at,
+      } as any) : (providers.find((p) => p.is_connected) || null);
+
+      setConnectedEmailProvider(connected);
 
       let remoteEmails: EmailMessageItem[] = [];
 
-      if (connected) {
+      if (activeGrants.length > 0) {
+        const grantIdParam = selectedGrantId === 'all' ? undefined : selectedGrantId;
+        remoteEmails = await fetchEmailMessagesAPI('nylas', '', 25, grantIdParam);
+      } else if (connected) {
         remoteEmails = await fetchEmailMessagesAPI(connected.provider, '', 25);
       }
       setInboxEmails(remoteEmails);
@@ -135,6 +155,8 @@ export default function AssistantHub({ className = '' }: { className?: string })
           ? new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
           : 'Recent',
         status: item.status === 'read' ? 'resolved' : 'delivered',
+        account_email: item.account_email,
+        provider: item.provider,
       }));
 
       // Also fetch any assistant system messages
@@ -201,6 +223,22 @@ export default function AssistantHub({ className = '' }: { className?: string })
     try {
       setProviderError('');
       setProviderReconnectRequired(false);
+      try {
+        const nylasProv = provider === 'gmail' ? 'google' : 'microsoft';
+        const authUrl = await startNylasConnectAPI({
+          provider: nylasProv,
+          product: 'all',
+          origin: 'assistant',
+          login_hint: currentUser?.email,
+        });
+        if (authUrl) {
+          window.location.href = authUrl;
+          return;
+        }
+      } catch (nylasErr) {
+        console.warn('Nylas connect attempt failed, falling back to direct provider OAuth', nylasErr);
+      }
+
       const result = await connectEmailProviderAPI(provider);
       const authUrl = result?.authorization_url || result?.auth_url || result?.url;
       if (authUrl) {
@@ -312,7 +350,7 @@ export default function AssistantHub({ className = '' }: { className?: string })
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
             <h2 className="text-base font-semibold text-[--foreground] flex items-center gap-2">
-              <Mail size={16} className="text-indigo-600" />
+              <Mail size={16} className="text-[#1EA0FF]" />
               Executive Email &amp; Assistant Stream
             </h2>
             <p className="text-xs text-[--muted-foreground]">
@@ -320,13 +358,33 @@ export default function AssistantHub({ className = '' }: { className?: string })
             </p>
           </div>
 
-          <div className="flex items-center gap-2 self-start sm:self-auto">
+          <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
+            {nylasGrants.length > 1 && (
+              <select
+                id="email-account-filter"
+                value={selectedGrantId}
+                onChange={(event) => {
+                  setSelectedGrantId(event.target.value);
+                  setTimeout(() => { void hydrateMessages(); }, 0);
+                }}
+                className="rounded-xl border border-[#BFE7FF] bg-[#F0F9FF] px-3 py-2 text-xs font-semibold text-[#0088EE] outline-none focus:ring-2 focus:ring-[#1EA0FF] shadow-2xs"
+                title="Filter by connected account"
+              >
+                <option value="all">🌐 All Accounts ({nylasGrants.length} Inboxes)</option>
+                {nylasGrants.map((g) => (
+                  <option key={g.grant_id} value={g.grant_id}>
+                    {g.provider === 'google' ? 'Google' : g.provider === 'microsoft' ? 'Outlook' : g.provider}: {g.email}
+                  </option>
+                ))}
+              </select>
+            )}
+
             <label className="sr-only" htmlFor="email-priority-filter">Filter emails by priority</label>
             <select
               id="email-priority-filter"
               value={emailFilter}
               onChange={(event) => setEmailFilter(event.target.value as typeof emailFilter)}
-              className="rounded-xl border border-[--border] bg-white px-3 py-2 text-xs font-medium text-[--foreground] outline-none focus:ring-2 focus:ring-indigo-400"
+              className="rounded-xl border border-[--border] bg-white px-3 py-2 text-xs font-medium text-[--foreground] outline-none focus:ring-2 focus:ring-[#1EA0FF]"
             >
               <option value="all">All messages</option>
               <option value="important">Important emails</option>
@@ -336,7 +394,7 @@ export default function AssistantHub({ className = '' }: { className?: string })
               onClick={handleRefreshFeed}
               disabled={isRefreshing || isAnalyzingAI}
               title="Refresh live messages"
-              className="inline-flex items-center gap-2 rounded-xl border border-indigo-200 bg-indigo-50 px-3.5 py-2 text-xs font-semibold text-indigo-700 shadow-sm transition hover:border-indigo-300 hover:bg-indigo-100 disabled:cursor-wait disabled:opacity-60"
+              className="inline-flex items-center gap-2 rounded-xl border border-[#BFE7FF] bg-[#F0F9FF] px-3.5 py-2 text-xs font-semibold text-[#0088EE] shadow-sm transition hover:border-[#80CFFF] hover:bg-[#E8F6FF] disabled:cursor-wait disabled:opacity-60"
             >
               <RefreshCw size={14} className={isRefreshing ? 'animate-spin' : ''} />
               {isRefreshing ? 'Refreshing…' : isAnalyzingAI ? 'Analyzing…' : 'Refresh inbox'}
@@ -364,22 +422,22 @@ export default function AssistantHub({ className = '' }: { className?: string })
           <div
             role="status"
             aria-live="polite"
-            className="rounded-xl border border-indigo-200 bg-gradient-to-r from-indigo-50 via-white to-violet-50 px-3.5 py-3 shadow-sm shadow-indigo-100/70"
+            className="rounded-xl border border-[#BFE7FF] bg-gradient-to-r from-[#F0F9FF] via-white to-violet-50 px-3.5 py-3 shadow-sm shadow-blue-500/10"
           >
             <div className="mb-2 flex items-center justify-between gap-3">
               <div className="flex min-w-0 items-center gap-2">
-                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-indigo-600 text-white shadow-sm shadow-indigo-300">
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#1EA0FF] text-white shadow-sm shadow-blue-500/30">
                   <Sparkles size={14} className="animate-pulse" />
                 </span>
                 <div className="min-w-0">
-                  <p className="text-xs font-bold text-indigo-950">AI is working on your inbox</p>
-                  <p className="text-[10px] text-indigo-700">Finding priorities, action items, and suggested replies</p>
+                  <p className="text-xs font-bold text-[#0D1B2A]">AI is working on your inbox</p>
+                  <p className="text-[10px] text-[#0088EE]">Finding priorities, action items, and suggested replies</p>
                 </div>
               </div>
-              <span className="shrink-0 text-xs font-bold tabular-nums text-indigo-700">{aiProgress}%</span>
+              <span className="shrink-0 text-xs font-bold tabular-nums text-[#0088EE]">{aiProgress}%</span>
             </div>
             <div
-              className="h-2 overflow-hidden rounded-full bg-indigo-100"
+              className="h-2 overflow-hidden rounded-full bg-[#E8F6FF]"
               role="progressbar"
               aria-label="AI email analysis progress"
               aria-valuemin={0}
@@ -387,7 +445,7 @@ export default function AssistantHub({ className = '' }: { className?: string })
               aria-valuenow={aiProgress}
             >
               <div
-                className="h-full rounded-full bg-gradient-to-r from-indigo-500 via-violet-500 to-fuchsia-500 transition-[width] duration-200 ease-out"
+                className="h-full rounded-full bg-gradient-to-r from-[#F0F9FF]0 via-violet-500 to-fuchsia-500 transition-[width] duration-200 ease-out"
                 style={{ width: `${aiProgress}%` }}
               />
             </div>
@@ -420,20 +478,20 @@ export default function AssistantHub({ className = '' }: { className?: string })
           </p>
         )}
         {connectedEmailProvider && (
-          <section className="overflow-hidden rounded-2xl border border-indigo-200 bg-gradient-to-br from-indigo-50 via-white to-violet-50 shadow-sm shadow-indigo-100/70">
+          <section className="overflow-hidden rounded-2xl border border-[#BFE7FF] bg-gradient-to-br from-[#F0F9FF] via-white to-violet-50 shadow-sm shadow-blue-500/10">
             <div className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex min-w-0 items-start gap-3">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-600 text-white shadow-md shadow-indigo-200">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#1EA0FF] text-white shadow-md shadow-blue-500/20">
                   <Sparkles size={18} />
                 </div>
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
-                    <h3 className="text-sm font-bold text-indigo-950">Priority Reply Studio</h3>
-                    <span className="rounded-full border border-indigo-200 bg-white/80 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-indigo-700">
+                    <h3 className="text-sm font-bold text-[#0D1B2A]">Priority Reply Studio</h3>
+                    <span className="rounded-full border border-[#BFE7FF] bg-white/80 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[#0088EE]">
                       Draft first · you approve
                     </span>
                   </div>
-                  <p className="mt-1 text-xs leading-relaxed text-indigo-800">
+                  <p className="mt-1 text-xs leading-relaxed text-[#0D1B2A]">
                     Give Nova your direction. It will draft a reply to the top-priority message in this inbox.
                   </p>
                 </div>
@@ -444,14 +502,14 @@ export default function AssistantHub({ className = '' }: { className?: string })
                     ? 'border-rose-200 bg-rose-50 text-rose-800'
                     : topPriorityMessage.aiInsight.priority === 'high'
                       ? 'border-orange-200 bg-orange-50 text-orange-800'
-                      : 'border-indigo-200 bg-white text-indigo-800'
+                      : 'border-[#BFE7FF] bg-white text-[#0D1B2A]'
                 }`}>
                   <p className="font-bold">{topPriorityMessage.aiInsight.priority.toUpperCase()} · selected email</p>
                   <p className="mt-0.5 max-w-xs truncate">{topPriorityEmail?.subject || topPriorityMessage.subject}</p>
                 </div>
               )}
             </div>
-            <form onSubmit={handleDraftTopPriorityReply} className="flex flex-col gap-2 border-t border-indigo-100 bg-white/70 p-3 sm:flex-row">
+            <form onSubmit={handleDraftTopPriorityReply} className="flex flex-col gap-2 border-t border-[#BFE7FF] bg-white/70 p-3 sm:flex-row">
               <label className="sr-only" htmlFor="priority-reply-command">Instructions for the reply</label>
               <input
                 id="priority-reply-command"
@@ -460,18 +518,18 @@ export default function AssistantHub({ className = '' }: { className?: string })
                 onChange={(event) => setReplyCommand(event.target.value)}
                 maxLength={1000}
                 placeholder="How should Nova handle it? e.g. Confirm receipt and ask to meet Friday."
-                className="min-w-0 flex-1 rounded-xl border border-indigo-100 bg-white px-3.5 py-2.5 text-xs outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-200"
+                className="min-w-0 flex-1 rounded-xl border border-[#BFE7FF] bg-white px-3.5 py-2.5 text-xs outline-none transition placeholder:text-slate-400 focus:border-[#1EA0FF] focus:ring-2 focus:ring-[#BFE7FF]"
               />
               <button
                 type="submit"
                 disabled={!replyCommand.trim() || !topPriorityEmail || isDraftingReply || isAnalyzingAI || isRefreshing}
-                className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-indigo-200 transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
+                className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-[#1EA0FF] px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-blue-500/20 transition hover:bg-[#0088EE] disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {isDraftingReply ? <RefreshCw size={14} className="animate-spin" /> : <Sparkles size={14} />}
                 {isDraftingReply ? 'Preparing draft…' : 'Draft top-priority reply'}
               </button>
             </form>
-            <div className="flex flex-wrap items-center justify-between gap-2 px-4 pb-3 text-[10px] text-indigo-700">
+            <div className="flex flex-wrap items-center justify-between gap-2 px-4 pb-3 text-[10px] text-[#0088EE]">
               <span>{isAnalyzingAI ? 'Priorities are still being analyzed…' : topPriorityEmail ? `Replying to ${topPriorityEmail.sender}` : 'Waiting for inbox priority analysis.'}</span>
               <span>Nothing sends until you review and approve it.</span>
             </div>
@@ -495,7 +553,7 @@ export default function AssistantHub({ className = '' }: { className?: string })
         <div className="space-y-2.5 max-h-[300px] overflow-y-auto pr-1">
           {!connectedEmailProvider ? (
             <div className="py-7 px-5 text-center bg-gray-50/70 border border-dashed border-[--border] rounded-2xl flex flex-col items-center justify-center space-y-3">
-              <div className="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-600 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-xl bg-[#F0F9FF] border border-[#BFE7FF] text-[#1EA0FF] flex items-center justify-center">
                 <Mail className="w-5 h-5" />
               </div>
               <div className="max-w-md">
@@ -509,7 +567,7 @@ export default function AssistantHub({ className = '' }: { className?: string })
                   type="button"
                   onClick={() => handleConnectProvider('gmail')}
                   disabled={isConnectingProvider}
-                  className="px-3 py-1.5 rounded-xl bg-white border border-gray-300 hover:border-indigo-400 text-xs font-semibold text-gray-700 hover:text-indigo-600 shadow-xs transition flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
+                  className="px-3 py-1.5 rounded-xl bg-white border border-gray-300 hover:border-[#1EA0FF] text-xs font-semibold text-gray-700 hover:text-[#1EA0FF] shadow-xs transition flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
                 >
                   <span>Connect Gmail</span>
                 </button>
@@ -517,13 +575,13 @@ export default function AssistantHub({ className = '' }: { className?: string })
                   type="button"
                   onClick={() => handleConnectProvider('outlook')}
                   disabled={isConnectingProvider}
-                  className="px-3 py-1.5 rounded-xl bg-white border border-gray-300 hover:border-indigo-400 text-xs font-semibold text-gray-700 hover:text-indigo-600 shadow-xs transition flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
+                  className="px-3 py-1.5 rounded-xl bg-white border border-gray-300 hover:border-[#1EA0FF] text-xs font-semibold text-gray-700 hover:text-[#1EA0FF] shadow-xs transition flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
                 >
                   <span>Connect Outlook</span>
                 </button>
                 <Link
                   href="/dashboard/settings"
-                  className="px-3 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-xs font-semibold text-indigo-700 border border-indigo-200 transition"
+                  className="px-3 py-1.5 rounded-xl bg-[#F0F9FF] hover:bg-[#E8F6FF] text-xs font-semibold text-[#0088EE] border border-[#BFE7FF] transition"
                 >
                   Settings &rarr;
                 </Link>
@@ -566,6 +624,11 @@ export default function AssistantHub({ className = '' }: { className?: string })
                         <Icon size={11} />
                         {ch.label}
                       </span>
+                      {msg.account_email && (
+                        <span className="text-[10px] text-gray-600 font-medium bg-slate-100 px-1.5 py-0.5 rounded border border-gray-200">
+                          {msg.provider ? `${msg.provider.toUpperCase()} · ` : ''}{msg.account_email}
+                        </span>
+                      )}
                       <span className="text-xs font-semibold text-[--foreground]">
                         {msg.sender}
                       </span>
@@ -590,13 +653,13 @@ export default function AssistantHub({ className = '' }: { className?: string })
 
                   {/* Stored AI analysis from Django/OpenRouter */}
                   {msg.aiAction && (
-                    <div className="flex items-center gap-1.5 text-[11px] font-medium text-indigo-700 bg-indigo-50/70 border border-indigo-100 rounded-lg px-2.5 py-1 self-start">
-                      <Sparkles size={11} className="text-indigo-500 shrink-0" />
+                    <div className="flex items-center gap-1.5 text-[11px] font-medium text-[#0088EE] bg-[#F0F9FF] border border-[#BFE7FF] rounded-lg px-2.5 py-1 self-start">
+                      <Sparkles size={11} className="text-[#1EA0FF] shrink-0" />
                       <span>{msg.aiAction}</span>
                     </div>
                   )}
                   {msg.channel === 'email' && msg.aiInsight && (
-                    <div className="rounded-xl border border-indigo-100 bg-white p-3 space-y-2">
+                    <div className="rounded-xl border border-[#BFE7FF] bg-white p-3 space-y-2">
                       <div className="flex flex-wrap items-center gap-2">
                         <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide ${
                           msg.aiInsight.priority === 'urgent' ? 'bg-rose-100 text-rose-700' :
@@ -606,7 +669,7 @@ export default function AssistantHub({ className = '' }: { className?: string })
                           {(isUrgent || isHighPriority) && <AlertTriangle size={11} />}
                           {msg.aiInsight.priority} priority
                         </span>
-                        <span className="text-[10px] font-medium text-indigo-600">AI email triage</span>
+                        <span className="text-[10px] font-medium text-[#1EA0FF]">AI email triage</span>
                       </div>
                       <p className="text-xs font-medium leading-relaxed text-slate-800">{msg.aiInsight.summary}</p>
                       {msg.aiInsight.priority_reason && (
@@ -628,14 +691,14 @@ export default function AssistantHub({ className = '' }: { className?: string })
                       )}
                       {msg.aiInsight.reply_draft && (
                         <details className="text-[11px]">
-                          <summary className="cursor-pointer font-semibold text-indigo-700">View reply draft</summary>
+                          <summary className="cursor-pointer font-semibold text-[#0088EE]">View reply draft</summary>
                           <p className="mt-1 whitespace-pre-wrap rounded-lg bg-slate-50 p-2 text-slate-700">{msg.aiInsight.reply_draft}</p>
                         </details>
                       )}
                     </div>
                   )}
                   {msg.channel === 'email' && isAnalyzingAI && !msg.aiInsight && (
-                    <div className="flex items-center gap-1.5 self-start rounded-lg border border-indigo-100 bg-indigo-50/70 px-2.5 py-1 text-[11px] text-indigo-700">
+                    <div className="flex items-center gap-1.5 self-start rounded-lg border border-[#BFE7FF] bg-[#F0F9FF] px-2.5 py-1 text-[11px] text-[#0088EE]">
                       <Sparkles size={11} className="animate-pulse" /> Analyzing email…
                     </div>
                   )}
@@ -651,19 +714,19 @@ export default function AssistantHub({ className = '' }: { className?: string })
         <form onSubmit={handleSendDirective} className="relative flex items-center gap-2">
           {/* Directive Channel Badge (Email only) */}
           <div className="flex items-center gap-1.5 px-3 py-2.5 bg-[--background] border border-[--border] rounded-xl text-xs font-medium text-[--foreground] shrink-0">
-            <Mail size={13} className="text-indigo-600" />
+            <Mail size={13} className="text-[#1EA0FF]" />
             <span>Directive</span>
           </div>
 
           {/* Directive text input */}
           <div className="relative flex-1">
-            <Sparkles size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-indigo-500 pointer-events-none" />
+            <Sparkles size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#1EA0FF] pointer-events-none" />
             <input
               type="text"
               value={directiveInput}
               onChange={(e) => setDirectiveInput(e.target.value)}
               placeholder="Write a directive to save to your assistant stream..."
-              className="w-full pl-9 pr-4 py-2.5 text-xs sm:text-sm bg-[--background] border border-[--border] rounded-xl outline-none focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 transition-all placeholder:text-[--muted-foreground]"
+              className="w-full pl-9 pr-4 py-2.5 text-xs sm:text-sm bg-[--background] border border-[--border] rounded-xl outline-none focus:ring-2 focus:ring-[#1EA0FF] focus:border-[#1EA0FF] transition-all placeholder:text-[--muted-foreground]"
             />
           </div>
 
@@ -671,7 +734,7 @@ export default function AssistantHub({ className = '' }: { className?: string })
           <button
             type="submit"
             disabled={!directiveInput.trim() || isDispatching}
-            className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl gradient-brand text-white text-xs sm:text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed shrink-0 shadow-md shadow-indigo-100"
+            className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl gradient-brand text-white text-xs sm:text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed shrink-0 shadow-md shadow-blue-500/10"
           >
             {isDispatching ? (
               <span className="flex items-center gap-1">
@@ -701,7 +764,7 @@ export default function AssistantHub({ className = '' }: { className?: string })
               key={chip}
               type="button"
               onClick={() => handleQuickChip(chip.replace(/^[^\s]+\s/, ''))}
-              className="text-[11px] font-medium px-2.5 py-1 rounded-lg bg-[--background] hover:bg-indigo-50 text-[--muted-foreground] hover:text-indigo-600 border border-[--border] hover:border-indigo-200 transition-all cursor-pointer"
+              className="text-[11px] font-medium px-2.5 py-1 rounded-lg bg-[--background] hover:bg-[#F0F9FF] text-[--muted-foreground] hover:text-[#1EA0FF] border border-[--border] hover:border-[#BFE7FF] transition-all cursor-pointer"
             >
               {chip}
             </button>
@@ -716,7 +779,7 @@ export default function AssistantHub({ className = '' }: { className?: string })
         {replyReview && (
           <div className="space-y-5">
             <div className="border-b border-[--border] pb-4">
-              <div className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-indigo-700">
+              <div className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-[#0088EE]">
                 <Sparkles size={14} /> AI reply · review required
               </div>
               <h2 className="text-lg font-bold text-slate-950">Review your reply</h2>
@@ -742,9 +805,9 @@ export default function AssistantHub({ className = '' }: { className?: string })
               </p>
             </div>
 
-            <div className="rounded-xl border border-indigo-100 bg-indigo-50/70 p-3 text-xs leading-relaxed text-indigo-950">
+            <div className="rounded-xl border border-[#BFE7FF] bg-[#F0F9FF] p-3 text-xs leading-relaxed text-[#0D1B2A]">
               <span className="font-bold">Your direction:</span> {replyReview.instruction}
-              {replyReview.draft.rationale && <p className="mt-1 text-[11px] text-indigo-800">Draft rationale: {replyReview.draft.rationale}</p>}
+              {replyReview.draft.rationale && <p className="mt-1 text-[11px] text-[#0D1B2A]">Draft rationale: {replyReview.draft.rationale}</p>}
             </div>
 
             <form onSubmit={handleSendApprovedReply} className="space-y-3">
@@ -756,7 +819,7 @@ export default function AssistantHub({ className = '' }: { className?: string })
                 maxLength={5000}
                 value={replyReview.content}
                 onChange={(event) => setReplyReview((current) => current ? { ...current, content: event.target.value } : current)}
-                className="w-full resize-y rounded-xl border border-slate-200 bg-white p-3 text-sm leading-relaxed text-slate-800 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+                className="w-full resize-y rounded-xl border border-slate-200 bg-white p-3 text-sm leading-relaxed text-slate-800 outline-none focus:border-[#1EA0FF] focus:ring-2 focus:ring-[#E8F6FF]"
               />
               {replyError && <p role="alert" className="text-xs text-rose-700">{replyError}</p>}
               <div className="flex flex-wrap items-center justify-between gap-2 border-t border-[--border] pt-3">
@@ -771,7 +834,7 @@ export default function AssistantHub({ className = '' }: { className?: string })
                 <button
                   type="submit"
                   disabled={!replyReview.content.trim() || isSendingReply}
-                  className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-2.5 text-xs font-bold text-white shadow-md shadow-indigo-200 transition hover:bg-indigo-700 disabled:cursor-wait disabled:opacity-50"
+                  className="inline-flex items-center gap-2 rounded-xl bg-[#1EA0FF] px-5 py-2.5 text-xs font-bold text-white shadow-md shadow-blue-500/20 transition hover:bg-[#0088EE] disabled:cursor-wait disabled:opacity-50"
                 >
                   {isSendingReply ? <RefreshCw size={14} className="animate-spin" /> : <Send size={14} />}
                   {isSendingReply ? 'Sending reply…' : 'Approve & send reply'}

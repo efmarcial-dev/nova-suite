@@ -22,7 +22,7 @@ export default function ViewToggle({ view, setView }: Props) {
           onClick={() => setView(tab.value)}
           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
             view === tab.value
-              ? 'bg-white text-indigo-600 shadow-sm border border-[--border]'
+              ? 'bg-white text-[#1EA0FF] shadow-sm border border-[--border]'
               : 'text-[--muted-foreground] hover:text-[--foreground]'
           }`}
         >

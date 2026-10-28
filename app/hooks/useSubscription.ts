@@ -13,8 +13,16 @@ export interface SubscriptionData {
   hasAccess: boolean;
   currentPeriodStart?: string;
   currentPeriodEnd?: string;
+  paidAt?: string;
+  lastPaymentDate?: string;
+  nextPaymentDate?: string;
   cancelAtPeriodEnd?: boolean;
   canceledAt?: string | null;
+  // Trial fields
+  isInTrial?: boolean;
+  trialEndsAt?: string | null;
+  trialDaysRemaining?: number;
+  trialStartedAt?: string | null;
   created_at?: string;
   updated_at?: string;
 }

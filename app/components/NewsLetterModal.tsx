@@ -92,7 +92,7 @@ export default function NewsLetterModal() {
                     {!submitted ? (
                         <>
                             <h2 className="text-xl font-semibold mb-2">Join our newsletter</h2>
-                            <p className="text-gray-600 mb-4">Get early access and exclusive lifetime pricing when NovaSuite launches.
+                            <p className="text-gray-600 mb-4">Get early access and exclusive lifetime pricing when Foxly launches.
                                 We&apos;ll keep you updated as we build.
                             </p>
                             {/* Benifits List */}

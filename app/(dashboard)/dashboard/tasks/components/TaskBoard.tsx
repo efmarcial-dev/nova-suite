@@ -20,6 +20,7 @@ import { useCachedTasks } from '@/app/hooks/useCachedTasks';
 import { updateTaskInCache, deleteTaskInCache } from '@/app/lib/cache/NovaCacheHelpers';
 import { rescoreTaskAPI, updateTaskAPI, deleteTaskAPI } from '@/app/lib/api/tasks';
 import { emitTaskChangeEvent } from '@/app/lib/events/novaEvents';
+import { areIdsEqual, deduplicateTasks } from '@/app/lib/utils/deduplicate';
 import { Task } from './task';
 import { computeTaskAIScore } from '@/app/lib/aiScoring';
 
@@ -48,11 +49,13 @@ export default function TaskBoard({
 
   useEffect(() => {
     if (!isLoading) {
-      setTasks(cacheTasks);
+      setTasks(deduplicateTasks(cacheTasks));
     }
   }, [cacheTasks, isLoading]);
 
-  const visibleTasks = tasks.filter((task) => {
+  const dedupedTasks = useMemo(() => deduplicateTasks(tasks), [tasks]);
+
+  const visibleTasks = dedupedTasks.filter((task) => {
     if (statusFilter === 'pending' && task.status === 'done') return false;
     if (priorityFilter === 'high' && !['high', 'critical'].includes(task.priority?.toLowerCase() || '')) return false;
     if (priorityFilter === 'important') {
@@ -70,7 +73,7 @@ export default function TaskBoard({
 
   const handleDragStart = (event: DragStartEvent) => {
     const taskId = event.active.id;
-    const task = tasks.find((t) => t.id === taskId);
+    const task = tasks.find((t) => areIdsEqual(t.id, taskId));
     if (task) setDraggedTask(task);
   };
 
@@ -83,39 +86,60 @@ export default function TaskBoard({
     const taskId = active.id;
     const newStatus = over.id.toString() as 'todo' | 'in_progress' | 'in_review' | 'done';
 
-    setTasks((prev) => {
-      const updatedTasks = prev.map((task) =>
-        task.id === taskId ? { ...task, status: newStatus } : task
-      );
+    const currentTask = tasks.find((t) => areIdsEqual(t.id, taskId));
+    if (!currentTask || currentTask.status === newStatus) return;
 
-      const updatedTask = updatedTasks.find((t) => t.id === taskId);
-      if (updatedTask) {
-        updateTaskInCache(updatedTask);
-        updateTaskAPI(updatedTask.id, { status: newStatus });
-        emitTaskChangeEvent({ action: 'update', task: updatedTask });
-      }
+    const updatedTask: Task = { ...currentTask, status: newStatus };
 
-      return updatedTasks;
-    });
+    // Pure state updater - NO side effects inside setState!
+    setTasks((prev) =>
+      prev.map((task) => (areIdsEqual(task.id, taskId) ? updatedTask : task))
+    );
+
+    // Side effects safely called outside React's render/state updater
+    updateTaskInCache(updatedTask);
+    updateTaskAPI(updatedTask.id, { status: newStatus });
+    emitTaskChangeEvent({ action: 'update', task: updatedTask });
   };
 
   const handleUpdateTask = async (updated: Task) => {
     setTasks((prev) =>
-      prev.map((t) => (t.id === updated.id ? updated : t))
+      prev.map((t) => (areIdsEqual(t.id, updated.id) ? updated : t))
     );
     await updateTaskInCache(updated);
     emitTaskChangeEvent({ action: 'update', task: updated });
     const saved = await updateTaskAPI(updated.id, updated);
     if (saved) {
-      setTasks((prev) => prev.map((task) => task.id === saved.id ? saved : task));
+      setTasks((prev) => prev.map((task) => areIdsEqual(task.id, saved.id) ? saved : task));
       setSelectedTask(saved);
       await updateTaskInCache(saved);
       emitTaskChangeEvent({ action: 'update', task: saved });
+
+      // If priority, title, description, due_date or tags changed, trigger a
+      // background Groq LLM rescore so the AI score reflects the new details.
+      const rescoreFields: (keyof Task)[] = ['priority', 'title', 'description', 'due_date', 'tags'];
+      const needsRescore = rescoreFields.some(
+        (field) => (updated as any)[field] !== (saved as any)[field] ||
+                   rescoreFields.includes(field)
+      );
+      // Always rescore after any edit (backend already does it in serializer.update,
+      // but we fire-and-forget the /rescore/ endpoint to ensure the LLM ran).
+      if (saved.id && !String(saved.id).startsWith('local-')) {
+        rescoreTaskAPI(saved.id).then((rescored) => {
+          if (rescored) {
+            updateTaskInCache(rescored);
+            setTasks((prev) => prev.map((t) => areIdsEqual(t.id, rescored.id) ? rescored : t));
+            emitTaskChangeEvent({ action: 'update', task: rescored });
+          }
+        }).catch(() => {
+          // Silent — rescore is best-effort
+        });
+      }
     }
   };
 
   const handleDeleteTask = async (taskId: Task['id']) => {
-    setTasks((prev) => prev.filter((t) => t.id !== taskId));
+    setTasks((prev) => prev.filter((t) => !areIdsEqual(t.id, taskId)));
     await deleteTaskInCache(taskId);
     emitTaskChangeEvent({ action: 'delete', taskId });
     await deleteTaskAPI(taskId);
@@ -124,7 +148,7 @@ export default function TaskBoard({
   const handleRescoreTask = async (task: Task) => {
     const rescored = await rescoreTaskAPI(task.id);
     if (!rescored) throw new Error('Could not reanalyze this task.');
-    setTasks((prev) => prev.map((item) => item.id === task.id ? rescored : item));
+    setTasks((prev) => prev.map((item) => areIdsEqual(item.id, task.id) ? rescored : item));
     setSelectedTask(rescored);
     await updateTaskInCache(rescored);
     emitTaskChangeEvent({ action: 'update', task: rescored });
@@ -168,10 +192,10 @@ export default function TaskBoard({
               <div key={status} className="bg-white rounded-2xl p-4 border border-[--border] shadow-xs">
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="text-sm font-bold text-[--foreground] capitalize flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-indigo-500" />
+                    <span className="w-2 h-2 rounded-full bg-[#F0F9FF]0" />
                     {status.replace('_', ' ')}
                   </h3>
-                  <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700">
+                  <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-[#F0F9FF] text-[#0088EE]">
                     {groupTasks.length}
                   </span>
                 </div>

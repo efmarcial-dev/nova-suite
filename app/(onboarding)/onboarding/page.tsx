@@ -126,7 +126,7 @@ export default function OnboardingPage() {
         'Task examples',
         'Connect accounts',
         'Product tour',
-        'Activate access',
+        'Free trial',
     ];
     const isSetupComplete = currentStepIndex >= setupStepTitles.length;
 
@@ -135,14 +135,14 @@ export default function OnboardingPage() {
             {!isSetupComplete && (
                 <>
                     <div className="mb-7 max-w-2xl">
-                        <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.18em] text-indigo-600">
-                            Personalize Nova
+                        <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.18em] text-[#1EA0FF]">
+                            Personalize Foxly
                         </p>
                         <h1 className="text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">
                             Let&apos;s set up your workspace
                         </h1>
                         <p className="mt-2 text-sm leading-6 text-slate-500">
-                            A few quick choices will help tailor Nova to the way you work.
+                            A few quick choices will help tailor Foxly to the way you work.
                         </p>
                     </div>
                     <ProgressBar
@@ -181,7 +181,7 @@ function ProgressBar({ currentStep, totalSteps, titles }: ProgressBarProps) {
                     <div
                         key={title}
                         aria-hidden="true"
-                        className={`h-1.5 rounded-full transition-colors duration-300 ${index <= currentStep ? 'bg-indigo-600' : 'bg-slate-200'}`}
+                        className={`h-1.5 rounded-full transition-colors duration-300 ${index <= currentStep ? 'bg-[#1EA0FF]' : 'bg-slate-200'}`}
                     />
                 ))}
             </div>

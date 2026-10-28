@@ -12,17 +12,21 @@ interface SquareCheckoutProps {
   promoCode?: string;
   amountCents?: number;
   plan?: string;
+  billingCycleLabel?: string;
+  badgeLabel?: string;
   onSuccess?: (data: any) => void;
   onCancel?: () => void;
 }
 
 export default function SquareCheckout({
-  planName = 'NovaSuite Founder Lifetime Access',
-  originalPrice = 49,
-  finalPrice = 49,
+  planName = 'Foxly Annual Plan',
+  originalPrice = 120,
+  finalPrice = 60,
   promoCode,
-  amountCents = 4900,
-  plan = 'founder_lifetime',
+  amountCents = 6000,
+  plan = 'annual',
+  billingCycleLabel = 'Billed annually at $60/yr',
+  badgeLabel = '50% OFF',
   onSuccess,
   onCancel,
 }: SquareCheckoutProps) {
@@ -113,9 +117,9 @@ export default function SquareCheckout({
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div className="bg-gradient-to-r from-amber-50 to-indigo-50/60 border border-amber-200/70 rounded-2xl p-4">
+      <div className="bg-gradient-to-r from-amber-50 to-[#F0F9FF] border border-amber-200/70 rounded-2xl p-4">
         <div className="flex items-start gap-3">
-          <div className="w-9 h-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center shrink-0">
+          <div className="w-9 h-9 rounded-xl bg-[#1EA0FF] text-white flex items-center justify-center shrink-0">
             <ShieldCheck className="w-4.5 h-4.5" />
           </div>
           <div>
@@ -125,10 +129,15 @@ export default function SquareCheckout({
                 <span className="text-xs text-gray-400 line-through">${originalPrice}.00</span>
               )}
               <span className="text-base font-extrabold text-gray-900">${finalPrice}.00 USD</span>
-              <span className="text-[11px] font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded border border-emerald-200">
-                Lifetime · one time
-              </span>
+              {badgeLabel && (
+                <span className="text-[11px] font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded border border-emerald-200">
+                  {badgeLabel}
+                </span>
+              )}
             </div>
+            {billingCycleLabel && (
+              <p className="text-xs text-slate-500 mt-0.5">{billingCycleLabel}</p>
+            )}
             {promoCode && (
               <div className="text-[11px] text-amber-700 mt-1 font-medium">
                 Promo <code className="font-mono font-semibold">{promoCode}</code> applied

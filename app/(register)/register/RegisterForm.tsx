@@ -90,28 +90,33 @@ export default function RegisterForm() {
             <div className="bg-white p-7 sm:p-9 rounded-3xl shadow-sm border border-gray-200/80">
                 {/* Header */}
                 <div className="text-center mb-6">
-                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-50 border border-indigo-200 text-indigo-700 text-xs font-semibold mb-2">
+                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-semibold mb-2">
                         <Sparkles size={12} />
-                        <span>Step {step} of 2 &bull; Founder Access Registration</span>
+                        <span>Step {step} of 2 &bull; 3-Day Free Trial (No Card Required)</span>
                     </div>
                     <h2 className="text-2xl font-extrabold text-gray-900 tracking-tight">
-                        {step === 1 ? 'Create Your Account' : 'Set Up Your Executive Workspace'}
+                        {step === 1 ? 'Start Your Foxly Free Trial' : 'Set Up Your Workspace'}
                     </h2>
                     <p className="text-xs sm:text-sm text-gray-500 mt-1">
                         {step === 1
-                            ? 'Choose your executive login credentials to begin.'
+                            ? 'Create your credentials to activate 3 days of unlimited access.'
                             : 'Personalize your workspace and executive identity.'}
                     </p>
                 </div>
 
                 {/* Step indicator pills */}
-                <div className="grid grid-cols-2 gap-2 mb-6">
+                <div className="grid grid-cols-2 gap-2 mb-4">
                     <div className={`h-1.5 rounded-full transition-all ${
-                        step >= 1 ? 'bg-indigo-600' : 'bg-gray-100'
+                        step >= 1 ? 'bg-[#1EA0FF]' : 'bg-gray-100'
                     }`} />
                     <div className={`h-1.5 rounded-full transition-all ${
-                        step === 2 ? 'bg-indigo-600' : 'bg-gray-100'
+                        step === 2 ? 'bg-[#1EA0FF]' : 'bg-gray-100'
                     }`} />
+                </div>
+
+                <div className="mb-6 p-3 rounded-2xl bg-[#F0F9FF] border border-[#BFE7FF] flex items-center gap-2.5 text-xs text-[#0D1B2A]">
+                    <ShieldCheck size={16} className="text-[#1EA0FF] shrink-0" />
+                    <span><strong>Free 3-day trial included:</strong> Enjoy unlimited usage across all features. No credit card required to start.</span>
                 </div>
 
                 {error && (
@@ -137,7 +142,7 @@ export default function RegisterForm() {
                                     onChange={(e) => setEmail(e.target.value)}
                                     required
                                     placeholder="you@company.com"
-                                    className="w-full pl-10 pr-3.5 py-2.5 bg-gray-50/50 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition"
+                                    className="w-full pl-10 pr-3.5 py-2.5 bg-gray-50/50 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#1EA0FF] focus:bg-white transition"
                                 />
                             </div>
                         </div>
@@ -157,7 +162,7 @@ export default function RegisterForm() {
                                         onChange={(e) => setPassword(e.target.value)}
                                         required
                                         placeholder="Min. 8 characters"
-                                        className="w-full pl-10 pr-3.5 py-2.5 bg-gray-50/50 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition"
+                                        className="w-full pl-10 pr-3.5 py-2.5 bg-gray-50/50 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#1EA0FF] focus:bg-white transition"
                                     />
                                 </div>
                             </div>
@@ -176,7 +181,7 @@ export default function RegisterForm() {
                                         onChange={(e) => setConfirmPassword(e.target.value)}
                                         required
                                         placeholder="Confirm password"
-                                        className="w-full pl-10 pr-3.5 py-2.5 bg-gray-50/50 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition"
+                                        className="w-full pl-10 pr-3.5 py-2.5 bg-gray-50/50 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#1EA0FF] focus:bg-white transition"
                                     />
                                 </div>
                             </div>
@@ -185,7 +190,7 @@ export default function RegisterForm() {
                         <div className="pt-2">
                             <button
                                 type="submit"
-                                className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl gradient-brand text-white text-sm font-semibold hover:opacity-90 transition shadow-md shadow-indigo-100 cursor-pointer"
+                                className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-[#1EA0FF] hover:bg-[#0088EE] text-white text-sm font-semibold transition shadow-md shadow-blue-500/20 cursor-pointer"
                             >
                                 <span>Continue to Workspace Setup</span>
                                 <ArrowRight size={15} />
@@ -210,7 +215,7 @@ export default function RegisterForm() {
                                         onChange={(e) => setFirstName(e.target.value)}
                                         required
                                         placeholder="Jane"
-                                        className="w-full pl-10 pr-3.5 py-2.5 bg-gray-50/50 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition"
+                                        className="w-full pl-10 pr-3.5 py-2.5 bg-gray-50/50 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#1EA0FF] focus:bg-white transition"
                                     />
                                 </div>
                             </div>
@@ -229,7 +234,7 @@ export default function RegisterForm() {
                                         onChange={(e) => setLastName(e.target.value)}
                                         required
                                         placeholder="Doe"
-                                        className="w-full pl-10 pr-3.5 py-2.5 bg-gray-50/50 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition"
+                                        className="w-full pl-10 pr-3.5 py-2.5 bg-gray-50/50 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#1EA0FF] focus:bg-white transition"
                                     />
                                 </div>
                             </div>
@@ -248,7 +253,7 @@ export default function RegisterForm() {
                                     onChange={(e) => setTenantName(e.target.value)}
                                     required
                                     placeholder="Acme Corp or My Studio"
-                                    className="w-full pl-10 pr-3.5 py-2.5 bg-gray-50/50 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition"
+                                    className="w-full pl-10 pr-3.5 py-2.5 bg-gray-50/50 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#1EA0FF] focus:bg-white transition"
                                 />
                             </div>
                         </div>
@@ -269,7 +274,7 @@ export default function RegisterForm() {
                             <button
                                 type="submit"
                                 disabled={loading}
-                                className="flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl gradient-brand text-white text-sm font-semibold hover:opacity-90 transition shadow-md shadow-indigo-100 disabled:opacity-60 cursor-pointer"
+                                className="flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-[#1EA0FF] hover:bg-[#0088EE] text-white text-sm font-semibold transition shadow-md shadow-blue-500/20 disabled:opacity-60 cursor-pointer"
                             >
                                 {loading ? (
                                     <span className="flex items-center gap-2">
@@ -289,7 +294,7 @@ export default function RegisterForm() {
 
                 <div className="mt-6 pt-5 border-t border-gray-100 text-center text-xs text-gray-500">
                     Already have an account?{' '}
-                    <Link href="/login" className="font-semibold text-indigo-600 hover:text-indigo-500">
+                    <Link href="/login" className="font-semibold text-[#1EA0FF] hover:text-[#0088EE]">
                         Sign In &rarr;
                     </Link>
                 </div>

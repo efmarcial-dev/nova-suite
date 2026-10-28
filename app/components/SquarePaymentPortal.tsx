@@ -14,7 +14,7 @@ interface SquarePaymentPortalProps {
 }
 
 export default function SquarePaymentPortal({
-  planName = 'NovaSuite Founder Lifetime Access',
+  planName = 'Foxly Founder Lifetime Access',
   originalPrice = 49,
   finalPrice = 49,
   onSuccess,
@@ -59,11 +59,11 @@ export default function SquarePaymentPortal({
 
         <div className="grid sm:grid-cols-[1fr_190px]">
           <div className="p-4 sm:p-5">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-indigo-600">Founder plan</p>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#1EA0FF]">Founder plan</p>
             <h3 className="mt-1 text-base font-bold leading-snug text-slate-900">{planName}</h3>
             <p className="mt-0.5 text-xs text-slate-500">One payment for lifetime access. No recurring charges.</p>
           </div>
-          <div className="flex flex-col justify-center border-t border-slate-100 bg-gradient-to-br from-slate-50 to-indigo-50/70 p-4 sm:border-l sm:border-t-0 sm:p-5">
+          <div className="flex flex-col justify-center border-t border-slate-100 bg-gradient-to-br from-slate-50 to-[#F0F9FF] p-4 sm:border-l sm:border-t-0 sm:p-5">
             <p className="text-xs font-medium text-slate-500">Due today</p>
             <p className="mt-0.5 text-3xl font-extrabold tracking-tight text-slate-950">
               ${finalPrice}<span className="ml-1 text-sm font-semibold text-slate-500">USD</span>
@@ -74,7 +74,7 @@ export default function SquarePaymentPortal({
             <button
               type="button"
               onClick={() => setIsModalOpen(true)}
-              className="mt-3 flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-indigo-200 transition hover:bg-indigo-700"
+              className="mt-3 flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-[#1EA0FF] px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-blue-500/20 transition hover:bg-[#0088EE]"
             >
               <CreditCard className="h-4 w-4" /> Continue to payment
             </button>

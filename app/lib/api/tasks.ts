@@ -1,5 +1,6 @@
 // lib/api/tasks.ts
 import { Task } from "@/app/(dashboard)/dashboard/tasks/components/task";
+import { deduplicateTasks } from "../utils/deduplicate";
 
 export async function fetchTasksAPI(): Promise<Task[]> {
 
@@ -19,7 +20,14 @@ export async function fetchTasksAPI(): Promise<Task[]> {
     }
 
     const data = await res.json();
-    return data.tasks || []; // Adjust based on backend
+    const raw = Array.isArray(data)
+      ? data
+      : Array.isArray(data?.tasks)
+        ? data.tasks
+        : Array.isArray(data?.data)
+          ? data.data
+          : [];
+    return deduplicateTasks(raw);
 
   }catch(error){
     console.log(`Internal Error: ${error}`);
@@ -36,7 +44,7 @@ export async function createTask(taskData: {
     dueDate: Date | null;
     description: string;
     attachment: File | null;
-}): Promise<{id: string}> {
+}): Promise<any> {
 
 
     const res = await fetch("/api/tasks/", {
@@ -50,21 +58,61 @@ export async function createTask(taskData: {
 
     if (!res.ok) throw new Error("Failed to create task");
 
-    return await res.json() || {}; // This gives you the created task object
+    const data = await res.json();
+    return data?.task ?? data ?? {};
+}
+
+// Fields the Django TaskSerializer accepts as writable on PATCH.
+// Read-only fields (score, confidence, reasoning, slug, etc.) must be excluded
+// or Django will 400 on certain field validations.
+const TASK_WRITABLE_FIELDS: (keyof Task | string)[] = [
+    'title',
+    'description',
+    'status',
+    'priority',
+    'due_date',
+    'dueDate',
+    'project',
+    'selectedProjectId',
+    'tags',
+    'snoozed_until',
+    'duration_estimate',
+    'start_date',
+];
+
+export function sanitizeTaskForPatch(updates: Partial<Task> & Record<string, any>): Record<string, any> {
+    const sanitized: Record<string, any> = {};
+    for (const key of TASK_WRITABLE_FIELDS) {
+        if (key in updates) {
+            // Send empty string as null for description so Django doesn't reject allow_blank=False
+            if (key === 'description' && (updates[key] === '' || updates[key] == null)) {
+                sanitized[key] = ' '; // single space satisfies allow_blank=False
+            } else {
+                sanitized[key] = (updates as any)[key];
+            }
+        }
+    }
+    // Always include required fields if present to avoid validation errors
+    if (!('description' in sanitized) && !('title' in sanitized)) {
+        // No required fields being changed — that's fine for partial=True
+    }
+    return sanitized;
 }
 
 export async function updateTaskAPI(taskId: number | string, updates: Partial<Task>): Promise<any> {
     try {
+        const payload = sanitizeTaskForPatch(updates as any);
         const res = await fetch("/api/tasks/", {
             method: "PATCH",
             headers: {
                 'Content-type': 'application/json',
             },
             credentials: 'include',
-            body: JSON.stringify({ id: taskId, ...updates }),
+            body: JSON.stringify({ id: taskId, ...payload }),
         });
         if (!res.ok) {
-            console.warn(`Backend task update returned ${res.status}`);
+            const errText = await res.text().catch(() => '');
+            console.warn(`Backend task update returned ${res.status}:`, errText);
             return null;
         }
         return await res.json();

@@ -20,7 +20,7 @@ export default function StatsCards({projects, tasks}: StatProps) {
         value={projects.length}
         href="/dashboard/projects"
         icon={<Briefcase size={18} />}
-        accent="bg-indigo-100 text-indigo-600"
+        accent="bg-[#E8F6FF] text-[#1EA0FF]"
       />
       <StatCard
         title="Total Tasks"

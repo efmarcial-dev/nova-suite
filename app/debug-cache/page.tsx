@@ -20,7 +20,7 @@ export default function DebugCachePage() {
     const demoProject = [
       {
         id: 1,
-        title: 'NovaSuitee',
+        title: 'Foxly',
         description: 'Test Description'
       },
       {

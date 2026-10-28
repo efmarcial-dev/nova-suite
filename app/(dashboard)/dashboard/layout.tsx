@@ -7,6 +7,7 @@ import Header from '../../components/Header';
 import SubscriptionGuard from '@/app/components/SubscriptionGuard';
 import FirstRunTourModal from '@/app/components/FirstRunTourModal';
 import DashboardAnalytics from '@/app/components/DashboardAnalytics';
+import TrialBanner from '@/app/components/TrialBanner';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -16,6 +17,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <Sidebar />
         <main className="flex-1 flex flex-col min-w-0 p-4 gap-4 overflow-hidden">
           <Header />
+          <TrialBanner />
           <section className="flex-1 overflow-y-auto pr-1 pb-4">
             {children}
           </section>

@@ -1,4 +1,5 @@
 import { Project } from "@/app/components/project";
+import { deduplicateProjects } from "../utils/deduplicate";
 
 
 export async function fetchProjectsAPI(): Promise<Project[]> {
@@ -18,7 +19,14 @@ export async function fetchProjectsAPI(): Promise<Project[]> {
         }
 
         const data = await res.json();
-        return data.projects || [];
+        const raw = Array.isArray(data)
+            ? data
+            : Array.isArray(data?.projects)
+                ? data.projects
+                : Array.isArray(data?.data)
+                    ? data.data
+                    : [];
+        return deduplicateProjects(raw);
 
     }catch(error){
         console.log(`Internal Error: ${error}`)
@@ -32,7 +40,7 @@ export async function createProject(projectData: {
     description: string;
     status: string | null;
 
-}): Promise<{id: string}> {
+}): Promise<any> {
 
     const res = await fetch("/api/projects/", {
         method: "POST",
@@ -46,7 +54,8 @@ export async function createProject(projectData: {
     if (!res.ok) throw new Error("Failed to create project");
 
     const data = await res.json();
-    return data || {};
+    const project = data?.project ?? data ?? {};
+    return project;
 }
 
 export async function updateProjectAPI(id: string | number, updates: {

@@ -34,7 +34,7 @@ function CustomTooltip({ active, payload, label }: TooltipProps<number, string>)
     return (
       <div className="bg-white border border-[--border] rounded-xl shadow-lg px-4 py-2.5 text-sm">
         <p className="font-semibold text-[--foreground] mb-1">{label}</p>
-        <p className="text-indigo-600 font-medium">{payload[0].value} tasks completed</p>
+        <p className="text-[#1EA0FF] font-medium">{payload[0].value} tasks completed</p>
       </div>
     );
   }
@@ -59,7 +59,7 @@ export default function ProductivityChart({ className = '' }: { className?: stri
               onClick={() => setRange(r)}
               className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${
                 range === r
-                  ? 'bg-white text-indigo-600 shadow-sm border border-[--border]'
+                  ? 'bg-white text-[#1EA0FF] shadow-sm border border-[--border]'
                   : 'text-[--muted-foreground] hover:text-[--foreground]'
               }`}
             >

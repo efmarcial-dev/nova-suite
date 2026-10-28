@@ -29,20 +29,31 @@ export default function NewProjectForm({
     try {
 
 
-      const newProject = await createProject({
+      const created = await createProject({
         projectName,
         description,
         status: 'pending'
-      })
+      });
 
-      console.log('New project created:', newProject);
+      const unwrapped = (created as any)?.project ?? created;
+      const validProject = {
+        ...unwrapped,
+        id: unwrapped?.id || `local-${Date.now()}`,
+        title: unwrapped?.title || unwrapped?.projectName || projectName.trim(),
+        projectName: unwrapped?.projectName || unwrapped?.title || projectName.trim(),
+        description: unwrapped?.description || description,
+        status: unwrapped?.status || 'planning',
+        last_updated: Date.now(),
+      };
 
-      await addProjectToCache(newProject);
-      emitProjectChangeEvent({ action: 'create', project: newProject });
+      console.log('New project created:', validProject);
+
+      await addProjectToCache(validProject);
+      emitProjectChangeEvent({ action: 'create', project: validProject });
 
       if (projectName.trim()) {
-            onSave(projectName.trim());
-        }
+        onSave(projectName.trim());
+      }
 
     }catch(error) {
       console.error('Error creating project:', error);

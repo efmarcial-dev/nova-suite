@@ -68,7 +68,7 @@ export default function TaskCard({ task, onClick }: TaskCardProps) {
         </div>
 
         {/* Title */}
-        <h2 className="text-sm font-semibold text-[--foreground] leading-snug group-hover:text-indigo-600 transition-colors">
+        <h2 className="text-sm font-semibold text-[--foreground] leading-snug group-hover:text-[#1EA0FF] transition-colors">
           {task.title}
         </h2>
 
@@ -83,7 +83,7 @@ export default function TaskCard({ task, onClick }: TaskCardProps) {
         {task.tags?.length > 0 && (
           <div className="flex flex-wrap gap-1">
             {task.tags.map((tag) => (
-              <span key={tag} className="text-[10px] font-medium px-2 py-0.5 rounded-md bg-indigo-50/70 text-indigo-600 border border-indigo-100">
+              <span key={tag} className="text-[10px] font-medium px-2 py-0.5 rounded-md bg-[#F0F9FF] text-[#1EA0FF] border border-[#BFE7FF]">
                 #{tag}
               </span>
             ))}
@@ -101,7 +101,7 @@ export default function TaskCard({ task, onClick }: TaskCardProps) {
             <span className="text-[11px] text-[--muted-foreground]">No deadline</span>
           )}
 
-          <span className="text-[11px] text-indigo-600 font-medium opacity-0 group-hover:opacity-100 transition-opacity flex items-center">
+          <span className="text-[11px] text-[#1EA0FF] font-medium opacity-0 group-hover:opacity-100 transition-opacity flex items-center">
             Inspect <ChevronRight size={12} />
           </span>
         </div>

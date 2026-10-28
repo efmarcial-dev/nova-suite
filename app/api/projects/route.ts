@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 import { getDjangoApiUrl } from "../../lib/api/getDjangoApiUrl";
+import { deduplicateProjects } from "../../lib/utils/deduplicate";
 
 export async function GET(request: Request) {
     const accessToken = (await cookies()).get('access')?.value;
@@ -25,8 +26,17 @@ export async function GET(request: Request) {
         }
 
         const data = await backendRes.json();
+        const rawProjects = Array.isArray(data)
+            ? data
+            : Array.isArray(data?.projects)
+                ? data.projects
+                : Array.isArray(data?.data)
+                    ? data.data
+                    : [];
 
-        return new Response(JSON.stringify({projects: data}), {
+        const uniqueProjects = deduplicateProjects(rawProjects);
+
+        return new Response(JSON.stringify({projects: uniqueProjects}), {
             status: 200,
             headers: {'Content-type' : 'application/json'}
         });
@@ -69,10 +79,11 @@ export async function POST(request: Request) {
         }
 
         const data = await backendRes.json();
+        const project = data?.project ?? data;
 
-        console.log(`Project created: ${JSON.stringify(data)}`);
+        console.log(`Project created: ${JSON.stringify(project)}`);
 
-        return new Response(JSON.stringify({project: data}), {
+        return new Response(JSON.stringify({project}), {
             status: 201,
             headers: {'Content-type': 'application/json'}
         });

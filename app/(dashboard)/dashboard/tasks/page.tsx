@@ -96,7 +96,7 @@ export default function TasksPage() {
             id="task-priority-filter"
             value={priorityFilter}
             onChange={(event) => setPriorityFilter(event.target.value as typeof priorityFilter)}
-            className="rounded-xl border border-[--border] bg-white px-3 py-2 text-sm text-[--foreground] outline-none focus:ring-2 focus:ring-indigo-400"
+            className="rounded-xl border border-[--border] bg-white px-3 py-2 text-sm text-[--foreground] outline-none focus:ring-2 focus:ring-[#1EA0FF]"
           >
             <option value="all">All priorities</option>
             <option value="high">High priority</option>
@@ -105,7 +105,7 @@ export default function TasksPage() {
           
           <button
             onClick={() => setShowNewTask(true)}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl gradient-brand text-white text-sm font-medium hover:opacity-90 transition-opacity shadow-md shadow-indigo-200">
+            className="flex items-center gap-2 px-4 py-2 rounded-xl gradient-brand text-white text-sm font-medium hover:opacity-90 transition-opacity shadow-md shadow-blue-500/20">
             + Create Task
           </button>
         </div>

@@ -1,6 +1,5 @@
 import { motion } from 'motion/react';
 import { Button } from './Button';
-import { ArrowRight } from 'lucide-react';
 
 interface CTASectionProps {
   title: string;
@@ -12,82 +11,63 @@ interface CTASectionProps {
 export function CTASection({ title, description, primaryButton, secondaryButton }: CTASectionProps) {
   return (
     <motion.section
-      initial={{ opacity: 0, y: 40 }}
+      initial={{ opacity: 0, y: 30 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
-      className="relative rounded-3xl overflow-hidden"
+      className="relative rounded-3xl overflow-hidden bg-white border border-slate-200 shadow-xl shadow-slate-200/50"
     >
-      {/* Animated gradient background */}
-      <div
-        className="absolute inset-0"
-        
-      />
-      
-      {/* Grid pattern overlay */}
-      <div 
-        className="absolute inset-0 opacity-10"
-        style={{
-          backgroundImage: `linear-gradient(rgba(78, 123, 255, 0.3) 1px, transparent 1px),
-                           linear-gradient(90deg, rgba(78, 123, 255, 0.3) 1px, transparent 1px)`,
-          backgroundSize: '50px 50px',
-        }}
-      />
+      {/* Background tint */}
+      <div className="absolute inset-0 bg-gradient-to-br from-[#F0F9FF] via-white to-white pointer-events-none" />
 
       {/* Content */}
-      <div className="relative px-8 lg:px-16 py-16 lg:py-20 text-center">
+      <div className="relative px-8 lg:px-16 py-16 lg:py-20 text-center space-y-6">
         <motion.h2
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ delay: 0.2 }}
-          className="mb-6 max-w-3xl mx-auto text-black text-lg"
+          transition={{ delay: 0.1 }}
+          className="max-w-2xl mx-auto text-3xl sm:text-4xl lg:text-5xl font-black text-[#0D1B2A] tracking-tight leading-tight"
         >
           {title}
         </motion.h2>
-        
+
         <motion.p
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ delay: 0.3 }}
-          className="text-xl text-gray-600 mb-10 max-w-2xl mx-auto"
+          transition={{ delay: 0.2 }}
+          className="text-base sm:text-lg text-slate-600 max-w-2xl mx-auto leading-relaxed"
         >
           {description}
         </motion.p>
 
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ delay: 0.4 }}
-          className="flex flex-col sm:flex-row items-center justify-center gap-4"
+          transition={{ delay: 0.3 }}
+          className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4"
         >
           {primaryButton && (
-            <Button
-              variant="primary"
-              size="lg"
+            <button
+              type="button"
               onClick={primaryButton.onClick}
-              className="group"
+              className="px-8 py-4 rounded-xl bg-[#1EA0FF] hover:bg-[#0088EE] text-white font-bold text-base shadow-lg shadow-blue-500/25 transition-all transform hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
             >
               {primaryButton.text}
-              
-            </Button>
+            </button>
           )}
           {secondaryButton && (
-            <Button
-              variant="outline"
-              size="lg"
+            <button
+              type="button"
               onClick={secondaryButton.onClick}
+              className="px-7 py-4 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-800 font-semibold text-sm transition shadow-2xs cursor-pointer"
             >
               {secondaryButton.text}
-            </Button>
+            </button>
           )}
         </motion.div>
       </div>
-
-      {/* Decorative elements */}
-      <div className="absolute top-0 left-0 w-64 h-64 bg-[#4E7BFF]/20 rounded-full blur-3xl" />
-      <div className="absolute bottom-0 right-0 w-80 h-80 bg-[#6B8FFF]/20 rounded-full blur-3xl" />
     </motion.section>
   );
 }

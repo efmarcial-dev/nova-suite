@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 import { getDjangoApiUrl } from "../../lib/api/getDjangoApiUrl";
+import { deduplicateTasks } from "../../lib/utils/deduplicate";
 
 export async function GET(request: Request){
   const accessToken = (await cookies()).get('access')?.value;
@@ -24,7 +25,17 @@ export async function GET(request: Request){
     }
 
     const data = await backendRes.json();
-    return new Response(JSON.stringify({tasks: data}), {
+    const rawTasks = Array.isArray(data)
+      ? data
+      : Array.isArray(data?.tasks)
+        ? data.tasks
+        : Array.isArray(data?.data)
+          ? data.data
+          : [];
+
+    const uniqueTasks = deduplicateTasks(rawTasks);
+
+    return new Response(JSON.stringify({tasks: uniqueTasks}), {
       status: 200,
       headers: {'Content-type': 'application/json'}
     });
@@ -70,11 +81,10 @@ export async function POST(request: Request){
     }
 
     const data = await backendRes.json();
+    const task = data?.task ?? data;
 
-    console.log(`Backend POST response: ${data}`);
-
-    return new Response(JSON.stringify(data), {
-      status: 200,
+    return new Response(JSON.stringify(task), {
+      status: backendRes.status === 201 ? 201 : 200,
       headers : {'Content-type' : "application/json"}
     })
 

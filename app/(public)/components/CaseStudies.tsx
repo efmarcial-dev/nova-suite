@@ -7,14 +7,14 @@ import { Quote } from 'lucide-react';
 const testimonials = [
   {
     quote:
-      'Before NovaSuite, I started every day buried in unread emails. Now I open the dashboard, see my top 5 priorities, and my assistant has already drafted responses for the three most urgent threads. I approved them in 4 minutes.',
+      'Before Foxly, I started every day buried in unread emails. Now I open the dashboard, see my top 5 priorities, and my assistant has already drafted responses for the three most urgent threads. I approved them in 4 minutes.',
     name: 'Marcus T.',
     title: 'CEO, Series B SaaS Company',
     result: '2.5 hrs reclaimed per day',
   },
   {
     quote:
-      'We stopped using four different tools — email, calendar, Trello, and a separate task manager. NovaSuite replaced all of them. The calendar conflict detection alone saved us from two missed client calls last month.',
+      'We stopped using four different tools — email, calendar, Trello, and a separate task manager. Foxly replaced all of them. The calendar conflict detection alone saved us from two missed client calls last month.',
     name: 'Priya M.',
     title: 'VP of Operations, Growth Agency',
     result: '4 tools consolidated into 1',
@@ -50,7 +50,7 @@ export default function CaseSection() {
             Executives who changed how they work
           </h2>
           <p className="text-lg text-gray-500 max-w-2xl mx-auto">
-            Real outcomes from real NovaSuite users who connected their inbox, calendar, and tasks into one AI-powered command center.
+            Real outcomes from real Foxly users who connected their inbox, calendar, and tasks into one AI-powered command center.
           </p>
         </motion.div>
 
@@ -65,14 +65,14 @@ export default function CaseSection() {
               transition={{ duration: 0.5, delay: i * 0.12 }}
               className="bg-slate-50 rounded-2xl border border-slate-200 p-7 space-y-4 flex flex-col shadow-xs hover:shadow-md transition-shadow"
             >
-              <Quote size={22} className="text-indigo-300" />
+              <Quote size={22} className="text-[#80CFFF]" />
               <p className="text-sm text-gray-700 leading-relaxed flex-1 italic">&ldquo;{t.quote}&rdquo;</p>
               <div className="pt-3 border-t border-slate-200 flex items-center justify-between flex-wrap gap-2">
                 <div>
                   <p className="text-sm font-bold text-gray-900">{t.name}</p>
                   <p className="text-xs text-gray-500">{t.title}</p>
                 </div>
-                <span className="text-xs font-semibold px-3 py-1 bg-indigo-50 text-indigo-700 border border-indigo-100 rounded-full">
+                <span className="text-xs font-semibold px-3 py-1 bg-[#F0F9FF] text-[#0088EE] border border-[#BFE7FF] rounded-full">
                   {t.result}
                 </span>
               </div>
@@ -91,10 +91,10 @@ export default function CaseSection() {
           {stats.map((s) => (
             <div
               key={s.label}
-              className="bg-gradient-to-br from-indigo-50 to-violet-50 border border-indigo-100 rounded-2xl p-5 text-center"
+              className="bg-gradient-to-br from-[#F0F9FF] to-violet-50 border border-[#BFE7FF] rounded-2xl p-5 text-center"
             >
-              <p className="text-3xl font-extrabold text-indigo-700">{s.value}</p>
-              <p className="text-xs text-indigo-500 mt-1 leading-snug">{s.label}</p>
+              <p className="text-3xl font-extrabold text-[#0088EE]">{s.value}</p>
+              <p className="text-xs text-[#1EA0FF] mt-1 leading-snug">{s.label}</p>
             </div>
           ))}
         </motion.div>

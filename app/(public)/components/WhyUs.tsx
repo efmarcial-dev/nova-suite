@@ -7,25 +7,25 @@ const reasons = [
     icon: Clock,
     title: 'Save 2+ Hours Every Day',
     description:
-      'Executives using NovaSuite report reclaiming over two hours per day previously lost to inbox triage, meeting prep, and manual task tracking. The AI handles the overhead — you handle the decisions.',
+      'Executives using Foxly report reclaiming over two hours per day previously lost to inbox triage, meeting prep, and manual task tracking. The AI handles the overhead — you handle the decisions.',
   },
   {
     icon: Zap,
     title: 'AI That Completes Work, Not Just Suggests It',
     description:
-      'Most AI tools tell you what to do. NovaSuite actually prepares the response, organizes the task, and queues the follow-up — you just review and approve. Your judgment stays in control.',
+      'Most AI tools tell you what to do. Foxly actually prepares the response, organizes the task, and queues the follow-up — you just review and approve. Your judgment stays in control.',
   },
   {
     icon: TrendingUp,
-    title: 'One Source of Truth Across All Tools',
+    title: 'Multiple Google & Outlook Inboxes & Calendars',
     description:
-      'Email, calendar, and tasks finally in sync. NovaSuite reads from your connected providers and surfaces a unified view — no switching between apps, no duplicate information, no missed threads.',
+      'Email, calendar, and tasks finally in sync across all accounts. Connect multiple Google Workspace and Outlook 365 profiles into a single command center with zero duplicate data and zero missed threads.',
   },
   {
     icon: ShieldCheck,
-    title: 'Enterprise-Grade Privacy, Zero Lock-In',
+    title: 'Strict SOC II Compliance & Enterprise Cloud',
     description:
-      'Your data is processed in an isolated tenant workspace. Disconnect Google or Microsoft at any time. We never sell your data or use it to train public AI models. Cancel any time — your tasks and history remain yours.',
+      'Your workspace adheres to strict SOC II compliance rules. Backed by Nylas Auth, Vercel, Supabase, and Firestore. Disconnect any provider anytime. We never sell your data or use it to train public AI models.',
   },
 ];
 
@@ -43,13 +43,13 @@ export default function WhySection() {
           className="text-center space-y-4"
         >
           <div className="inline-block px-4 py-1.5 border border-slate-300 rounded-full text-xs font-semibold text-slate-600 uppercase tracking-wider">
-            Why NovaSuite
+            Why Foxly
           </div>
           <h2 className="text-3xl md:text-5xl font-extrabold text-gray-900 max-w-3xl mx-auto leading-tight tracking-tight">
             Built for how executives actually work
           </h2>
           <p className="text-lg text-gray-500 max-w-2xl mx-auto">
-            Not another productivity app. NovaSuite is an intelligence layer that sits across your existing tools and turns raw communication into organized, prioritized, actionable work.
+            Not another productivity app. Foxly is an intelligence layer that sits across your existing tools and turns raw communication into organized, prioritized, actionable work.
           </p>
         </motion.div>
 
@@ -66,7 +66,7 @@ export default function WhySection() {
                 transition={{ duration: 0.5, delay: i * 0.1 }}
                 className="bg-white rounded-2xl border border-slate-200 p-7 space-y-3 shadow-xs hover:shadow-md transition-shadow"
               >
-                <div className="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600">
+                <div className="w-10 h-10 rounded-xl bg-[#F0F9FF] border border-[#BFE7FF] flex items-center justify-center text-[#1EA0FF]">
                   <Icon size={20} />
                 </div>
                 <h3 className="text-base font-bold text-gray-900">{r.title}</h3>
@@ -94,7 +94,7 @@ export default function WhySection() {
               key={s.label}
               className="bg-white rounded-2xl border border-slate-200 p-5 text-center shadow-xs"
             >
-              <p className="text-3xl font-extrabold text-indigo-600">{s.value}</p>
+              <p className="text-3xl font-extrabold text-[#1EA0FF]">{s.value}</p>
               <p className="text-xs text-gray-500 mt-1 leading-snug">{s.label}</p>
             </div>
           ))}

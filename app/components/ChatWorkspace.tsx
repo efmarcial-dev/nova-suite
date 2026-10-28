@@ -147,7 +147,7 @@ export default function ChatWorkspace() {
     } catch (err) {
       setMessages((current) => current.filter((item) => item.id !== optimistic.id));
       setPrompt(content);
-      setError(err instanceof Error ? err.message : 'Nova could not respond just now.');
+      setError(err instanceof Error ? err.message : 'Foxly could not respond just now.');
     } finally {
       setIsSending(false);
     }
@@ -167,7 +167,7 @@ export default function ChatWorkspace() {
           <button
             type="button"
             onClick={startNewChat}
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-slate-950 px-3 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-700"
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-slate-950 px-3 py-2.5 text-sm font-semibold text-white transition hover:bg-[#0088EE]"
           >
             <Plus size={16} /> New chat
           </button>
@@ -180,7 +180,7 @@ export default function ChatWorkspace() {
             <div
               key={conversation.id}
               onClick={() => void loadConversation(conversation)}
-              className={`group flex items-center justify-between w-full rounded-lg px-3 py-2 text-left text-xs transition cursor-pointer ${activeConversation?.id === conversation.id ? 'bg-white font-semibold text-indigo-700 shadow-sm ring-1 ring-slate-200' : 'text-slate-600 hover:bg-white hover:text-slate-950'}`}
+              className={`group flex items-center justify-between w-full rounded-lg px-3 py-2 text-left text-xs transition cursor-pointer ${activeConversation?.id === conversation.id ? 'bg-white font-semibold text-[#1EA0FF] shadow-sm ring-1 ring-slate-200' : 'text-slate-600 hover:bg-white hover:text-slate-950'}`}
             >
               <div className="flex items-center gap-2 min-w-0 flex-1">
                 <MessageSquareText className="h-4 w-4 shrink-0 opacity-70" />
@@ -205,9 +205,9 @@ export default function ChatWorkspace() {
 
       <section className="flex min-w-0 flex-1 flex-col">
         <header className="flex items-center gap-3 border-b border-slate-100 px-5 py-4">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600"><Sparkles className="h-4.5 w-4.5" /></div>
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#F0F9FF] text-[#1EA0FF]"><Sparkles className="h-4.5 w-4.5" /></div>
           <div className="min-w-0">
-            <h1 className="truncate text-sm font-bold text-slate-900">{activeConversation?.title || 'Nova AI Chat'}</h1>
+            <h1 className="truncate text-sm font-bold text-slate-900">{activeConversation?.title || 'Foxly AI Chat'}</h1>
             <p className="text-[11px] text-slate-500">Private to your account · Hugging Face with automatic AI fallback</p>
           </div>
         </header>
@@ -219,10 +219,10 @@ export default function ChatWorkspace() {
             <div className="mx-auto max-w-3xl space-y-6">
               {messages.map((message) => (
                 <article key={message.id} className={`flex gap-3 ${message.role === 'user' ? 'flex-row-reverse' : ''}`}>
-                  <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${message.role === 'assistant' ? 'bg-indigo-600 text-white' : 'bg-slate-200 text-slate-700'}`}>
+                  <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${message.role === 'assistant' ? 'bg-[#1EA0FF] text-white' : 'bg-slate-200 text-slate-700'}`}>
                     {message.role === 'assistant' ? <Bot size={16} /> : <UserRound size={16} />}
                   </div>
-                  <div className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${message.role === 'assistant' ? 'bg-slate-50 text-slate-800 ring-1 ring-slate-100' : 'bg-indigo-600 text-white'}`}>
+                  <div className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${message.role === 'assistant' ? 'bg-slate-50 text-slate-800 ring-1 ring-slate-100' : 'bg-[#1EA0FF] text-white'}`}>
                     <p className="whitespace-pre-wrap">{message.content}</p>
                     {message.role === 'assistant' && message.provider && (
                       <p className="mt-2 border-t border-slate-200 pt-1.5 text-[10px] text-slate-400">{message.provider}{message.model ? ` · ${message.model}` : ''}</p>
@@ -231,17 +231,17 @@ export default function ChatWorkspace() {
                 </article>
               ))}
               {isSending && (
-                <div className="flex items-center gap-3 text-sm text-slate-500"><div className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-600 text-white"><Bot size={16} /></div><span className="animate-pulse">Nova is thinking…</span></div>
+                <div className="flex items-center gap-3 text-sm text-slate-500"><div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#1EA0FF] text-white"><Bot size={16} /></div><span className="animate-pulse">Foxly is thinking…</span></div>
               )}
             </div>
           ) : (
             <div className="flex h-full flex-col items-center justify-center px-4 text-center">
-              <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600"><Sparkles className="h-7 w-7" /></div>
+              <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#F0F9FF] text-[#1EA0FF]"><Sparkles className="h-7 w-7" /></div>
               <h2 className="text-xl font-bold text-slate-900">What can I help you with?</h2>
-              <p className="mt-2 max-w-md text-sm text-slate-500">Ask Nova to think through a problem, summarize information, or help plan your next steps.</p>
+              <p className="mt-2 max-w-md text-sm text-slate-500">Ask Foxly to think through a problem, summarize information, or help plan your next steps.</p>
               <div className="mt-6 flex flex-wrap justify-center gap-2">
                 {['Help me plan my day', 'Draft a project plan', 'Summarize a complex topic'].map((suggestion) => (
-                  <button key={suggestion} type="button" onClick={() => setPrompt(suggestion)} className="rounded-full border border-slate-200 px-3 py-2 text-xs text-slate-600 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700">{suggestion}</button>
+                  <button key={suggestion} type="button" onClick={() => setPrompt(suggestion)} className="rounded-full border border-slate-200 px-3 py-2 text-xs text-slate-600 transition hover:border-[#BFE7FF] hover:bg-[#F0F9FF] hover:text-[#0088EE]">{suggestion}</button>
                 ))}
               </div>
             </div>
@@ -251,18 +251,18 @@ export default function ChatWorkspace() {
         <div className="border-t border-slate-100 px-4 py-4 sm:px-8">
           {error && <p role="alert" className="mx-auto mb-3 max-w-3xl rounded-lg bg-red-50 px-3 py-2 text-xs text-red-700">{error}</p>}
           <form onSubmit={(event) => void sendPrompt(event)} className="mx-auto max-w-3xl">
-            <div className="flex items-end gap-2 rounded-2xl border border-slate-200 bg-white p-2 shadow-sm focus-within:border-indigo-300 focus-within:ring-4 focus-within:ring-indigo-50">
+            <div className="flex items-end gap-2 rounded-2xl border border-slate-200 bg-white p-2 shadow-sm focus-within:border-[#80CFFF] focus-within:ring-4 focus-within:ring-[#F0F9FF]">
               <textarea
                 value={prompt}
                 onChange={(event) => setPrompt(event.target.value)}
                 onKeyDown={onComposerKeyDown}
-                placeholder="Message Nova…"
+                placeholder="Message Foxly…"
                 rows={1}
                 maxLength={12000}
                 disabled={isSending || isLoadingConversation}
                 className="max-h-40 min-h-10 flex-1 resize-y bg-transparent px-2 py-2 text-sm text-slate-900 outline-none placeholder:text-slate-400 disabled:opacity-60"
               />
-              <button type="submit" disabled={!prompt.trim() || isSending || isLoadingConversation} aria-label="Send message" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-600 text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400">
+              <button type="submit" disabled={!prompt.trim() || isSending || isLoadingConversation} aria-label="Send message" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#1EA0FF] text-white transition hover:bg-[#0088EE] disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400">
                 {isSending ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
               </button>
             </div>

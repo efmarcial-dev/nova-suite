@@ -19,6 +19,9 @@ export interface EmailMessageItem {
   snippet?: string;
   timestamp: string;
   status: 'read' | 'unread' | 'delivered';
+  grant_id?: string;
+  account_email?: string;
+  provider?: string;
 }
 
 export interface EmailInsight {
@@ -100,9 +103,10 @@ export async function disconnectEmailProviderAPI(provider: string): Promise<any>
 }
 
 export async function fetchEmailMessagesAPI(
-  provider: string = 'gmail',
+  provider: string = 'nylas',
   query: string = '',
-  maxResults: number = 25
+  maxResults: number = 25,
+  grantId?: string
 ): Promise<EmailMessageItem[]> {
   try {
     const params = new URLSearchParams({
@@ -110,6 +114,9 @@ export async function fetchEmailMessagesAPI(
       q: query,
       max_results: String(maxResults),
     });
+    if (grantId) {
+      params.set('grant_id', grantId);
+    }
 
     const res = await fetch(`/api/email/messages/?${params.toString()}`, {
       method: 'GET',

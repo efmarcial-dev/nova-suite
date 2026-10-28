@@ -22,7 +22,7 @@ const dataPoints = [
     title: 'Gmail & Outlook Email Access',
     purpose: 'Why we request this',
     description:
-      'NovaSuite reads your inbox to triage incoming messages, detect action items, surface high-priority client correspondence, and prepare draft responses for your review. You approve every AI-drafted reply before it is sent.',
+      'Foxly reads your inbox to triage incoming messages, detect action items, surface high-priority client correspondence, and prepare draft responses for your review. You approve every AI-drafted reply before it is sent.',
     scope: 'Read-only access to email headers, subjects, and message content.',
     notUsedFor: 'We never send emails on your behalf without your explicit confirmation.',
   },
@@ -34,36 +34,37 @@ const dataPoints = [
     title: 'Google Calendar & Outlook Calendar Access',
     purpose: 'Why we request this',
     description:
-      'NovaSuite syncs your calendar events to build your daily schedule view, detect meeting conflicts, extract agenda items, and generate pre-meeting briefings so you walk into every call fully prepared.',
+      'Foxly syncs your calendar events to build your daily schedule view, detect meeting conflicts, extract agenda items, and generate pre-meeting briefings so you walk into every call fully prepared.',
     scope: 'Read and write access to calendar events to sync and display your schedule.',
     notUsedFor: 'We do not create, modify, or delete calendar events without your explicit action.',
   },
   {
     icon: Brain,
-    color: 'text-indigo-600',
-    bg: 'bg-indigo-50',
-    border: 'border-indigo-100',
+    color: 'text-[#1EA0FF]',
+    bg: 'bg-[#F0F9FF]',
+    border: 'border-[#BFE7FF]',
     title: 'AI-Powered Task & Project Intelligence',
     purpose: 'What we do with your data',
     description:
-      'Your email and calendar data is processed by NovaSuite\'s AI engine solely to surface work you need to act on. Extracted insights are organized into tasks, project boards, and morning briefings visible only to you.',
+      'Your email and calendar data is processed by Foxly\'s AI engine solely to surface work you need to act on. Extracted insights are organized into tasks, project boards, and morning briefings visible only to you.',
     scope: 'Data is processed server-side within your isolated tenant workspace.',
     notUsedFor: 'Your data is never sold, shared with third parties, or used to train public AI models.',
   },
 ];
 
 const guarantees = [
-  'OAuth 2.0 secure authorization — NovaSuite never stores your Google or Microsoft password',
-  'Read-only access is requested by default; write permissions are only requested when you explicitly connect calendar sync',
-  'You can disconnect any provider at any time from Settings without losing your data',
-  'Data processed under Google API Limited Use Policy and Microsoft Graph API terms',
-  'No human staff reads your emails unless you explicitly request technical support',
+  'Strict SOC II compliance rules: isolated per-tenant workspaces and zero cross-tenant access',
+  'Multi-provider support: connect multiple Google (Gmail & Google Calendar) and Microsoft (Outlook & Exchange) accounts',
+  'Nylas Auth OAuth 2.0 integration — Foxly never sees or stores your Google or Microsoft password',
+  'Backed by enterprise cloud partners: Vercel edge deployment, Supabase real-time sync, and Firestore document caching',
+  'Strict Limited Use policy: customer data is never sold, shared, or used to train public AI models',
+  'You can disconnect any Google or Outlook provider at any time from Workspace Settings without losing your tasks',
 ];
 
 export default function DataTransparency() {
   return (
     <section
-      id="data-transparency"
+      id="security"
       className="relative py-24 px-6 lg:px-20 bg-slate-50/70 border-y border-slate-200/60"
     >
       <div className="max-w-[1200px] mx-auto space-y-14">
@@ -75,15 +76,15 @@ export default function DataTransparency() {
           transition={{ duration: 0.6 }}
           className="text-center space-y-4"
         >
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-700 text-xs font-semibold uppercase tracking-wider">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#F0F9FF] border border-[#BFE7FF] text-[#0088EE] text-xs font-semibold uppercase tracking-wider">
             <ShieldCheck size={14} />
             Data Transparency &amp; Privacy
           </div>
           <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 max-w-3xl mx-auto leading-tight tracking-tight">
-            What Data NovaSuite Requests — and Exactly Why
+            What Data Foxly Requests — and Exactly Why
           </h2>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            When you connect your Google or Microsoft account, NovaSuite requests
+            When you connect your Google or Microsoft account, Foxly requests
             specific permissions to power your executive workspace. Here is a complete,
             plain-language breakdown.
           </p>
@@ -115,7 +116,7 @@ export default function DataTransparency() {
 
                 <div className="space-y-2 pt-2 border-t border-slate-100">
                   <div className="flex items-start gap-2 text-xs text-gray-500">
-                    <Lock size={12} className="text-indigo-500 mt-0.5 shrink-0" />
+                    <Lock size={12} className="text-[#1EA0FF] mt-0.5 shrink-0" />
                     <span><strong className="text-gray-700">Scope: </strong>{item.scope}</span>
                   </div>
                   <div className="flex items-start gap-2 text-xs text-gray-500">
@@ -160,14 +161,14 @@ export default function DataTransparency() {
         >
           <Link
             href="/privacy"
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold shadow-sm transition-colors"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#1EA0FF] hover:bg-[#0088EE] text-white font-semibold shadow-sm transition-colors"
           >
             <ShieldCheck size={15} />
             Read Our Full Privacy Policy
           </Link>
           <Link
             href="/terms"
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white border border-slate-200 hover:border-indigo-300 text-gray-700 hover:text-indigo-700 font-semibold transition-colors"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white border border-slate-200 hover:border-[#80CFFF] text-gray-700 hover:text-[#0088EE] font-semibold transition-colors"
           >
             <ExternalLink size={14} />
             Terms of Service

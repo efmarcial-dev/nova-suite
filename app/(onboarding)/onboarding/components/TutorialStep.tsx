@@ -44,7 +44,7 @@ export default function TutorialStep({ onNext, onBack }: TutorialStepProps) {
   return (
     <div className="space-y-6">
       <div className="text-center max-w-xl mx-auto">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 border border-indigo-200 text-indigo-700 text-xs font-semibold mb-3">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#F0F9FF] border border-[#BFE7FF] text-[#0088EE] text-xs font-semibold mb-3">
           <Sparkles className="w-3.5 h-3.5" />
           <span>Interactive Product Tour</span>
         </div>
@@ -63,7 +63,7 @@ export default function TutorialStep({ onNext, onBack }: TutorialStepProps) {
           onClick={() => setActiveTab('briefing')}
           className={`flex-1 py-2 text-xs font-semibold rounded-lg transition ${
             activeTab === 'briefing'
-              ? 'bg-white text-indigo-600 shadow-sm'
+              ? 'bg-white text-[#1EA0FF] shadow-sm'
               : 'text-gray-600 hover:text-gray-900'
           }`}
         >
@@ -74,7 +74,7 @@ export default function TutorialStep({ onNext, onBack }: TutorialStepProps) {
           onClick={() => setActiveTab('scoring')}
           className={`flex-1 py-2 text-xs font-semibold rounded-lg transition ${
             activeTab === 'scoring'
-              ? 'bg-white text-indigo-600 shadow-sm'
+              ? 'bg-white text-[#1EA0FF] shadow-sm'
               : 'text-gray-600 hover:text-gray-900'
           }`}
         >
@@ -85,7 +85,7 @@ export default function TutorialStep({ onNext, onBack }: TutorialStepProps) {
           onClick={() => setActiveTab('directives')}
           className={`flex-1 py-2 text-xs font-semibold rounded-lg transition ${
             activeTab === 'directives'
-              ? 'bg-white text-indigo-600 shadow-sm'
+              ? 'bg-white text-[#1EA0FF] shadow-sm'
               : 'text-gray-600 hover:text-gray-900'
           }`}
         >
@@ -98,7 +98,7 @@ export default function TutorialStep({ onNext, onBack }: TutorialStepProps) {
         {activeTab === 'briefing' && (
           <div className="space-y-4">
             <div className="flex items-start gap-4">
-              <div className="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center shrink-0">
+              <div className="w-10 h-10 rounded-xl bg-[#1EA0FF] text-white flex items-center justify-center shrink-0">
                 <Bot className="w-5 h-5" />
               </div>
               <div>
@@ -112,12 +112,12 @@ export default function TutorialStep({ onNext, onBack }: TutorialStepProps) {
             {/* Mock Visual */}
             <div className="bg-white rounded-xl p-4 border border-[--border] shadow-xs space-y-2.5">
               <div className="flex items-center justify-between text-xs font-semibold text-gray-700">
-                <span className="flex items-center gap-1.5 text-indigo-700">
+                <span className="flex items-center gap-1.5 text-[#0088EE]">
                   <Sparkles className="w-3.5 h-3.5" /> Today&apos;s Focus
                 </span>
                 <span className="text-gray-400">8:30 AM Briefing</span>
               </div>
-              <p className="text-xs text-gray-700 bg-indigo-50/50 p-2.5 rounded-lg border border-indigo-100">
+              <p className="text-xs text-gray-700 bg-[#F0F9FF]/50 p-2.5 rounded-lg border border-[#BFE7FF]">
                 &ldquo;You have 2 high-priority deliverables due today and 1 client sync at 2:00 PM. I&apos;ve cleared a 90-minute focus block this afternoon to protect your deep work.&rdquo;
               </p>
             </div>
@@ -169,7 +169,7 @@ export default function TutorialStep({ onNext, onBack }: TutorialStepProps) {
 
             {/* Mock Input Bar */}
             <div className="bg-white rounded-xl p-3 border border-[--border] shadow-xs flex items-center gap-2 text-xs text-gray-500">
-              <Send className="w-4 h-4 text-indigo-600" />
+              <Send className="w-4 h-4 text-[#1EA0FF]" />
               <span className="italic text-gray-400">
                 &ldquo;Draft a reply to Sarah agreeing to the 2pm schedule and mark proposal as complete&rdquo;
               </span>
@@ -214,7 +214,7 @@ export default function TutorialStep({ onNext, onBack }: TutorialStepProps) {
           type="button"
           onClick={handleContinue}
           disabled={isSubmittingStep}
-          className="px-6 py-2.5 rounded-xl text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 flex items-center gap-2 shadow-sm transition disabled:opacity-50"
+          className="px-6 py-2.5 rounded-xl text-xs font-semibold text-white bg-[#1EA0FF] hover:bg-[#0088EE] flex items-center gap-2 shadow-sm transition disabled:opacity-50"
         >
           {isSubmittingStep ? (
             <>

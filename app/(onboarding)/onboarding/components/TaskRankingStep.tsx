@@ -59,9 +59,9 @@ export default function TaskRankingStep({data, onNext, onBack}: TaskRankingStep)
                                 const rank = index + 1;
                                 const selected = taskRanking.find((item) => item.id === task.id)?.rank === rank;
                                 return (
-                                    <label key={option} className={`flex min-h-10 cursor-pointer items-center justify-center gap-1.5 rounded-xl border px-2 py-2 text-xs font-medium transition ${selected ? 'border-indigo-400 bg-indigo-50 text-indigo-900' : 'border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-50'}`}>
+                                    <label key={option} className={`flex min-h-10 cursor-pointer items-center justify-center gap-1.5 rounded-xl border px-2 py-2 text-xs font-medium transition ${selected ? 'border-[#1EA0FF] bg-[#F0F9FF] text-[#0D1B2A]' : 'border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-50'}`}>
                                         <input className="sr-only" type="radio" name={`task-${task.id}`} value={rank} checked={selected} onChange={() => setRank(task.id, rank)} />
-                                        {selected && <Check className="h-3.5 w-3.5 text-indigo-600" />}{option}
+                                        {selected && <Check className="h-3.5 w-3.5 text-[#1EA0FF]" />}{option}
                                     </label>
                                 );
                             })}
@@ -75,7 +75,7 @@ export default function TaskRankingStep({data, onNext, onBack}: TaskRankingStep)
                 <button
                     type="button"
                     onClick={() => onNext({ taskRanking })}
-                    className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-40"
+                    className="inline-flex items-center gap-2 rounded-xl bg-[#1EA0FF] px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0088EE] disabled:cursor-not-allowed disabled:opacity-40"
                     disabled={taskRanking.length < sampleTasks.length}
                 >
                     Continue <ArrowRight className="h-4 w-4" />

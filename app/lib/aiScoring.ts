@@ -70,9 +70,9 @@ export function computeTaskAIScore(task: Partial<Task>): AIScoreResult {
   // Determine Tier & Styling
   let tier: 'critical' | 'high' | 'medium' | 'low' = 'medium';
   let badgeLabel = 'Moderate';
-  let badgeBg = 'bg-indigo-50';
-  let badgeBorder = 'border-indigo-200';
-  let badgeText = 'text-indigo-700';
+  let badgeBg = 'bg-[#F0F9FF]';
+  let badgeBorder = 'border-[#BFE7FF]';
+  let badgeText = 'text-[#0088EE]';
 
   if (score >= 88 || isOverdue) {
     tier = 'critical';
@@ -89,9 +89,9 @@ export function computeTaskAIScore(task: Partial<Task>): AIScoreResult {
   } else if (score >= 48) {
     tier = 'medium';
     badgeLabel = 'Standard Pace';
-    badgeBg = 'bg-indigo-50';
-    badgeBorder = 'border-indigo-200';
-    badgeText = 'text-indigo-700';
+    badgeBg = 'bg-[#F0F9FF]';
+    badgeBorder = 'border-[#BFE7FF]';
+    badgeText = 'text-[#0088EE]';
   } else {
     tier = 'low';
     badgeLabel = 'Low Urgency';

@@ -18,25 +18,25 @@ import Link from 'next/link';
 
 export default function HelpPage() {
   const handleLaunchTour = () => {
-    window.dispatchEvent(new CustomEvent('nova:open-tour'));
+    window.dispatchEvent(new CustomEvent('foxly:open-tour'));
   };
 
   return (
     <div className="max-w-5xl mx-auto space-y-6 pb-12">
       {/* Hero: Replay Interactive Tour */}
-      <div className="bg-gradient-to-br from-indigo-900 via-indigo-800 to-indigo-950 text-white rounded-3xl p-8 shadow-xl relative overflow-hidden">
-        <div className="absolute right-0 top-0 translate-x-8 -translate-y-8 w-72 h-72 rounded-full bg-indigo-500/20 blur-3xl pointer-events-none" />
+      <div className="bg-gradient-to-br from-[#0D1B2A] via-[#1E232C] to-[#0D1B2A] text-white rounded-3xl p-8 shadow-xl relative overflow-hidden">
+        <div className="absolute right-0 top-0 translate-x-8 -translate-y-8 w-72 h-72 rounded-full bg-[#1EA0FF]/20 blur-3xl pointer-events-none" />
         <div className="relative z-10 max-w-2xl space-y-4">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-700/50 border border-indigo-400/30 text-indigo-200 text-xs font-semibold backdrop-blur-sm">
-            <Sparkles className="w-3.5 h-3.5 text-indigo-300" />
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/20 text-blue-100 text-xs font-semibold backdrop-blur-sm">
+            <Sparkles className="w-3.5 h-3.5 text-[#80CFFF]" />
             <span>Interactive Onboarding &amp; AI Tour</span>
           </div>
 
           <h1 className="text-3xl font-extrabold tracking-tight text-white">
-            How Nova Operates as Your Executive Assistant
+            How Foxly Operates as Your Executive Assistant
           </h1>
 
-          <p className="text-indigo-200 text-sm leading-relaxed">
+          <p className="text-blue-100 text-sm leading-relaxed">
             Need a refresher on how the AI scores your tasks, extracts action items from emails, or guards your calendar? Launch the interactive visual walkthrough anytime.
           </p>
 
@@ -44,18 +44,18 @@ export default function HelpPage() {
             <button
               type="button"
               onClick={handleLaunchTour}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white text-indigo-900 font-bold text-xs shadow-lg hover:bg-indigo-50 transition-all hover:scale-[1.02] active:scale-[0.98]"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white text-[#0D1B2A] font-bold text-xs shadow-lg hover:bg-blue-50 transition-all hover:scale-[1.02] active:scale-[0.98]"
             >
-              <Play className="w-3.5 h-3.5 fill-indigo-900" />
+              <Play className="w-3.5 h-3.5 fill-[#0D1B2A]" />
               <span>Launch Interactive Walkthrough</span>
             </button>
 
             <Link
               href="/dashboard/settings"
-              className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-indigo-800/60 hover:bg-indigo-700/60 text-white text-xs font-semibold border border-indigo-500/30 transition"
+              className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-semibold border border-white/20 transition"
             >
               <span>Manage Integrations</span>
-              <ChevronRight className="w-3.5 h-3.5 text-indigo-300" />
+              <ChevronRight className="w-3.5 h-3.5 text-[#80CFFF]" />
             </Link>
           </div>
         </div>
@@ -69,8 +69,8 @@ export default function HelpPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Pillar 1: Task Scoring */}
-          <div className="bg-white border border-[--border] rounded-2xl p-6 shadow-sm hover:border-indigo-200 transition-all space-y-3">
-            <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 border border-indigo-100 flex items-center justify-center">
+          <div className="bg-white border border-[--border] rounded-2xl p-6 shadow-sm hover:border-[#BFE7FF] transition-all space-y-3">
+            <div className="w-10 h-10 rounded-xl bg-[#F0F9FF] text-[#1EA0FF] border border-[#BFE7FF] flex items-center justify-center">
               <ListTodo className="w-5 h-5" />
             </div>
             <h3 className="font-bold text-gray-900 text-base">
@@ -79,58 +79,58 @@ export default function HelpPage() {
             <p className="text-gray-500 text-xs leading-relaxed">
               Every deliverable is dynamically graded based on deadline proximity, business leverage, and your onboarding preferences. High-scoring tasks (80+) automatically populate your Daily Executive Briefing.
             </p>
-            <div className="pt-2 text-xs font-semibold text-indigo-600 flex items-center gap-1">
+            <div className="pt-2 text-xs font-semibold text-[#1EA0FF] flex items-center gap-1">
               <span>View in Tasks page</span>
               <ArrowRight className="w-3 h-3" />
             </div>
           </div>
 
           {/* Pillar 2: Email Intelligence */}
-          <div className="bg-white border border-[--border] rounded-2xl p-6 shadow-sm hover:border-indigo-200 transition-all space-y-3">
-            <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 border border-indigo-100 flex items-center justify-center">
+          <div className="bg-white border border-[--border] rounded-2xl p-6 shadow-sm hover:border-[#BFE7FF] transition-all space-y-3">
+            <div className="w-10 h-10 rounded-xl bg-[#F0F9FF] text-[#1EA0FF] border border-[#BFE7FF] flex items-center justify-center">
               <Mail className="w-5 h-5" />
             </div>
             <h3 className="font-bold text-gray-900 text-base">
               AI Email Intelligence &amp; Triage
             </h3>
             <p className="text-gray-500 text-xs leading-relaxed">
-              Connect Gmail or Microsoft Outlook. Nova filters newsletters, summarizes key threads, detects explicit commitments/requests, and writes context-aware draft replies ready for 1-click approval.
+              Connect Gmail or Microsoft Outlook. Foxly filters newsletters, summarizes key threads, detects explicit commitments/requests, and writes context-aware draft replies ready for 1-click approval.
             </p>
-            <div className="pt-2 text-xs font-semibold text-indigo-600 flex items-center gap-1">
+            <div className="pt-2 text-xs font-semibold text-[#1EA0FF] flex items-center gap-1">
               <span>Configure in Settings</span>
               <ArrowRight className="w-3 h-3" />
             </div>
           </div>
 
           {/* Pillar 3: Calendar & Focus */}
-          <div className="bg-white border border-[--border] rounded-2xl p-6 shadow-sm hover:border-indigo-200 transition-all space-y-3">
-            <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 border border-indigo-100 flex items-center justify-center">
+          <div className="bg-white border border-[--border] rounded-2xl p-6 shadow-sm hover:border-[#BFE7FF] transition-all space-y-3">
+            <div className="w-10 h-10 rounded-xl bg-[#F0F9FF] text-[#1EA0FF] border border-[#BFE7FF] flex items-center justify-center">
               <Calendar className="w-5 h-5" />
             </div>
             <h3 className="font-bold text-gray-900 text-base">
               Focus Guard &amp; Smart Scheduling
             </h3>
             <p className="text-gray-500 text-xs leading-relaxed">
-              Nova protects 2-hour uninterrupted deep-work windows against meeting fragmentation, reserves decompression buffers, and flags overlapping calendar conflicts before they occur.
+              Foxly protects 2-hour uninterrupted deep-work windows against meeting fragmentation, reserves decompression buffers, and flags overlapping calendar conflicts before they occur.
             </p>
-            <div className="pt-2 text-xs font-semibold text-indigo-600 flex items-center gap-1">
+            <div className="pt-2 text-xs font-semibold text-[#1EA0FF] flex items-center gap-1">
               <span>Open Calendar View</span>
               <ArrowRight className="w-3 h-3" />
             </div>
           </div>
 
           {/* Pillar 4: Directives */}
-          <div className="bg-white border border-[--border] rounded-2xl p-6 shadow-sm hover:border-indigo-200 transition-all space-y-3">
-            <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 border border-indigo-100 flex items-center justify-center">
+          <div className="bg-white border border-[--border] rounded-2xl p-6 shadow-sm hover:border-[#BFE7FF] transition-all space-y-3">
+            <div className="w-10 h-10 rounded-xl bg-[#F0F9FF] text-[#1EA0FF] border border-[#BFE7FF] flex items-center justify-center">
               <Zap className="w-5 h-5" />
             </div>
             <h3 className="font-bold text-gray-900 text-base">
               Executive Directives Engine
             </h3>
             <p className="text-gray-500 text-xs leading-relaxed">
-              Instruct Nova naturally from the bottom bar or Assistant Hub: &ldquo;Reschedule my 3pm sync&rdquo;, &ldquo;Draft contract follow-up to David&rdquo;, or &ldquo;Prioritize client milestones for this week&rdquo;.
+              Instruct Foxly naturally from the bottom bar or Assistant Hub: &ldquo;Reschedule my 3pm sync&rdquo;, &ldquo;Draft contract follow-up to David&rdquo;, or &ldquo;Prioritize client milestones for this week&rdquo;.
             </p>
-            <div className="pt-2 text-xs font-semibold text-indigo-600 flex items-center gap-1">
+            <div className="pt-2 text-xs font-semibold text-[#1EA0FF] flex items-center gap-1">
               <span>Try on Dashboard</span>
               <ArrowRight className="w-3 h-3" />
             </div>
@@ -147,10 +147,10 @@ export default function HelpPage() {
         <div className="space-y-3 divide-y divide-gray-100">
           <div className="pt-3 first:pt-0 space-y-1">
             <p className="text-xs font-semibold text-gray-900">
-              Does Nova send emails or change calendar events without my confirmation?
+              Does Foxly send emails or change calendar events without my confirmation?
             </p>
             <p className="text-xs text-gray-500 leading-relaxed">
-              No. Nova operates under strict executive oversight. Draft replies and calendar reschedules are prepared as proposals that you approve or edit with one click.
+              No. Foxly operates under strict executive oversight. Draft replies and calendar reschedules are prepared as proposals that you approve or edit with one click.
             </p>
           </div>
 
@@ -159,7 +159,7 @@ export default function HelpPage() {
               How do I connect or disconnect Gmail and Microsoft Outlook?
             </p>
             <p className="text-xs text-gray-500 leading-relaxed">
-              Head to <Link href="/dashboard/settings" className="text-indigo-600 underline font-medium">Settings &rarr; Email Providers</Link> to link your account via OAuth. You can disconnect with one click at any time.
+              Head to <Link href="/dashboard/settings" className="text-[#1EA0FF] underline font-medium">Settings &rarr; Email Providers</Link> to link your account via OAuth. You can disconnect with one click at any time.
             </p>
           </div>
 

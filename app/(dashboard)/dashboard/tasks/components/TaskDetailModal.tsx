@@ -123,7 +123,7 @@ export default function TaskDetailModal({
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full text-lg font-bold text-[--foreground] bg-transparent border-b border-transparent hover:border-[--border] focus:border-indigo-400 outline-none transition-colors py-1"
+              className="w-full text-lg font-bold text-[--foreground] bg-transparent border-b border-transparent hover:border-[--border] focus:border-[#1EA0FF] outline-none transition-colors py-1"
               placeholder="Task Title..."
             />
           </div>
@@ -136,10 +136,10 @@ export default function TaskDetailModal({
         </div>
 
         {/* AI Scoring & Diagnostic Card */}
-        <div className="rounded-2xl bg-gradient-to-br from-indigo-50/70 via-white to-violet-50/70 border border-indigo-100 p-4 space-y-3 shadow-xs">
+        <div className="rounded-2xl bg-gradient-to-br from-[#F0F9FF] via-white to-violet-50/70 border border-[#BFE7FF] p-4 space-y-3 shadow-xs">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-xs">
+              <div className="w-8 h-8 rounded-xl bg-[#1EA0FF] text-white flex items-center justify-center shadow-xs">
                 <Sparkles size={16} />
               </div>
               <div>
@@ -148,15 +148,15 @@ export default function TaskDetailModal({
               </div>
             </div>
             {/* Score circle */}
-            <div className="flex items-baseline gap-1 bg-white px-3 py-1.5 rounded-xl border border-indigo-100 shadow-xs">
-              <span className="text-xl font-black text-indigo-600 tracking-tight">{aiScore.score}</span>
+            <div className="flex items-baseline gap-1 bg-white px-3 py-1.5 rounded-xl border border-[#BFE7FF] shadow-xs">
+              <span className="text-xl font-black text-[#1EA0FF] tracking-tight">{aiScore.score}</span>
               <span className="text-[11px] font-semibold text-[--muted-foreground]">/ 100</span>
             </div>
           </div>
 
           {/* Reasoning */}
-          <div className="bg-white/90 rounded-xl p-3 border border-indigo-50 text-xs text-[--foreground] leading-relaxed">
-            <span className="font-semibold text-indigo-900">AI Reasoning: </span>
+          <div className="bg-white/90 rounded-xl p-3 border border-[#F0F9FF] text-xs text-[--foreground] leading-relaxed">
+            <span className="font-semibold text-[#0D1B2A]">AI Reasoning: </span>
             {aiScore.reasonSummary}
           </div>
 
@@ -174,14 +174,14 @@ export default function TaskDetailModal({
                 setIsRescoring(true);
                 try { await onRescore(task); } finally { setIsRescoring(false); }
               }}
-              className="flex items-center gap-1.5 rounded-xl border border-indigo-200 bg-white px-3 py-1.5 text-xs font-semibold text-indigo-700 transition hover:bg-indigo-50 disabled:opacity-50"
+              className="flex items-center gap-1.5 rounded-xl border border-[#BFE7FF] bg-white px-3 py-1.5 text-xs font-semibold text-[#0088EE] transition hover:bg-[#F0F9FF] disabled:opacity-50"
             >
               <Sparkles size={12} /> {isRescoring ? 'Analyzing…' : 'Analyze again'}
             </button>
             <button
               type="button"
               onClick={handleDelegate}
-              className="flex items-center gap-1.5 text-xs font-semibold text-indigo-600 hover:text-indigo-700 bg-white hover:bg-indigo-50 px-3 py-1.5 rounded-xl border border-indigo-200 transition-colors cursor-pointer"
+              className="flex items-center gap-1.5 text-xs font-semibold text-[#1EA0FF] hover:text-[#0088EE] bg-white hover:bg-[#F0F9FF] px-3 py-1.5 rounded-xl border border-[#BFE7FF] transition-colors cursor-pointer"
             >
               <Send size={12} /> Ask Assistant to Draft / Delegate Task
             </button>
@@ -201,7 +201,7 @@ export default function TaskDetailModal({
           <div className="grid grid-cols-4 gap-2">
             {[
               { value: 'todo' as const, label: 'To Do', dot: 'bg-slate-400' },
-              { value: 'in_progress' as const, label: 'In Progress', dot: 'bg-indigo-500' },
+              { value: 'in_progress' as const, label: 'In Progress', dot: 'bg-[#1EA0FF]' },
               { value: 'in_review' as const, label: 'In Review', dot: 'bg-amber-400' },
               { value: 'done' as const, label: 'Done', dot: 'bg-emerald-500' },
             ].map((s) => {
@@ -213,7 +213,7 @@ export default function TaskDetailModal({
                   onClick={() => setStatus(s.value)}
                   className={`flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-xl text-xs font-medium border transition-all ${
                     isSelected
-                      ? 'border-indigo-500 bg-indigo-50/70 text-indigo-700 font-semibold shadow-xs'
+                      ? 'border-[#1EA0FF] bg-[#F0F9FF] text-[#0088EE] font-semibold shadow-xs'
                       : 'border-[--border] bg-white text-[--muted-foreground] hover:border-gray-300'
                   }`}
                 >
@@ -245,7 +245,7 @@ export default function TaskDetailModal({
                   onClick={() => setPriority(p.value)}
                   className={`py-2 px-2.5 rounded-xl text-xs font-medium border text-center transition-all ${
                     isSelected
-                      ? `${p.color} font-semibold ring-2 ring-indigo-400/30`
+                      ? `${p.color} font-semibold ring-2 ring-[#1EA0FF]/30`
                       : 'border-[--border] bg-white text-[--muted-foreground] hover:border-gray-300'
                   }`}
                 >
@@ -267,7 +267,7 @@ export default function TaskDetailModal({
               type="date"
               value={dueDate}
               onChange={(e) => setDueDate(e.target.value)}
-              className="w-full px-3 py-2 text-xs bg-[--background] border border-[--border] rounded-xl outline-none focus:ring-2 focus:ring-indigo-400"
+              className="w-full px-3 py-2 text-xs bg-[--background] border border-[--border] rounded-xl outline-none focus:ring-2 focus:ring-[#1EA0FF]"
             />
           </div>
 
@@ -279,7 +279,7 @@ export default function TaskDetailModal({
             <select
               value={projectId ?? ''}
               onChange={(e) => setProjectId(e.target.value ? Number(e.target.value) : undefined)}
-              className="w-full px-3 py-2 text-xs bg-[--background] border border-[--border] rounded-xl outline-none focus:ring-2 focus:ring-indigo-400"
+              className="w-full px-3 py-2 text-xs bg-[--background] border border-[--border] rounded-xl outline-none focus:ring-2 focus:ring-[#1EA0FF]"
             >
               <option value="">No Project Assigned</option>
               {projects.map((p) => (
@@ -301,7 +301,7 @@ export default function TaskDetailModal({
             {tags.map((t) => (
               <span
                 key={t}
-                className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-200"
+                className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-lg bg-[#F0F9FF] text-[#0088EE] border border-[#BFE7FF]"
               >
                 {t}
                 <button
@@ -353,7 +353,7 @@ export default function TaskDetailModal({
               type="button"
               disabled={isSaving || !title.trim()}
               onClick={handleSave}
-              className="flex items-center gap-1.5 px-5 py-2 text-xs font-medium gradient-brand text-white rounded-xl hover:opacity-90 transition-opacity disabled:opacity-50 shadow-md shadow-indigo-100"
+              className="flex items-center gap-1.5 px-5 py-2 text-xs font-medium gradient-brand text-white rounded-xl hover:opacity-90 transition-opacity disabled:opacity-50 shadow-md shadow-blue-500/10"
             >
               {isSaving ? 'Saving...' : 'Save Changes'}
             </button>

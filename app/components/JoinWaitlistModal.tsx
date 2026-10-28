@@ -92,7 +92,7 @@ export default function JoinWaitlistModal() {
               <>
                 <h2 className="text-xl font-semibold mb-2">Join the Waitlist</h2>
                 <p className="text-gray-600 mb-4">
-                  Get early access and exclusive lifetime pricing when NovaSuite launches.
+                  Get early access and exclusive lifetime pricing when Foxly launches.
                   We&apos;ll keep you updated as we build.
                 </p>
                 {/* Benefits List */}

@@ -4,7 +4,7 @@ import { Task } from './task'
 
 const columnConfig: Record<string, { header: string; dot: string; bg: string; count: string }> = {
   todo:        { header: 'text-slate-700',  dot: 'bg-slate-400',   bg: 'bg-slate-50',   count: 'bg-slate-100 text-slate-600' },
-  in_progress: { header: 'text-indigo-700', dot: 'bg-indigo-500',  bg: 'bg-indigo-50/40', count: 'bg-indigo-100 text-indigo-600' },
+  in_progress: { header: 'text-[#0088EE]', dot: 'bg-[#F0F9FF]0',  bg: 'bg-[#F0F9FF]/40', count: 'bg-[#E8F6FF] text-[#1EA0FF]' },
   in_review:   { header: 'text-amber-700',  dot: 'bg-amber-400',   bg: 'bg-amber-50/40',  count: 'bg-amber-100 text-amber-600' },
   done:        { header: 'text-emerald-700',dot: 'bg-emerald-500', bg: 'bg-emerald-50/40',count: 'bg-emerald-100 text-emerald-600' },
 }

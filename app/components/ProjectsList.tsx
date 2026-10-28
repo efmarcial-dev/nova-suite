@@ -11,7 +11,7 @@ interface ProjectsListProps {
 
 const statusConfig: Record<string, { label: string; classes: string }> = {
   completed: { label: 'Completed', classes: 'bg-emerald-50 text-emerald-700' },
-  in_progress: { label: 'In Progress', classes: 'bg-indigo-50 text-indigo-700' },
+  in_progress: { label: 'In Progress', classes: 'bg-[#F0F9FF] text-[#1EA0FF]' },
   planning: { label: 'Planning', classes: 'bg-amber-50 text-amber-700' },
   on_hold: { label: 'On Hold', classes: 'bg-gray-100 text-gray-600' },
 }
@@ -40,7 +40,7 @@ export default function ProjectsList({ projects, isLoading, className = '' }: Pr
         <h2 className="text-base font-semibold text-[--foreground]">Projects</h2>
         <Link
           href="/dashboard/projects"
-          className="text-xs font-medium text-indigo-600 hover:text-indigo-700 flex items-center gap-1 transition-colors"
+          className="text-xs font-medium text-[#1EA0FF] hover:text-[#0088EE] flex items-center gap-1 transition-colors"
         >
           View all <ArrowRight size={12} />
         </Link>
@@ -56,7 +56,7 @@ export default function ProjectsList({ projects, isLoading, className = '' }: Pr
           </>
         ) : projects.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-10 text-center">
-            <div className="w-10 h-10 rounded-full bg-indigo-50 flex items-center justify-center mb-3">
+            <div className="w-10 h-10 rounded-full bg-[#F0F9FF] flex items-center justify-center mb-3">
               <span className="text-xl">📁</span>
             </div>
             <p className="text-sm font-medium text-[--foreground]">No projects yet</p>

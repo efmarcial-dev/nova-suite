@@ -19,7 +19,7 @@ export default function WelcomeWorkspaceStep({ data, onNext, onBack }: WelcomeWo
     return (
         <div className="max-w-3xl">
             <div className="mb-7 flex items-start gap-4">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-indigo-100 text-indigo-700">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#E8F6FF] text-[#0088EE]">
                     <Building2 className="h-6 w-6" />
                 </div>
                 <div>
@@ -36,7 +36,7 @@ export default function WelcomeWorkspaceStep({ data, onNext, onBack }: WelcomeWo
                     type="text"
                     value={workspace_name}
                     onChange={(e) => setworkspace_name(e.target.value)}
-                    className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100"
+                    className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-[#1EA0FF] focus:ring-4 focus:ring-[#E8F6FF]"
                     placeholder="e.g. Acme Studio"
                 />
             </div>
@@ -50,7 +50,7 @@ export default function WelcomeWorkspaceStep({ data, onNext, onBack }: WelcomeWo
                     type="text"
                     value={role}
                     onChange={(e) => setRole(e.target.value)}
-                    className="w-full rounded-xl border border-slate-200 bg-white py-3 pl-10 pr-4 text-sm outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100"
+                    className="w-full rounded-xl border border-slate-200 bg-white py-3 pl-10 pr-4 text-sm outline-none transition placeholder:text-slate-400 focus:border-[#1EA0FF] focus:ring-4 focus:ring-[#E8F6FF]"
                     placeholder="e.g. Founder, Operations lead"
                 />
                 </div>
@@ -64,7 +64,7 @@ export default function WelcomeWorkspaceStep({ data, onNext, onBack }: WelcomeWo
                 <button
                     type="button"
                     onClick={() => onNext({workspace_name, role})}
-                    className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-40"
+                    className="inline-flex items-center gap-2 rounded-xl bg-[#1EA0FF] px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0088EE] disabled:cursor-not-allowed disabled:opacity-40"
                     disabled={!workspace_name.trim() || !role.trim()}
                 >
                     Continue <ArrowRight className="h-4 w-4" />

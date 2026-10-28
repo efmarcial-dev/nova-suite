@@ -10,11 +10,12 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json().catch(() => ({}));
-    const provider = body.provider || 'google';
+    const provider = body.provider || 'nylas';
     const syncPayload: Record<string, unknown> = { provider };
 
     if (body.time_min) syncPayload.time_min = body.time_min;
     if (body.time_max) syncPayload.time_max = body.time_max;
+    if (body.grant_id) syncPayload.grant_id = body.grant_id;
 
     const res = await fetch(getDjangoApiUrl('auth/calendar/events/sync/'), {
       method: 'POST',

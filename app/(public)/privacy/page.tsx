@@ -3,8 +3,8 @@ import Link from 'next/link';
 import { ShieldCheck, Lock, Eye, FileText, Database, UserCheck, RefreshCw } from 'lucide-react';
 
 export const metadata: Metadata = {
-  title: 'Privacy Policy | NovaSuite',
-  description: 'NovaSuite Application Privacy Policy. Learn how we protect your personal information, email data, calendar events, and payment information.',
+  title: 'Privacy Policy | Foxly',
+  description: 'Foxly Application Privacy Policy. Learn how we protect your personal information, email data, calendar events, and payment information.',
 };
 
 export default function PrivacyPolicyPage() {
@@ -16,7 +16,7 @@ export default function PrivacyPolicyPage() {
         
         {/* Header */}
         <div className="border-b border-slate-100 pb-8 mb-10">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-700 text-xs font-semibold uppercase tracking-wider mb-4">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#F0F9FF] border border-[#BFE7FF] text-[#0088EE] text-xs font-semibold uppercase tracking-wider mb-4">
             <ShieldCheck size={14} />
             <span>Public Compliance & Security</span>
           </div>
@@ -33,20 +33,20 @@ export default function PrivacyPolicyPage() {
           
           <section className="space-y-3">
             <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-              <Eye size={18} className="text-indigo-600" />
+              <Eye size={18} className="text-[#1EA0FF]" />
               1. Overview & Commitment
             </h2>
             <p>
-              NovaSuite (&quot;Nova&quot;, &quot;we&quot;, &quot;our&quot;, or &quot;us&quot;), operated by Nova IT Solutions, is committed to safeguarding your privacy and ensuring transparency in how your personal and corporate information is collected, processed, and safeguarded.
+              Foxly (&quot;we&quot;, &quot;our&quot;, or &quot;us&quot;), operated by Nova IT Solutions, is committed to safeguarding your privacy and ensuring transparency in how your personal and corporate information is collected, processed, and safeguarded.
             </p>
             <p>
-              This Application Privacy Policy applies to the NovaSuite operating platform, web applications, and related services (collectively, the &quot;Service&quot;). By creating an account or accessing NovaSuite, you consent to the data practices described herein.
+              This Application Privacy Policy applies to the Foxly operating platform, web applications, and related services (collectively, the &quot;Service&quot;). By creating an account or accessing Foxly, you consent to the data practices described herein.
             </p>
           </section>
 
           <section className="space-y-3">
             <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-              <Database size={18} className="text-indigo-600" />
+              <Database size={18} className="text-[#1EA0FF]" />
               2. Information We Collect
             </h2>
             <p>We collect only the information necessary to provide, optimize, and secure your executive workspace:</p>
@@ -58,7 +58,7 @@ export default function PrivacyPolicyPage() {
                 <strong className="text-slate-800">Connected Provider Data (Google Workspace & Microsoft 365):</strong> When you explicitly authorize email or calendar integrations via OAuth 2.0, we access email headers, subjects, content snippets, and calendar event metadata solely to deliver automated triage, action item detection, and scheduling intelligence.
               </li>
               <li>
-                <strong className="text-slate-800">Billing & Payment Tokens:</strong> Payment processing is handled directly via Square Web Payments SDK. Sensitive card details are tokenized securely directly on Square&apos;s servers. NovaSuite never stores raw credit card numbers or security CVVs.
+                <strong className="text-slate-800">Billing & Payment Tokens:</strong> Payment processing is handled directly via Square Web Payments SDK. Sensitive card details are tokenized securely directly on Square&apos;s servers. Foxly never stores raw credit card numbers or security CVVs.
               </li>
               <li>
                 <strong className="text-slate-800">AI Chat Content:</strong> Chat prompts and responses are saved to your account so you can return to prior conversations. To generate replies, the prompt and relevant conversation history are sent to configured AI providers in this order: Hugging Face, Groq, then OpenRouter when an earlier provider is unavailable.
@@ -71,11 +71,11 @@ export default function PrivacyPolicyPage() {
 
           <section className="space-y-3">
             <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-              <Lock size={18} className="text-indigo-600" />
+              <Lock size={18} className="text-[#1EA0FF]" />
               3. Google & Microsoft User Data Handling
             </h2>
             <p>
-              NovaSuite strictly adheres to the <em>Google API Services User Data Policy</em> and <em>Microsoft Identity and Graph API Guidelines</em>, including Limited Use requirements:
+              Foxly strictly adheres to the <em>Google API Services User Data Policy</em> and <em>Microsoft Identity and Graph API Guidelines</em>, including Limited Use requirements:
             </p>
             <ul className="list-disc pl-5 space-y-2">
               <li>
@@ -95,7 +95,7 @@ export default function PrivacyPolicyPage() {
 
           <section className="space-y-3">
             <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-              <FileText size={18} className="text-indigo-600" />
+              <FileText size={18} className="text-[#1EA0FF]" />
               4. How We Use Information
             </h2>
             <p>Your data is processed to:</p>
@@ -109,20 +109,20 @@ export default function PrivacyPolicyPage() {
 
           <section className="space-y-3">
             <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-              <UserCheck size={18} className="text-indigo-600" />
+              <UserCheck size={18} className="text-[#1EA0FF]" />
               5. Data Retention, Portability & Deletion
             </h2>
             <p>
               You retain full ownership of your data at all times. You can disconnect linked Google or Microsoft accounts at any time from your Workspace Settings.
             </p>
             <p>
-              Upon account cancellation or receipt of a formal data erasure request, NovaSuite will permanently delete your personal profile data, cached messages, event indexes, and associated tokens within thirty (30) days, retaining only minimal records required for statutory tax and legal compliance.
+              Upon account cancellation or receipt of a formal data erasure request, Foxly will permanently delete your personal profile data, cached messages, event indexes, and associated tokens within thirty (30) days, retaining only minimal records required for statutory tax and legal compliance.
             </p>
           </section>
 
           <section className="space-y-3">
             <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-              <RefreshCw size={18} className="text-indigo-600" />
+              <RefreshCw size={18} className="text-[#1EA0FF]" />
               6. Policy Updates & Contact
             </h2>
             <p>
@@ -133,8 +133,8 @@ export default function PrivacyPolicyPage() {
             </p>
             <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 text-xs space-y-1">
               <p className="font-semibold text-slate-900">Nova IT Solutions &ndash; Privacy &amp; Data Protection</p>
-              <p>Email: <a href="mailto:support@novadev.solutions" className="text-indigo-600 hover:underline">support@novadev.solutions</a></p>
-              <p>Website: <a href="https://www.novadev.solutions" className="text-indigo-600 hover:underline" target="_blank" rel="noreferrer">www.novadev.solutions</a></p>
+              <p>Email: <a href="mailto:support@novadev.solutions" className="text-[#1EA0FF] hover:underline">support@novadev.solutions</a></p>
+              <p>Website: <a href="https://www.novadev.solutions" className="text-[#1EA0FF] hover:underline" target="_blank" rel="noreferrer">www.novadev.solutions</a></p>
             </div>
           </section>
 
@@ -142,7 +142,7 @@ export default function PrivacyPolicyPage() {
 
         {/* Footer Navigation */}
         <div className="mt-12 pt-8 border-t border-slate-100 flex flex-wrap items-center justify-between gap-4 text-xs text-slate-500">
-          <Link href="/" className="text-indigo-600 hover:text-indigo-700 font-semibold">
+          <Link href="/" className="text-[#1EA0FF] hover:text-[#0088EE] font-semibold">
             &larr; Back to Home
           </Link>
           <div className="flex items-center gap-4">

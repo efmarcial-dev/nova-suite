@@ -57,10 +57,10 @@ export default function PrioritizationPhilosophyStep({data, onNext, onBack}: Pro
                             {options.map((option) => {
                                 const selected = localData[key].choice === option;
                                 return (
-                                    <label key={option} className={`flex min-h-11 cursor-pointer items-center justify-between gap-2 rounded-xl border px-3 py-2.5 text-xs leading-5 transition ${selected ? 'border-indigo-400 bg-indigo-50 text-indigo-950' : 'border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-50'}`}>
+                                    <label key={option} className={`flex min-h-11 cursor-pointer items-center justify-between gap-2 rounded-xl border px-3 py-2.5 text-xs leading-5 transition ${selected ? 'border-[#1EA0FF] bg-[#F0F9FF] text-[#0D1B2A]' : 'border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-50'}`}>
                                         <span>{option}</span>
                                         <input className="sr-only" type="radio" name={key} value={option} checked={selected} onChange={(e) => handleChange(key, 'choice', e.target.value)} />
-                                        {selected && <Check className="h-4 w-4 shrink-0 text-indigo-600" />}
+                                        {selected && <Check className="h-4 w-4 shrink-0 text-[#1EA0FF]" />}
                                     </label>
                                 );
                             })}
@@ -70,7 +70,7 @@ export default function PrioritizationPhilosophyStep({data, onNext, onBack}: Pro
                             <input
                                 type="text"
                                 placeholder="Add your own context (optional)"
-                                className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-xs outline-none placeholder:text-slate-400 focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-100"
+                                className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-xs outline-none placeholder:text-slate-400 focus:border-[#1EA0FF] focus:bg-white focus:ring-4 focus:ring-[#E8F6FF]"
                                 value={localData[key].details}
                                 onChange={(e) => handleChange(key, 'details', e.target.value)}
                             />
@@ -81,7 +81,7 @@ export default function PrioritizationPhilosophyStep({data, onNext, onBack}: Pro
 
             <div className="flex items-center justify-between border-t border-slate-200 pt-5">
                 <button type="button" onClick={onBack} className="inline-flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-500 transition hover:bg-white hover:text-slate-900"><ArrowLeft className="h-4 w-4" /> Back</button>
-                <button type="button" onClick={handleNextClick} className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700">Continue <ArrowRight className="h-4 w-4" /></button>
+                <button type="button" onClick={handleNextClick} className="inline-flex items-center gap-2 rounded-xl bg-[#1EA0FF] px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0088EE]">Continue <ArrowRight className="h-4 w-4" /></button>
             </div>
         </div>
     );

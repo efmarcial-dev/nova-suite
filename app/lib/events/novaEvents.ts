@@ -20,12 +20,19 @@ export const NOVA_PROJECT_EVENT = 'nova:project-change';
 
 export function emitTaskChangeEvent(detail: TaskEventDetail) {
   if (typeof window !== 'undefined') {
-    window.dispatchEvent(new CustomEvent(NOVA_TASK_EVENT, { detail }));
+    // Dispatch asynchronously in next tick so React never encounters
+    // "Cannot update a component while rendering a different component"
+    setTimeout(() => {
+      window.dispatchEvent(new CustomEvent(NOVA_TASK_EVENT, { detail }));
+    }, 0);
   }
 }
 
 export function emitProjectChangeEvent(detail: ProjectEventDetail) {
   if (typeof window !== 'undefined') {
-    window.dispatchEvent(new CustomEvent(NOVA_PROJECT_EVENT, { detail }));
+    // Dispatch asynchronously in next tick
+    setTimeout(() => {
+      window.dispatchEvent(new CustomEvent(NOVA_PROJECT_EVENT, { detail }));
+    }, 0);
   }
 }

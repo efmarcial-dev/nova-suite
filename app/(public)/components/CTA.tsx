@@ -11,8 +11,8 @@ export default function CTASec() {
         {/* App Icon Box with Logo */}
         <div className="w-20 h-20 bg-white rounded-2xl shadow flex items-center justify-center mx-auto">
           <img
-            src="/images/nova_logo.png"
-            alt="Nova CRM Logo"
+            src="/images/foxly_mascot_transparent.png"
+            alt="Foxly Logo"
             className="w-12 h-12 object-contain"
           />
         </div>
@@ -22,7 +22,7 @@ export default function CTASec() {
         Early Access Offer
         </h2>
         <p className="max-w-2xl mx-auto mt-4 text-white text-md md:text-lg lg:text-xl">
-        Join NovaSuite early and receive <strong>lifetime access</strong> at a discounted rate. Limited spots available.
+        Join Foxly early and receive <strong>lifetime access</strong> at a discounted rate. Limited spots available.
         </p>
 
       </div>

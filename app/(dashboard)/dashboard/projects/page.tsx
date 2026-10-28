@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useCachedProjects } from "@/app/hooks/useCachedProjects";
 import { updateProjectAPI, createProject, clearDemoProjectsAPI } from "@/app/lib/api/projects";
 import { Plus, Briefcase, CalendarDays, X, Check, Clock, AlertCircle, Trash2, CheckCircle2, Loader2 } from "lucide-react";
@@ -8,10 +8,11 @@ import ModalPanel from "@/app/components/ModalPanel";
 import { isDemoProject, isDemoTask } from "@/app/lib/constants/starterWorkspace";
 import { replaceProjectsInCache, replaceTasksInCache, getCachedTasks } from "@/app/lib/cache/NovaCacheHelpers";
 import { emitProjectChangeEvent, emitTaskChangeEvent } from "@/app/lib/events/novaEvents";
+import { deduplicateProjects } from "@/app/lib/utils/deduplicate";
 
 const statusConfig: Record<string, { label: string; classes: string; dot: string }> = {
   completed:   { label: 'Completed',   classes: 'bg-emerald-50 text-emerald-700 border-emerald-200', dot: 'bg-emerald-500' },
-  in_progress: { label: 'In Progress', classes: 'bg-indigo-50 text-indigo-700 border-indigo-200',   dot: 'bg-indigo-500' },
+  in_progress: { label: 'In Progress', classes: 'bg-[#F0F9FF] text-[#0088EE] border-[#BFE7FF]',   dot: 'bg-[#1EA0FF]' },
   planning:    { label: 'Planning',    classes: 'bg-amber-50 text-amber-700 border-amber-200',       dot: 'bg-amber-500' },
   on_hold:     { label: 'On Hold',     classes: 'bg-gray-100 text-gray-600 border-gray-200',         dot: 'bg-gray-400' },
 }
@@ -132,16 +133,20 @@ export default function ProjectsPage() {
         status: newStatus,
       });
 
+      const unwrapped = (res as any)?.project ?? res;
       const newProj = {
-        id: res.id || `local-${Date.now()}`,
-        title: newTitle,
-        projectName: newTitle,
-        description: newDesc,
-        status: newStatus,
+        ...unwrapped,
+        id: unwrapped?.id || `local-${Date.now()}`,
+        title: unwrapped?.title || unwrapped?.projectName || newTitle.trim(),
+        projectName: unwrapped?.projectName || unwrapped?.title || newTitle.trim(),
+        description: unwrapped?.description || newDesc,
+        status: unwrapped?.status || newStatus,
         last_updated: Date.now(),
       };
 
       await addProjectToCache(newProj);
+      emitProjectChangeEvent({ action: 'create', project: newProj });
+
       setShowCreateModal(false);
       setNewTitle("");
       setNewDesc("");
@@ -153,9 +158,11 @@ export default function ProjectsPage() {
     }
   };
 
+  const dedupedProjects = useMemo(() => deduplicateProjects(projects), [projects]);
+
   const visibleProjects = filter === 'all'
-    ? projects
-    : projects.filter((p) => {
+    ? dedupedProjects
+    : dedupedProjects.filter((p) => {
         const key = p.status?.toLowerCase().replace(/\s+/g, '_') ?? '';
         return key === filter;
       });
@@ -207,7 +214,7 @@ export default function ProjectsPage() {
 
           <button
             onClick={() => setShowCreateModal(true)}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl gradient-brand text-white text-sm font-medium hover:opacity-90 transition-opacity shadow-md shadow-indigo-200"
+            className="flex items-center gap-2 px-4 py-2 rounded-xl gradient-brand text-white text-sm font-medium hover:opacity-90 transition-opacity shadow-md shadow-blue-500/20"
           >
             <Plus size={15} /> New Project
           </button>
@@ -222,7 +229,7 @@ export default function ProjectsPage() {
             onClick={() => setFilter(tab.value)}
             className={`px-4 py-1.5 text-sm font-medium rounded-lg transition-all ${
               filter === tab.value
-                ? 'bg-white text-indigo-600 shadow-sm border border-[--border]'
+                ? 'bg-white text-[#1EA0FF] shadow-sm border border-[--border]'
                 : 'text-[--muted-foreground] hover:text-[--foreground]'
             }`}
           >
@@ -245,8 +252,8 @@ export default function ProjectsPage() {
         </div>
       ) : visibleProjects.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-center bg-white rounded-2xl border border-[--border]">
-          <div className="w-16 h-16 rounded-2xl bg-indigo-50 flex items-center justify-center mb-4">
-            <Briefcase size={28} className="text-indigo-400" />
+          <div className="w-16 h-16 rounded-2xl bg-[#F0F9FF] flex items-center justify-center mb-4">
+            <Briefcase size={28} className="text-[#1EA0FF]" />
           </div>
           <h3 className="text-base font-semibold text-[--foreground]">No projects found</h3>
           <p className="text-sm text-[--muted-foreground] mt-1">
@@ -268,11 +275,11 @@ export default function ProjectsPage() {
               <div
                 key={project.id ?? index}
                 onClick={() => openEditModal(project)}
-                className="bg-white rounded-2xl border border-[--border] shadow-sm p-5 flex flex-col gap-3 hover:shadow-md hover:-translate-y-0.5 hover:border-indigo-200 transition-all duration-200 cursor-pointer group"
+                className="bg-white rounded-2xl border border-[--border] shadow-sm p-5 flex flex-col gap-3 hover:shadow-md hover:-translate-y-0.5 hover:border-[#BFE7FF] transition-all duration-200 cursor-pointer group"
               >
                 <div className="flex items-start justify-between gap-2">
-                  <div className="w-9 h-9 rounded-xl bg-indigo-50 flex items-center justify-center shrink-0 group-hover:bg-indigo-100 transition-colors">
-                    <Briefcase size={16} className="text-indigo-600" />
+                  <div className="w-9 h-9 rounded-xl bg-[#F0F9FF] flex items-center justify-center shrink-0 group-hover:bg-[#E8F6FF] transition-colors">
+                    <Briefcase size={16} className="text-[#1EA0FF]" />
                   </div>
                   <span className={`text-xs font-medium px-2.5 py-1 rounded-full border ${cfg.classes}`}>
                     {cfg.label}
@@ -280,7 +287,7 @@ export default function ProjectsPage() {
                 </div>
 
                 <div>
-                  <h2 className="text-sm font-semibold text-[--foreground] group-hover:text-indigo-600 transition-colors leading-snug">
+                  <h2 className="text-sm font-semibold text-[--foreground] group-hover:text-[#1EA0FF] transition-colors leading-snug">
                     {title}
                   </h2>
                   {project.description && (
@@ -293,7 +300,7 @@ export default function ProjectsPage() {
                     <CalendarDays size={12} />
                     {project.due_date ? `Due ${project.due_date}` : 'No deadline'}
                   </span>
-                  <span className="text-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity font-medium">
+                  <span className="text-[#1EA0FF] opacity-0 group-hover:opacity-100 transition-opacity font-medium">
                     Edit →
                   </span>
                 </div>
@@ -326,7 +333,7 @@ export default function ProjectsPage() {
                 type="text"
                 value={editTitle}
                 onChange={(e) => setEditTitle(e.target.value)}
-                className="w-full px-3.5 py-2 text-sm bg-[--background] border border-[--border] rounded-xl outline-none focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400"
+                className="w-full px-3.5 py-2 text-sm bg-[--background] border border-[--border] rounded-xl outline-none focus:ring-2 focus:ring-[#1EA0FF] focus:border-[#1EA0FF]"
                 placeholder="Project title..."
               />
             </div>
@@ -339,7 +346,7 @@ export default function ProjectsPage() {
               <div className="grid grid-cols-2 gap-2">
                 {[
                   { value: 'planning', label: 'Planning', dot: 'bg-amber-400' },
-                  { value: 'in_progress', label: 'In Progress', dot: 'bg-indigo-500' },
+                  { value: 'in_progress', label: 'In Progress', dot: 'bg-[#1EA0FF]' },
                   { value: 'completed', label: 'Completed', dot: 'bg-emerald-500' },
                   { value: 'on_hold', label: 'On Hold', dot: 'bg-gray-400' },
                 ].map((s) => {
@@ -351,13 +358,13 @@ export default function ProjectsPage() {
                       onClick={() => setEditStatus(s.value)}
                       className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium border transition-all ${
                         isSelected
-                          ? 'border-indigo-500 bg-indigo-50/60 text-indigo-700 shadow-xs'
+                          ? 'border-[#1EA0FF] bg-[#F0F9FF] text-[#0088EE] shadow-xs'
                           : 'border-[--border] bg-white text-[--muted-foreground] hover:border-gray-300'
                       }`}
                     >
                       <span className={`w-2 h-2 rounded-full ${s.dot}`} />
                       {s.label}
-                      {isSelected && <Check size={13} className="ml-auto text-indigo-600" />}
+                      {isSelected && <Check size={13} className="ml-auto text-[#1EA0FF]" />}
                     </button>
                   );
                 })}
@@ -373,7 +380,7 @@ export default function ProjectsPage() {
                 rows={3}
                 value={editDesc}
                 onChange={(e) => setEditDesc(e.target.value)}
-                className="w-full px-3.5 py-2 text-sm bg-[--background] border border-[--border] rounded-xl outline-none focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400"
+                className="w-full px-3.5 py-2 text-sm bg-[--background] border border-[--border] rounded-xl outline-none focus:ring-2 focus:ring-[#1EA0FF] focus:border-[#1EA0FF]"
                 placeholder="What is this project about?"
               />
             </div>
@@ -387,7 +394,7 @@ export default function ProjectsPage() {
                 type="date"
                 value={editDueDate}
                 onChange={(e) => setEditDueDate(e.target.value)}
-                className="w-full px-3.5 py-2 text-sm bg-[--background] border border-[--border] rounded-xl outline-none focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400"
+                className="w-full px-3.5 py-2 text-sm bg-[--background] border border-[--border] rounded-xl outline-none focus:ring-2 focus:ring-[#1EA0FF] focus:border-[#1EA0FF]"
               />
             </div>
           </div>
@@ -436,7 +443,7 @@ export default function ProjectsPage() {
                 required
                 value={newTitle}
                 onChange={(e) => setNewTitle(e.target.value)}
-                className="w-full px-3.5 py-2 text-sm bg-[--background] border border-[--border] rounded-xl outline-none focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400"
+                className="w-full px-3.5 py-2 text-sm bg-[--background] border border-[--border] rounded-xl outline-none focus:ring-2 focus:ring-[#1EA0FF] focus:border-[#1EA0FF]"
                 placeholder="e.g. Q4 Marketing Campaign"
               />
             </div>
@@ -449,7 +456,7 @@ export default function ProjectsPage() {
                 rows={3}
                 value={newDesc}
                 onChange={(e) => setNewDesc(e.target.value)}
-                className="w-full px-3.5 py-2 text-sm bg-[--background] border border-[--border] rounded-xl outline-none focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400"
+                className="w-full px-3.5 py-2 text-sm bg-[--background] border border-[--border] rounded-xl outline-none focus:ring-2 focus:ring-[#1EA0FF] focus:border-[#1EA0FF]"
                 placeholder="Project summary, objectives, or context..."
               />
             </div>
@@ -461,7 +468,7 @@ export default function ProjectsPage() {
               <div className="grid grid-cols-2 gap-2">
                 {[
                   { value: 'planning', label: 'Planning', dot: 'bg-amber-400' },
-                  { value: 'in_progress', label: 'In Progress', dot: 'bg-indigo-500' },
+                  { value: 'in_progress', label: 'In Progress', dot: 'bg-[#1EA0FF]' },
                 ].map((s) => {
                   const isSelected = newStatus === s.value;
                   return (
@@ -471,7 +478,7 @@ export default function ProjectsPage() {
                       onClick={() => setNewStatus(s.value)}
                       className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium border transition-all ${
                         isSelected
-                          ? 'border-indigo-500 bg-indigo-50/60 text-indigo-700'
+                          ? 'border-[#1EA0FF] bg-[#F0F9FF] text-[#0088EE]'
                           : 'border-[--border] bg-white text-[--muted-foreground]'
                       }`}
                     >

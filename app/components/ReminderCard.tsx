@@ -10,7 +10,7 @@ const actions = [
     icon: <Plus size={16} />,
     label: 'New Task',
     description: 'Add a task',
-    accent: 'bg-indigo-100 text-indigo-600',
+    accent: 'bg-[#E8F6FF] text-[#1EA0FF]',
     href: null as string | null,
   },
   {
@@ -48,7 +48,7 @@ export default function QuickActions({ className = '' }: { className?: string })
                   {action.icon}
                 </span>
                 <div>
-                  <p className="text-sm font-medium text-[--foreground] group-hover:text-indigo-600 transition-colors">{action.label}</p>
+                  <p className="text-sm font-medium text-[--foreground] group-hover:text-[#1EA0FF] transition-colors">{action.label}</p>
                   <p className="text-xs text-[--muted-foreground]">{action.description}</p>
                 </div>
               </Link>
@@ -62,7 +62,7 @@ export default function QuickActions({ className = '' }: { className?: string })
                   {action.icon}
                 </span>
                 <div>
-                  <p className="text-sm font-medium text-[--foreground] group-hover:text-indigo-600 transition-colors">{action.label}</p>
+                  <p className="text-sm font-medium text-[--foreground] group-hover:text-[#1EA0FF] transition-colors">{action.label}</p>
                   <p className="text-xs text-[--muted-foreground]">{action.description}</p>
                 </div>
               </button>

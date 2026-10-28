@@ -13,6 +13,7 @@ import {
   Lock,
   Bot,
   AlertTriangle,
+  Globe,
 } from 'lucide-react';
 import { useCachedUser } from '@/app/hooks/useCachedUser';
 import ModalPanel from '@/app/components/ModalPanel';
@@ -24,9 +25,15 @@ import {
   saveCalendarEventAPI,
   syncCalendarEventsAPI,
 } from '@/app/lib/api/calendar';
+import {
+  fetchNylasGrantsAPI,
+  startNylasConnectAPI,
+  disconnectNylasGrantAPI,
+  NylasGrant,
+} from '@/app/lib/api/nylas';
 import { ProviderReconnectRequiredError } from '@/app/lib/api/providerErrors';
 
-type ProviderId = 'google' | 'outlook';
+type ProviderId = 'google' | 'outlook' | 'other' | 'nylas';
 
 interface CalendarEvent {
   id: string;
@@ -44,6 +51,8 @@ interface CalendarEvent {
   hasConflict?: boolean;
   startAt: string;
   endAt: string;
+  provider?: string;
+  accountEmail?: string;
 }
 
 function mapBackendEvent(evt: any): CalendarEvent {
@@ -76,6 +85,8 @@ function mapBackendEvent(evt: any): CalendarEvent {
     priorityExplanation: evt.priorityExplanation || undefined,
     startAt: safeStart.toISOString(),
     endAt: safeEnd.toISOString(),
+    provider: evt.provider || evt.sync_provider || '',
+    accountEmail: evt.account_email || evt.accountEmail || '',
   };
 }
 
@@ -91,6 +102,11 @@ export default function CalendarPage() {
   const [selectedProvider, setSelectedProvider] = useState<ProviderId>('google');
   const [isConnecting, setIsConnecting] = useState(false);
   const [connectedEmail, setConnectedEmail] = useState('');
+
+  // Nylas Multi-Account State
+  const [nylasGrants, setNylasGrants] = useState<NylasGrant[]>([]);
+  const [selectedGrantId, setSelectedGrantId] = useState<string>('all');
+  const [targetAddEventGrantId, setTargetAddEventGrantId] = useState<string>('');
   
   // Permission toggles
   const [autoConflictWarn, setAutoConflictWarn] = useState(true);
@@ -118,15 +134,29 @@ export default function CalendarPage() {
   useEffect(() => {
     const hydrateCalendar = async () => {
       // Check query params if redirected from OAuth
+      let isSuccessRedirect = false;
       let paramProvider: ProviderId | null = null;
       if (typeof window !== 'undefined') {
         const params = new URLSearchParams(window.location.search);
-        if (params.get('connected') === 'calendar') {
+        if (params.get('connected') === 'calendar' || params.get('connected') === 'nylas') {
+          isSuccessRedirect = true;
           const prov = params.get('provider');
           if (prov === 'outlook' || prov === 'google') {
             paramProvider = prov;
           }
         }
+      }
+
+      let grants: NylasGrant[] = [];
+      try {
+        grants = await fetchNylasGrantsAPI();
+        const activeGrants = grants.filter((g) => g.is_connected !== false);
+        setNylasGrants(activeGrants);
+        if (activeGrants.length > 0 && !targetAddEventGrantId) {
+          setTargetAddEventGrantId(activeGrants[0].grant_id);
+        }
+      } catch (e) {
+        console.warn('Could not load Nylas grants:', e);
       }
 
       let connection: Record<string, any> = {};
@@ -136,22 +166,40 @@ export default function CalendarPage() {
       } catch {
         setConnectionError('Could not load calendar connection status. Please refresh or try again.');
       }
-      const isConnectedProvider = Boolean(connection?.isConnected);
+
+      const activeGrants = grants.filter((g) => g.is_connected !== false);
+      const isConnectedProvider = Boolean(connection?.isConnected) || activeGrants.length > 0;
 
       if (isConnectedProvider) {
         setIsConnected(true);
-        const activeProv: ProviderId = connection?.provider === 'outlook' ? 'outlook' : (paramProvider || 'google');
-        setSelectedProvider(activeProv);
-        setConnectedEmail(connection?.email || (currentUser?.email ?? ''));
+        if (isSuccessRedirect) {
+          setCreatedEventNotice('Calendar accounts synced successfully via Nylas v3!');
+        }
 
-        // Initial sync from provider
-        try {
-          await syncCalendarEventsAPI(activeProv);
-          setReconnectRequired(false);
-        } catch (e) {
-          console.warn('Initial calendar sync skipped:', e);
-          setReconnectRequired(e instanceof ProviderReconnectRequiredError);
-          setEventsError(e instanceof Error ? e.message : 'Calendar sync failed.');
+        if (activeGrants.length > 0) {
+          setSelectedProvider('nylas');
+          setConnectedEmail(activeGrants.map((g) => g.email).join(', '));
+          try {
+            await syncCalendarEventsAPI('nylas');
+            setReconnectRequired(false);
+          } catch (e) {
+            console.warn('Nylas initial calendar sync skipped:', e);
+            setReconnectRequired(e instanceof ProviderReconnectRequiredError);
+            setEventsError(e instanceof Error ? e.message : 'Calendar sync failed.');
+          }
+        } else {
+          const activeProv: ProviderId = connection?.provider === 'outlook' ? 'outlook' : (paramProvider || 'google');
+          setSelectedProvider(activeProv);
+          setConnectedEmail(connection?.email || (currentUser?.email ?? ''));
+
+          try {
+            await syncCalendarEventsAPI(activeProv);
+            setReconnectRequired(false);
+          } catch (e) {
+            console.warn('Initial calendar sync skipped:', e);
+            setReconnectRequired(e instanceof ProviderReconnectRequiredError);
+            setEventsError(e instanceof Error ? e.message : 'Calendar sync failed.');
+          }
         }
       } else {
         setIsConnected(false);
@@ -173,7 +221,9 @@ export default function CalendarPage() {
     setIsSyncing(true);
     try {
       setEventsError('');
-      await syncCalendarEventsAPI(selectedProvider);
+      const providerToSync = nylasGrants.length > 0 ? 'nylas' : selectedProvider;
+      const grantIdToSync = selectedGrantId !== 'all' ? selectedGrantId : undefined;
+      await syncCalendarEventsAPI(providerToSync, undefined, undefined, grantIdToSync);
       setReconnectRequired(false);
       const backendEvents = await fetchCalendarEventsAPI();
       if (Array.isArray(backendEvents)) {
@@ -191,32 +241,70 @@ export default function CalendarPage() {
   const handleConnect = async (targetProvider?: ProviderId) => {
     setIsConnecting(true);
     setReconnectRequired(false);
-    const provider = (targetProvider || selectedProvider) === 'outlook' ? 'outlook' : 'google';
-    setSelectedProvider(provider);
+    const target = targetProvider || selectedProvider;
+    setSelectedProvider(target);
 
     try {
-      const result = await connectCalendarProviderAPI(provider);
-      const authUrl = result?.authorization_url || result?.auth_url || result?.authorizationUrl || result?.url;
+      // Primary: Nylas Hosted OAuth
+      try {
+        const nylasProv = target === 'outlook' ? 'microsoft' : target === 'other' ? undefined : 'google';
+        const authUrl = await startNylasConnectAPI({
+          provider: nylasProv,
+          product: 'calendar',
+          origin: 'calendar',
+          login_hint: currentUser?.email,
+        });
+        if (authUrl) {
+          window.location.href = authUrl;
+          return;
+        }
+      } catch (nylasErr) {
+        console.warn('Nylas calendar connect error, attempting direct provider OAuth:', nylasErr);
+      }
 
-      if (authUrl) {
-        window.location.href = authUrl;
-        return;
+      // Fallback: Legacy provider OAuth
+      if (target === 'google' || target === 'outlook') {
+        const result = await connectCalendarProviderAPI(target);
+        const authUrl = result?.authorization_url || result?.auth_url || result?.authorizationUrl || result?.url;
+        if (authUrl) {
+          window.location.href = authUrl;
+          return;
+        }
       }
       throw new Error('The backend did not return an authorization URL.');
     } catch (e) {
-      console.error('Failed to save calendar connection', e);
+      console.error('Failed to initiate calendar connection', e);
       setConnectionError(e instanceof Error ? e.message : 'Could not start calendar authorization.');
     } finally {
       setIsConnecting(false);
     }
   };
 
-  const handleDisconnect = async () => {
+  const handleDisconnect = async (grantIdToRemove?: string) => {
     try {
-      await disconnectCalendarProviderAPI(selectedProvider === 'outlook' ? 'outlook' : 'google');
-      setIsConnected(false);
-      setConnectedEmail('');
-      setEvents([]);
+      if (nylasGrants.length > 0) {
+        const targetGrantId = grantIdToRemove || (selectedGrantId !== 'all' ? selectedGrantId : nylasGrants[0]?.grant_id);
+        if (targetGrantId) {
+          await disconnectNylasGrantAPI(targetGrantId);
+          const remaining = nylasGrants.filter((g) => g.grant_id !== targetGrantId);
+          setNylasGrants(remaining);
+          if (remaining.length === 0) {
+            setIsConnected(false);
+            setConnectedEmail('');
+            setEvents([]);
+          } else {
+            setSelectedGrantId('all');
+            setConnectedEmail(remaining.map((g) => g.email).join(', '));
+            const backendEvents = await fetchCalendarEventsAPI();
+            setEvents(backendEvents.map(mapBackendEvent));
+          }
+        }
+      } else {
+        await disconnectCalendarProviderAPI(selectedProvider === 'outlook' ? 'outlook' : 'google');
+        setIsConnected(false);
+        setConnectedEmail('');
+        setEvents([]);
+      }
       setConnectionError('');
     } catch (e) {
       console.error('Failed to disconnect calendar connection', e);
@@ -244,8 +332,11 @@ export default function CalendarPage() {
       setEventConflicts([]);
       setCreatedEventNotice('');
 
+      const syncProv = nylasGrants.length > 0 ? 'nylas' : (isConnected ? selectedProvider : undefined);
+      const grantIdToUse = targetAddEventGrantId || (selectedGrantId !== 'all' ? selectedGrantId : undefined);
+
       if (isConnected && autoConflictWarn && !allowConflicts) {
-        const syncResult = await syncCalendarEventsAPI(selectedProvider, startIso, endIso);
+        const syncResult = await syncCalendarEventsAPI(syncProv || selectedProvider, startIso, endIso, grantIdToUse);
         const syncedEvents = Array.isArray(syncResult?.events)
           ? syncResult.events
           : await fetchCalendarEventsAPI();
@@ -268,7 +359,8 @@ export default function CalendarPage() {
         start_time: startIso,
         end_time: endIso,
         event_type: newEventType,
-        ...(isConnected ? { sync_provider: selectedProvider } : {}),
+        ...(syncProv ? { sync_provider: syncProv } : {}),
+        ...(grantIdToUse ? { grant_id: grantIdToUse } : {}),
       });
 
       if (savedEvent) {
@@ -276,14 +368,14 @@ export default function CalendarPage() {
         setAgendaDate(localStart);
         setViewMode('day');
         setEvents((prev) => [...prev.filter((event) => event.id !== saved.id), saved]);
-        setCreatedEventNotice(`“${saved.title}” was added${isConnected ? ` to ${providerDetails[selectedProvider].name}` : ''}.`);
+        setCreatedEventNotice(`“${saved.title}” was added${isConnected ? ` to your calendar` : ''}.`);
         setEventConflicts([]);
         setShowAddModal(false);
         setNewEventTitle('');
 
         if (isConnected) {
           try {
-            await syncCalendarEventsAPI(selectedProvider, startIso, endIso);
+            await syncCalendarEventsAPI(syncProv || selectedProvider, startIso, endIso, grantIdToUse);
             const backendEvents = await fetchCalendarEventsAPI();
             setEvents(backendEvents.map(mapBackendEvent));
           } catch (syncError) {
@@ -306,7 +398,7 @@ export default function CalendarPage() {
     }
   };
 
-  const providerDetails = {
+  const providerDetails: Record<ProviderId, { name: string; icon: React.ReactNode; tag: string; desc: string; color: string }> = {
     google: {
       name: 'Google Calendar',
       icon: (
@@ -334,6 +426,28 @@ export default function CalendarPage() {
       desc: 'Microsoft 365, Exchange, and Outlook.com with corporate SSO.',
       color: 'border-sky-200 bg-sky-50/40',
     },
+    other: {
+      name: 'Other Provider (iCloud / IMAP)',
+      icon: (
+        <div className="w-6 h-6 rounded-md bg-gradient-to-tr from-gray-700 to-gray-900 flex items-center justify-center text-white">
+          <CalendarIcon size={14} />
+        </div>
+      ),
+      tag: 'Universal Sync',
+      desc: 'Apple iCloud, CalDAV, Yahoo, and custom IMAP/calendar servers.',
+      color: 'border-gray-200 bg-gray-50/40',
+    },
+    nylas: {
+      name: 'Unified Executive Calendar',
+      icon: (
+        <div className="w-6 h-6 rounded-md bg-[#1EA0FF] flex items-center justify-center text-white font-bold text-xs">
+          <Globe size={14} />
+        </div>
+      ),
+      tag: 'Multi-Account Sync',
+      desc: 'Unified multi-account calendar engine powered by Nylas v3.',
+      color: 'border-blue-200 bg-blue-50/40',
+    },
   };
 
   // -------------------------------------------------------------
@@ -344,7 +458,7 @@ export default function CalendarPage() {
       <div className="max-w-4xl mx-auto space-y-6 py-4">
         {/* Header */}
         <div className="text-center space-y-2">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 border border-indigo-200 text-indigo-700 text-xs font-semibold">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#F0F9FF] border border-[#BFE7FF] text-[#0088EE] text-xs font-semibold">
             <Bot size={13} />
             <span>Assistant Calendar Intelligence</span>
           </div>
@@ -374,8 +488,9 @@ export default function CalendarPage() {
 
         {/* Provider Selection Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {(Object.keys(providerDetails) as ProviderId[]).map((pid) => {
+          {(['google', 'outlook', 'other'] as ProviderId[]).map((pid) => {
             const p = providerDetails[pid];
+            if (!p) return null;
             const isSelected = selectedProvider === pid;
             return (
               <div
@@ -383,7 +498,7 @@ export default function CalendarPage() {
                 onClick={() => setSelectedProvider(pid)}
                 className={`relative bg-white rounded-2xl border p-5 cursor-pointer transition-all duration-200 flex flex-col justify-between hover:shadow-md ${
                   isSelected
-                    ? 'border-indigo-600 ring-2 ring-indigo-500/20 shadow-sm'
+                    ? 'border-[#1EA0FF] ring-2 ring-[#1EA0FF]/20 shadow-sm'
                     : 'border-[--border] hover:border-gray-300'
                 }`}
               >
@@ -395,7 +510,7 @@ export default function CalendarPage() {
                   <div
                     className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${
                       isSelected
-                        ? 'bg-indigo-600 border-indigo-600 text-white'
+                        ? 'bg-[#1EA0FF] border-[#1EA0FF] text-white'
                         : 'border-[--border] bg-white'
                     }`}
                   >
@@ -407,7 +522,7 @@ export default function CalendarPage() {
                   <div className="flex items-center gap-2">
                     <h3 className="text-sm font-bold text-[--foreground]">{p.name}</h3>
                   </div>
-                  <span className="inline-block text-[10px] font-semibold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full border border-indigo-100">
+                  <span className="inline-block text-[10px] font-semibold text-[#1EA0FF] bg-[#F0F9FF] px-2 py-0.5 rounded-full border border-[#BFE7FF]">
                     {p.tag}
                   </span>
                   <p className="text-xs text-[--muted-foreground] leading-relaxed pt-1">
@@ -427,7 +542,7 @@ export default function CalendarPage() {
         {/* Assistant Capabilities & Permissions Box */}
         <div className="bg-white rounded-2xl border border-[--border] p-5 space-y-4">
           <div className="flex items-center gap-2">
-            <Sparkles size={16} className="text-indigo-600" />
+            <Sparkles size={16} className="text-[#1EA0FF]" />
             <h3 className="text-sm font-bold text-[--foreground]">
               AI Assistant Schedule Guardrails
             </h3>
@@ -439,10 +554,10 @@ export default function CalendarPage() {
                 type="checkbox"
                 checked={autoConflictWarn}
                 onChange={(e) => setAutoConflictWarn(e.target.checked)}
-                className="mt-0.5 w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 border-gray-300"
+                className="mt-0.5 w-4 h-4 rounded text-[#1EA0FF] focus:ring-[#1EA0FF] border-gray-300"
               />
               <div>
-                <p className="text-xs font-semibold text-[--foreground] group-hover:text-indigo-600 transition-colors">
+                <p className="text-xs font-semibold text-[--foreground] group-hover:text-[#1EA0FF] transition-colors">
                   Proactive Schedule Conflict Alerts
                 </p>
                 <p className="text-[11px] text-[--muted-foreground]">
@@ -456,10 +571,10 @@ export default function CalendarPage() {
                 type="checkbox"
                 checked={sendSmsBriefings}
                 onChange={(e) => setSendSmsBriefings(e.target.checked)}
-                className="mt-0.5 w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 border-gray-300"
+                className="mt-0.5 w-4 h-4 rounded text-[#1EA0FF] focus:ring-[#1EA0FF] border-gray-300"
               />
               <div>
-                <p className="text-xs font-semibold text-[--foreground] group-hover:text-indigo-600 transition-colors">
+                <p className="text-xs font-semibold text-[--foreground] group-hover:text-[#1EA0FF] transition-colors">
                   15-Minute Pre-Meeting Email Briefings
                 </p>
                 <p className="text-[11px] text-[--muted-foreground]">
@@ -473,10 +588,10 @@ export default function CalendarPage() {
                 type="checkbox"
                 checked={protectFocusBlocks}
                 onChange={(e) => setProtectFocusBlocks(e.target.checked)}
-                className="mt-0.5 w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 border-gray-300"
+                className="mt-0.5 w-4 h-4 rounded text-[#1EA0FF] focus:ring-[#1EA0FF] border-gray-300"
               />
               <div>
-                <p className="text-xs font-semibold text-[--foreground] group-hover:text-indigo-600 transition-colors">
+                <p className="text-xs font-semibold text-[--foreground] group-hover:text-[#1EA0FF] transition-colors">
                   Daily Deep Work & Focus Block Protection
                 </p>
                 <p className="text-[11px] text-[--muted-foreground]">
@@ -497,7 +612,7 @@ export default function CalendarPage() {
           <button
             onClick={() => handleConnect()}
             disabled={isConnecting}
-            className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 rounded-xl gradient-brand text-white text-sm font-semibold hover:opacity-90 transition-opacity shadow-md shadow-indigo-200 disabled:opacity-50 cursor-pointer"
+            className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 rounded-xl gradient-brand text-white text-sm font-semibold hover:opacity-90 transition-opacity shadow-md shadow-blue-500/20 disabled:opacity-50 cursor-pointer"
           >
             {isConnecting ? (
               <span className="flex items-center gap-2">
@@ -519,7 +634,8 @@ export default function CalendarPage() {
   // -------------------------------------------------------------
   // STATE 2: CONNECTED CALENDAR & LIVE EXECUTIVE AGENDA VIEW
   // -------------------------------------------------------------
-  const activeProvider = providerDetails[selectedProvider];
+  const activeProvider = providerDetails[selectedProvider] || providerDetails.nylas;
+  const hasMultipleAccounts = nylasGrants.length > 1;
   const todayEvents = events.filter((event) => new Date(event.startAt).toDateString() === new Date().toDateString());
   const weekStart = new Date(agendaDate);
   weekStart.setHours(0, 0, 0, 0);
@@ -542,46 +658,97 @@ export default function CalendarPage() {
   return (
     <div className="space-y-5">
       {/* Top Banner: Connection Status Bar */}
-      <div className="bg-white rounded-2xl border border-[--border] p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-[--background] border border-[--border] flex items-center justify-center shrink-0">
-            {activeProvider.icon}
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-emerald-500" />
-              <h2 className="text-sm font-bold text-[--foreground]">
-                Connected to {activeProvider.name}
-              </h2>
+      <div className="bg-white rounded-2xl border border-[--border] p-4 flex flex-col gap-3 shadow-xs">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-[--background] border border-[--border] flex items-center justify-center shrink-0">
+              {activeProvider.icon}
             </div>
-            <p className="text-xs text-[--muted-foreground]">
-              Connected account: <span className="font-medium text-[--foreground]">{connectedEmail || 'provider account'}</span>
-            </p>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                <h2 className="text-sm font-bold text-[--foreground]">
+                  {nylasGrants.length > 0
+                    ? `Unified Calendar · ${nylasGrants.length} ${nylasGrants.length === 1 ? 'Account' : 'Accounts'} Synced`
+                    : `Connected to ${activeProvider.name}`}
+                </h2>
+              </div>
+              <p className="text-xs text-[--muted-foreground]">
+                {nylasGrants.length > 0
+                  ? nylasGrants.map((g) => g.email).join(' · ')
+                  : <>Connected account: <span className="font-medium text-[--foreground]">{connectedEmail || 'provider account'}</span></>}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* Account filter dropdown for multi-account */}
+            {hasMultipleAccounts && (
+              <select
+                value={selectedGrantId}
+                onChange={(e) => setSelectedGrantId(e.target.value)}
+                className="px-2.5 py-1.5 rounded-xl border border-[--border] bg-[--background] text-xs font-medium text-[--foreground] outline-none focus:ring-2 focus:ring-[#1EA0FF]"
+              >
+                <option value="all">🌐 All Accounts (Unified)</option>
+                {nylasGrants.map((g) => (
+                  <option key={g.grant_id} value={g.grant_id}>
+                    {g.provider === 'google' ? '🔵' : g.provider === 'microsoft' ? '🟦' : '📧'} {g.email}
+                  </option>
+                ))}
+              </select>
+            )}
+            <button
+              onClick={handleSyncCalendar}
+              disabled={isSyncing}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[--border] bg-white hover:bg-gray-50 text-xs font-semibold text-[--foreground] shadow-xs transition-colors disabled:opacity-50"
+            >
+              <RefreshCw size={13} className={isSyncing ? "animate-spin text-[#1EA0FF]" : "text-gray-500"} />
+              <span>{isSyncing ? 'Syncing...' : 'Sync Calendar'}</span>
+            </button>
+            <button
+              onClick={() => setShowAddModal(true)}
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl gradient-brand text-white text-xs font-semibold hover:opacity-90 shadow-sm transition-opacity"
+            >
+              <Plus size={13} /> Add Event
+            </button>
+            <button
+              onClick={() => handleConnect('other')}
+              disabled={isConnecting}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[--border] bg-white hover:bg-gray-50 text-xs font-semibold text-[#1EA0FF] shadow-xs transition-colors disabled:opacity-50"
+            >
+              <Plus size={13} /> Add Account
+            </button>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          <button
-            onClick={handleSyncCalendar}
-            disabled={isSyncing}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[--border] bg-white hover:bg-gray-50 text-xs font-semibold text-[--foreground] shadow-xs transition-colors disabled:opacity-50"
-          >
-            <RefreshCw size={13} className={isSyncing ? "animate-spin text-indigo-600" : "text-gray-500"} />
-            <span>{isSyncing ? 'Syncing...' : 'Sync Calendar'}</span>
-          </button>
-          <button
-            onClick={() => setShowAddModal(true)}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl gradient-brand text-white text-xs font-semibold hover:opacity-90 shadow-sm transition-opacity"
-          >
-            <Plus size={13} /> Add Event
-          </button>
-          <button
-            onClick={handleDisconnect}
-            className="px-3 py-1.5 rounded-xl border border-[--border] bg-white hover:bg-gray-50 text-xs font-medium text-[--muted-foreground] hover:text-rose-600 transition-colors"
-          >
-            Disconnect
-          </button>
-        </div>
+        {/* Nylas Multi-Account Badges */}
+        {nylasGrants.length > 0 && (
+          <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-[--border]">
+            {nylasGrants.map((g) => (
+              <div
+                key={g.grant_id}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[--background] border border-[--border] text-xs"
+              >
+                <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+                <span className={`font-bold ${g.provider === 'google' ? 'text-blue-600' : g.provider === 'microsoft' ? 'text-sky-600' : 'text-gray-600'}`}>
+                  {g.provider === 'google' ? 'G' : g.provider === 'microsoft' ? 'M' : '✉'}
+                </span>
+                <span className="font-medium text-[--foreground] truncate max-w-[140px]">{g.email}</span>
+                <span className="text-[10px] text-emerald-600 font-semibold bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
+                  Active
+                </span>
+                <button
+                  type="button"
+                  onClick={() => void handleDisconnect(g.grant_id)}
+                  className="text-[10px] text-[--muted-foreground] hover:text-rose-600 font-medium ml-1 transition-colors"
+                  title={`Disconnect ${g.email}`}
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {(connectionError || eventsError) && (
@@ -613,7 +780,7 @@ export default function CalendarPage() {
           <div className="flex items-center justify-between border-b border-[--border] pb-3">
             <div>
               <h2 className="text-base font-bold text-[--foreground] flex items-center gap-2">
-                <CalendarIcon size={16} className="text-indigo-600" />
+                <CalendarIcon size={16} className="text-[#1EA0FF]" />
                 Executive Agenda
               </h2>
               <p className="text-xs text-[--muted-foreground]">
@@ -626,7 +793,7 @@ export default function CalendarPage() {
                 <button
                   onClick={() => setViewMode('day')}
                   className={`px-3 py-1 rounded-lg font-medium transition-all ${
-                    viewMode === 'day' ? 'bg-white text-indigo-600 shadow-xs border border-[--border]' : 'text-[--muted-foreground]'
+                    viewMode === 'day' ? 'bg-white text-[#1EA0FF] shadow-xs border border-[--border]' : 'text-[--muted-foreground]'
                   }`}
                 >
                   Day
@@ -634,7 +801,7 @@ export default function CalendarPage() {
                 <button
                   onClick={() => setViewMode('week')}
                   className={`px-3 py-1 rounded-lg font-medium transition-all ${
-                    viewMode === 'week' ? 'bg-white text-indigo-600 shadow-xs border border-[--border]' : 'text-[--muted-foreground]'
+                    viewMode === 'week' ? 'bg-white text-[#1EA0FF] shadow-xs border border-[--border]' : 'text-[--muted-foreground]'
                   }`}
                 >
                   Week
@@ -647,7 +814,7 @@ export default function CalendarPage() {
           <div className="space-y-3">
             {visibleEvents.length === 0 ? (
               <div className="rounded-2xl border border-dashed border-[--border] p-10 text-center flex flex-col items-center justify-center gap-3 bg-[--background]">
-                <div className="w-12 h-12 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600">
+                <div className="w-12 h-12 rounded-2xl bg-[#F0F9FF] border border-[#BFE7FF] flex items-center justify-center text-[#1EA0FF]">
                   <CalendarIcon size={24} />
                 </div>
                 <div>
@@ -664,7 +831,7 @@ export default function CalendarPage() {
                   <button
                     onClick={handleSyncCalendar}
                     disabled={isSyncing}
-                    className="mt-2 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow-xs disabled:opacity-50 transition-all cursor-pointer"
+                    className="mt-2 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#1EA0FF] hover:bg-[#0088EE] text-white text-xs font-semibold shadow-xs disabled:opacity-50 transition-all cursor-pointer"
                   >
                     <RefreshCw size={13} className={isSyncing ? 'animate-spin' : ''} />
                     {isSyncing ? 'Syncing...' : 'Sync Events Now'}
@@ -674,14 +841,14 @@ export default function CalendarPage() {
                     <button
                       onClick={() => handleConnect('google')}
                       disabled={isConnecting}
-                      className="px-3.5 py-2 rounded-xl bg-white border border-[--border] text-xs font-semibold text-[--foreground] hover:border-indigo-400 hover:text-indigo-600 transition-all cursor-pointer disabled:opacity-50"
+                      className="px-3.5 py-2 rounded-xl bg-white border border-[--border] text-xs font-semibold text-[--foreground] hover:border-[#1EA0FF] hover:text-[#1EA0FF] transition-all cursor-pointer disabled:opacity-50"
                     >
                       Connect Google
                     </button>
                     <button
                       onClick={() => handleConnect('outlook')}
                       disabled={isConnecting}
-                      className="px-3.5 py-2 rounded-xl bg-white border border-[--border] text-xs font-semibold text-[--foreground] hover:border-indigo-400 hover:text-indigo-600 transition-all cursor-pointer disabled:opacity-50"
+                      className="px-3.5 py-2 rounded-xl bg-white border border-[--border] text-xs font-semibold text-[--foreground] hover:border-[#1EA0FF] hover:text-[#1EA0FF] transition-all cursor-pointer disabled:opacity-50"
                     >
                       Connect Outlook
                     </button>
@@ -696,20 +863,20 @@ export default function CalendarPage() {
                     key={evt.id}
                     className={`rounded-2xl border p-4 transition-all duration-150 flex flex-col gap-2.5 ${
                       isFocus
-                        ? 'bg-gradient-to-r from-indigo-50/70 to-violet-50/70 border-indigo-200'
+                        ? 'bg-gradient-to-r from-[#F0F9FF] to-violet-50/70 border-[#BFE7FF]'
                         : 'bg-[--background] border-[--border] hover:border-gray-300'
                     }`}
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="space-y-0.5">
                         <div className="flex items-center gap-2">
-                          <span className="text-xs font-mono font-semibold text-indigo-600">
+                          <span className="text-xs font-mono font-semibold text-[#1EA0FF]">
                             {evt.startTime} – {evt.endTime}
                           </span>
                           <span
                             className={`text-[10px] font-semibold px-2 py-0.5 rounded-full uppercase tracking-wider ${
                               isFocus
-                                ? 'bg-indigo-600 text-white'
+                                ? 'bg-[#1EA0FF] text-white'
                                 : 'bg-white text-[--muted-foreground] border border-[--border]'
                             }`}
                           >
@@ -723,7 +890,7 @@ export default function CalendarPage() {
                                   ? 'bg-rose-50 text-rose-700 border-rose-200'
                                   : evt.priorityScore >= 0.65
                                     ? 'bg-amber-50 text-amber-700 border-amber-200'
-                                    : 'bg-indigo-50 text-indigo-700 border-indigo-200'
+                                    : 'bg-[#F0F9FF] text-[#0088EE] border-[#BFE7FF]'
                               }`}
                             >
                               {evt.priorityScore >= 0.8 ? 'Priority reminder' : 'Profile scored'} · {Math.round(evt.priorityScore * 100)}
@@ -737,7 +904,7 @@ export default function CalendarPage() {
 
                       {evt.location && (
                         <span className="text-xs text-[--muted-foreground] flex items-center gap-1 bg-white px-2 py-1 rounded-lg border border-[--border]">
-                          <Video size={12} className="text-indigo-500" />
+                          <Video size={12} className="text-[#1EA0FF]" />
                           {evt.location}
                         </span>
                       )}
@@ -753,8 +920,8 @@ export default function CalendarPage() {
 
                     {/* AI Assistant Insight / Briefing */}
                     {evt.assistantBrief && (
-                      <div className="flex items-start gap-2 bg-white/90 rounded-xl p-2.5 border border-indigo-100 text-xs text-indigo-950">
-                        <Sparkles size={13} className="text-indigo-600 mt-0.5 shrink-0" />
+                      <div className="flex items-start gap-2 bg-white/90 rounded-xl p-2.5 border border-[#BFE7FF] text-xs text-[#0D1B2A]">
+                        <Sparkles size={13} className="text-[#1EA0FF] mt-0.5 shrink-0" />
                         <p className="leading-relaxed">{evt.assistantBrief}</p>
                       </div>
                     )}
@@ -813,16 +980,16 @@ export default function CalendarPage() {
               </div>
               <div className="flex justify-between text-[--muted-foreground]">
                 <span>Focus / Deep Work:</span>
-                <span className="font-semibold text-indigo-600">{focusHours.toFixed(1)} hrs</span>
+                <span className="font-semibold text-[#1EA0FF]">{focusHours.toFixed(1)} hrs</span>
               </div>
               <div className="text-[--muted-foreground]">{todayEvents.length} event{todayEvents.length === 1 ? '' : 's'} scheduled today</div>
             </div>
           </div>
 
           {/* Quick Assistant Schedule Directive */}
-          <div className="bg-gradient-to-br from-indigo-50/80 to-violet-50/80 rounded-2xl border border-indigo-100 p-5 space-y-3">
+          <div className="bg-gradient-to-br from-[#F0F9FF] to-violet-50/80 rounded-2xl border border-[#BFE7FF] p-5 space-y-3">
             <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-indigo-600 text-white flex items-center justify-center">
+              <div className="w-7 h-7 rounded-lg bg-[#1EA0FF] text-white flex items-center justify-center">
                 <Bot size={14} />
               </div>
               <h4 className="text-xs font-bold text-[--foreground] uppercase tracking-wide">
@@ -840,7 +1007,7 @@ export default function CalendarPage() {
               ].map((chip) => (
                 <p
                   key={chip}
-                  className="w-full text-left text-xs font-medium px-3 py-2 rounded-xl bg-white text-[--muted-foreground] border border-indigo-100"
+                  className="w-full text-left text-xs font-medium px-3 py-2 rounded-xl bg-white text-[--muted-foreground] border border-[#BFE7FF]"
                 >
                   {chip}
                 </p>
@@ -873,7 +1040,7 @@ export default function CalendarPage() {
                 value={newEventTitle}
                 onChange={(e) => setNewEventTitle(e.target.value)}
                 placeholder="e.g. Client Design Review or Focus Block..."
-                className="w-full px-3.5 py-2 text-xs sm:text-sm bg-[--background] border border-[--border] rounded-xl outline-none focus:ring-2 focus:ring-indigo-400"
+                className="w-full px-3.5 py-2 text-xs sm:text-sm bg-[--background] border border-[--border] rounded-xl outline-none focus:ring-2 focus:ring-[#1EA0FF]"
               />
             </div>
 
@@ -887,7 +1054,7 @@ export default function CalendarPage() {
                   required
                   value={newEventDate}
                   onChange={(e) => setNewEventDate(e.target.value)}
-                  className="w-full rounded-xl border border-[--border] bg-[--background] px-3.5 py-2 text-xs outline-none focus:ring-2 focus:ring-indigo-400"
+                  className="w-full rounded-xl border border-[--border] bg-[--background] px-3.5 py-2 text-xs outline-none focus:ring-2 focus:ring-[#1EA0FF]"
                 />
               </div>
               <div>
@@ -899,7 +1066,7 @@ export default function CalendarPage() {
                   required
                   value={newEventTime}
                   onChange={(e) => setNewEventTime(e.target.value)}
-                  className="w-full px-3.5 py-2 text-xs bg-[--background] border border-[--border] rounded-xl outline-none focus:ring-2 focus:ring-indigo-400"
+                  className="w-full px-3.5 py-2 text-xs bg-[--background] border border-[--border] rounded-xl outline-none focus:ring-2 focus:ring-[#1EA0FF]"
                 />
               </div>
 
@@ -910,7 +1077,7 @@ export default function CalendarPage() {
                 <select
                   value={newEventType}
                   onChange={(e) => setNewEventType(e.target.value as any)}
-                  className="w-full px-3.5 py-2 text-xs bg-[--background] border border-[--border] rounded-xl outline-none focus:ring-2 focus:ring-indigo-400"
+                  className="w-full px-3.5 py-2 text-xs bg-[--background] border border-[--border] rounded-xl outline-none focus:ring-2 focus:ring-[#1EA0FF]"
                 >
                   <option value="meeting">📅 Meeting / Call</option>
                   <option value="focus">🛡️ Focus / Deep Work</option>
