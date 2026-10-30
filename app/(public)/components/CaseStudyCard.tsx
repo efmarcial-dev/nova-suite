@@ -18,7 +18,7 @@ export function CaseStudyCard({ company, industry, problem, solution, results, d
       viewport={{ once: true }}
       transition={{ duration: 0.7, delay }}
       whileHover={{ y: -10 }}
-      className="group relative bg-white rounded-2xl p-8 lg:p-10 border border-[#4E7BFF]/10 hover:border-[#4E7BFF]/30 transition-all overflow-hidden"
+      className="group relative bg-white rounded-2xl p-5 sm:p-7 lg:p-10 border border-[#4E7BFF]/10 hover:border-[#4E7BFF]/30 transition-all overflow-hidden"
     >
       {/* Animated background gradient */}
       <motion.div
@@ -56,7 +56,7 @@ export function CaseStudyCard({ company, industry, problem, solution, results, d
       </div>
 
       {/* Results */}
-      <div className="grid grid-cols-3 gap-6 mb-6 relative z-10">
+      <div className="grid grid-cols-1 min-[420px]:grid-cols-3 gap-4 sm:gap-6 mb-6 relative z-10">
         {results.map((result, index) => (
           <div key={index} className="text-center">
             <motion.div

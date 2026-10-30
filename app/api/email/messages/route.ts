@@ -14,10 +14,14 @@ export async function GET(request: Request) {
     const q = url.searchParams.get('q') || '';
     const maxResults = url.searchParams.get('max_results') || '25';
     const grantId = url.searchParams.get('grant_id') || '';
+    const forceRefresh = url.searchParams.get('force_refresh') === '1';
 
     let targetUrl = `auth/email/messages/?provider=${encodeURIComponent(provider)}&q=${encodeURIComponent(q)}&max_results=${encodeURIComponent(maxResults)}`;
     if (grantId) {
       targetUrl += `&grant_id=${encodeURIComponent(grantId)}`;
+    }
+    if (forceRefresh) {
+      targetUrl += '&force_refresh=1';
     }
 
     const res = await fetch(getDjangoApiUrl(targetUrl), {
@@ -26,6 +30,7 @@ export async function GET(request: Request) {
         Authorization: `Bearer ${accessToken}`,
         'Content-Type': 'application/json',
       },
+      cache: 'no-store',
     });
 
     if (!res.ok) {
@@ -34,7 +39,10 @@ export async function GET(request: Request) {
     }
 
     const data = await res.json();
-    return Response.json(data, { status: 200 });
+    return Response.json(data, {
+      status: 200,
+      headers: { 'Cache-Control': 'private, no-store' },
+    });
   } catch (error) {
     console.error('Email messages fetch failed', error);
     return Response.json({ message: 'Internal server error', messages: [] }, { status: 500 });

@@ -64,7 +64,7 @@ export function PricingTable() {
     const router = useRouter();
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6 lg:gap-8">
       {tiers.map((tier, index) => (
         <motion.div
           key={tier.name}
@@ -75,7 +75,7 @@ export function PricingTable() {
           whileHover={{ y: -10 }}
           className={`relative rounded-2xl p-8 border transition-all ${
             tier.featured
-              ? 'bg-gradient-to-br from-blue-100 to-blue-300 border-[#4E7BFF]/50 shadow-xl shadow-[#4E7BFF]/20 scale-105'
+              ? 'bg-gradient-to-br from-blue-100 to-blue-300 border-[#4E7BFF]/50 shadow-xl shadow-[#4E7BFF]/20 lg:scale-105'
               : 'bg-gradient-to-br from-white/5 to-transparent border-[#4E7BFF]/10 hover:border-[#4E7BFF]/30'
           }`}
         >

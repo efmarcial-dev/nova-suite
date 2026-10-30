@@ -15,24 +15,21 @@ export default function DashboardPage() {
   const { tasks: cachedTasks } = useCachedTasks();
 
   return (
-    <div className="grid grid-cols-4 gap-4 auto-rows-min">
-      {/* Row 1: Executive Stats */}
+    <div className="grid grid-cols-1 gap-3 auto-rows-min sm:gap-4 md:grid-cols-2 xl:grid-cols-4">
+      {/* Put the most actionable information before summary metrics on small screens. */}
+      <PriorityReminders tasks={cachedTasks} className="col-span-1 md:col-span-2 xl:col-span-4" />
+
       <StatsCards projects={cacheProjects} tasks={cachedTasks} />
 
-      {/* High urgency items scored against the user's priority profile */}
-      <PriorityReminders tasks={cachedTasks} className="col-span-4" />
-
-      {/* Row 2: Assistant Executive Briefing & Omnichannel Stream (spans 3) + Projects list (spans 1, 2 rows) */}
-      <AssistantHub className="col-span-3" />
+      <AssistantHub compact className="col-span-1 md:col-span-2 xl:col-span-3" />
       <ProjectsList
         projects={cacheProjects}
         isLoading={isProjectLoading}
-        className="col-span-1 row-span-2"
+        className="col-span-1 md:col-span-1 xl:row-span-2"
       />
 
-      {/* Row 3: Quick Directives + Time Tracker */}
-      <QuickActions className="col-span-2" />
-      <TimeTracker className="col-span-1" />
+      <QuickActions className="col-span-1 md:col-span-2 xl:col-span-2" />
+      <TimeTracker className="col-span-1 md:col-span-1" />
     </div>
   );
 }

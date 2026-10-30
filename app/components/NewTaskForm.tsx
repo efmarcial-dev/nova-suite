@@ -81,8 +81,11 @@ export default function NewTaskForm({
                 lastUpdated: Date.now(),
             };
 
-            // Add to cache database
-            await addTaskToCache(validTask);
+            // The Django create has succeeded. A blocked browser cache must not
+            // turn that successful task creation into a user-facing failure.
+            await addTaskToCache(validTask).catch((cacheError) => {
+                console.warn('Task created successfully, but the local cache could not be updated.', cacheError);
+            });
 
             // Emit task change event so TaskBoard and all components update instantly
             emitTaskChangeEvent({ action: 'create', task: validTask });
@@ -97,7 +100,9 @@ export default function NewTaskForm({
             if (realId && !String(realId).startsWith('local-')) {
                 rescoreTaskAPI(realId).then((rescored) => {
                     if (rescored) {
-                        updateTaskInCache(rescored);
+                        void updateTaskInCache(rescored).catch((cacheError) => {
+                            console.warn('Could not update the rescored task cache.', cacheError);
+                        });
                         emitTaskChangeEvent({ action: 'update', task: rescored });
                     }
                 }).catch(() => {

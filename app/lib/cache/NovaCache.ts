@@ -49,14 +49,32 @@ interface NovaCacheDBD extends DBSchema {
             data: any;
             updatedAt: string;
         }
-    }
+    };
+    emailInboxes: {
+        key: string;
+        value: {
+            key: string;
+            userId: string;
+            cachedAt: number;
+            [key: string]: any;
+        }
+    };
 }
 
-let dbPromise: Promise<IDBPDatabase<NovaCacheDBD>>;
+let dbPromise: Promise<IDBPDatabase<NovaCacheDBD>> | undefined;
+let cacheRetryAfter = 0;
 
 export function initNovaCache() {
+    if (!dbPromise && Date.now() < cacheRetryAfter) {
+        return Promise.reject(new Error('NovaCacheDB is temporarily unavailable.'));
+    }
     if (!dbPromise) {
-        dbPromise = openDB<NovaCacheDBD>('NovaCacheDB', 4, {
+        let abandonOpenRequest = false;
+        let rejectBlocked: (error: Error) => void = () => undefined;
+        const blockedRequest = new Promise<never>((_resolve, reject) => {
+            rejectBlocked = reject;
+        });
+        const openRequest = openDB<NovaCacheDBD>('NovaCacheDB', 5, {
             upgrade(db, _oldVersion, _newVersion, transaction) {
                 const nativeDb = db as unknown as IDBDatabase;
                 if (nativeDb.objectStoreNames.contains('assignees')) {
@@ -90,7 +108,44 @@ export function initNovaCache() {
                 if (!db.objectStoreNames.contains('analytics')){
                     db.createObjectStore('analytics', {keyPath: 'id'});
                 }
-            }
+                if (!db.objectStoreNames.contains('emailInboxes')) {
+                    db.createObjectStore('emailInboxes', { keyPath: 'key' });
+                }
+            },
+            blocked() {
+                abandonOpenRequest = true;
+                rejectBlocked(new Error('NovaCacheDB upgrade is blocked by another open tab.'));
+            },
+            blocking() {
+                // Let another tab complete its version upgrade instead of holding
+                // the shared database connection open indefinitely.
+                void dbPromise?.then((db) => db.close()).catch(() => undefined);
+                dbPromise = undefined;
+            },
+        }).catch((error) => {
+            // Keep a failed upgrade from poisoning every later cache attempt.
+            dbPromise = undefined;
+            throw error;
+        });
+
+        // A stale tab can block the v4 -> v5 upgrade indefinitely. The cache is
+        // optional, so blocked opens fail fast and other opens have a short limit.
+        let timeoutId: ReturnType<typeof setTimeout>;
+        const timeoutRequest = new Promise<never>((_resolve, reject) => {
+            timeoutId = setTimeout(() => {
+                abandonOpenRequest = true;
+                reject(new Error('NovaCacheDB did not open in time; using live APIs.'));
+            }, 2000);
+        });
+        openRequest.then((db) => {
+            if (abandonOpenRequest) db.close();
+        }).catch(() => undefined);
+        dbPromise = Promise.race([openRequest, blockedRequest, timeoutRequest])
+            .finally(() => clearTimeout(timeoutId))
+            .catch((error) => {
+            dbPromise = undefined;
+            cacheRetryAfter = Date.now() + 15_000;
+            throw error;
         });
     }
 

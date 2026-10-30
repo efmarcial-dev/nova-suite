@@ -14,7 +14,12 @@ export function useCachedUser() {
         let isMounted = true;
 
         async function load() {
-            const cachedUser = await getCachedUser();
+            let cachedUser: any[] = [];
+            try {
+                cachedUser = await getCachedUser();
+            } catch (cacheError) {
+                console.warn('Could not read the local user cache; loading from the API.', cacheError);
+            }
 
             if (isMounted && cachedUser.length > 0) {
                 setUser(cachedUser);
@@ -32,7 +37,9 @@ export function useCachedUser() {
                     const withTimestamps = userArray.map(u => ({
                         ...u,
                         last_updated: Date.now()}))
-                    await saveUserToCache(withTimestamps);
+                    void saveUserToCache(withTimestamps).catch((cacheError) => {
+                        console.warn('Could not save the user cache.', cacheError);
+                    });
 
                     if (isMounted) {
                         setUser(withTimestamps);
@@ -41,6 +48,7 @@ export function useCachedUser() {
                     }
                 } catch (error) {
                     console.error('Failed to fetch user:', error);
+                    if (isMounted) setIsLoading(false);
                 }
             }
         }

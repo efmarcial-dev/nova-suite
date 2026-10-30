@@ -48,7 +48,9 @@ export default function NewProjectForm({
 
       console.log('New project created:', validProject);
 
-      await addProjectToCache(validProject);
+      await addProjectToCache(validProject).catch((cacheError) => {
+        console.warn('Project created successfully, but the local cache could not be updated.', cacheError);
+      });
       emitProjectChangeEvent({ action: 'create', project: validProject });
 
       if (projectName.trim()) {

@@ -142,7 +142,7 @@ export default function RegisterForm() {
                                     onChange={(e) => setEmail(e.target.value)}
                                     required
                                     placeholder="you@company.com"
-                                    className="w-full pl-10 pr-3.5 py-2.5 bg-gray-50/50 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#1EA0FF] focus:bg-white transition"
+                                    className="w-full pl-10 pr-3.5 py-2.5 bg-gray-50/50 border border-gray-300 rounded-xl text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#1EA0FF] focus:bg-white transition"
                                 />
                             </div>
                         </div>
@@ -162,7 +162,7 @@ export default function RegisterForm() {
                                         onChange={(e) => setPassword(e.target.value)}
                                         required
                                         placeholder="Min. 8 characters"
-                                        className="w-full pl-10 pr-3.5 py-2.5 bg-gray-50/50 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#1EA0FF] focus:bg-white transition"
+                                        className="w-full pl-10 pr-3.5 py-2.5 bg-gray-50/50 border border-gray-300 rounded-xl text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#1EA0FF] focus:bg-white transition"
                                     />
                                 </div>
                             </div>
@@ -181,7 +181,7 @@ export default function RegisterForm() {
                                         onChange={(e) => setConfirmPassword(e.target.value)}
                                         required
                                         placeholder="Confirm password"
-                                        className="w-full pl-10 pr-3.5 py-2.5 bg-gray-50/50 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#1EA0FF] focus:bg-white transition"
+                                        className="w-full pl-10 pr-3.5 py-2.5 bg-gray-50/50 border border-gray-300 rounded-xl text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#1EA0FF] focus:bg-white transition"
                                     />
                                 </div>
                             </div>
@@ -215,7 +215,7 @@ export default function RegisterForm() {
                                         onChange={(e) => setFirstName(e.target.value)}
                                         required
                                         placeholder="Jane"
-                                        className="w-full pl-10 pr-3.5 py-2.5 bg-gray-50/50 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#1EA0FF] focus:bg-white transition"
+                                        className="w-full pl-10 pr-3.5 py-2.5 bg-gray-50/50 border border-gray-300 rounded-xl text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#1EA0FF] focus:bg-white transition"
                                     />
                                 </div>
                             </div>
@@ -234,7 +234,7 @@ export default function RegisterForm() {
                                         onChange={(e) => setLastName(e.target.value)}
                                         required
                                         placeholder="Doe"
-                                        className="w-full pl-10 pr-3.5 py-2.5 bg-gray-50/50 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#1EA0FF] focus:bg-white transition"
+                                        className="w-full pl-10 pr-3.5 py-2.5 bg-gray-50/50 border border-gray-300 rounded-xl text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#1EA0FF] focus:bg-white transition"
                                     />
                                 </div>
                             </div>
@@ -253,7 +253,7 @@ export default function RegisterForm() {
                                     onChange={(e) => setTenantName(e.target.value)}
                                     required
                                     placeholder="Acme Corp or My Studio"
-                                    className="w-full pl-10 pr-3.5 py-2.5 bg-gray-50/50 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#1EA0FF] focus:bg-white transition"
+                                    className="w-full pl-10 pr-3.5 py-2.5 bg-gray-50/50 border border-gray-300 rounded-xl text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#1EA0FF] focus:bg-white transition"
                                 />
                             </div>
                         </div>

@@ -13,7 +13,7 @@ export default function MatrixViewComponent({ tasks }: { tasks: Task[] }) {
   }
 
   return (
-    <div className="grid grid-cols-4 gap-4">
+    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 2xl:grid-cols-4 sm:gap-4">
       <MatrixCell title="Do Now" color="red" tasks={quadrants.do_now} />
       <MatrixCell title="Schedule" color="yellow" tasks={quadrants.schedule} />
       <MatrixCell title="Delegate" color="green" tasks={quadrants.delegate} />

@@ -27,12 +27,12 @@ export default function HeroSection() {
   const router = useRouter();
 
   return (
-    <section className="relative min-h-[88vh] flex flex-col justify-center overflow-hidden bg-white border-b border-slate-100">
+    <section className="relative min-h-[80vh] flex flex-col justify-center overflow-hidden bg-white border-b border-slate-100 sm:min-h-[88vh]">
       {/* Subtle brand tint background */}
       <div className="absolute inset-0 bg-gradient-to-b from-[#F0F9FF]/50 via-white to-white pointer-events-none" />
 
-      <div className="max-w-7xl mx-auto px-6 lg:px-12 relative z-10 py-16 lg:py-24">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 relative z-10 py-12 sm:py-16 lg:py-24">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-9 sm:gap-12 lg:gap-16 items-center">
           
           {/* Left Column: Headlines & Call to Action */}
           <div className="lg:col-span-7 text-left space-y-6">
@@ -53,7 +53,7 @@ export default function HeroSection() {
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.1 }}
-              className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight text-[#0D1B2A] leading-[1.08]"
+              className="text-[clamp(2rem,8vw,2.75rem)] sm:text-5xl lg:text-6xl font-black tracking-tight text-[#0D1B2A] leading-[1.08]"
             >
               One calm workspace for all your{' '}
               <span className="text-[#1EA0FF]">inboxes, calendars &amp; tasks.</span>
@@ -142,10 +142,10 @@ export default function HeroSection() {
               className="w-full max-w-md"
             >
               {/* Product Card */}
-              <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-xl shadow-slate-200/60 space-y-5">
+              <div className="rounded-3xl border border-slate-200 bg-white p-4 sm:p-6 shadow-xl shadow-slate-200/60 space-y-5">
                 
                 {/* Header */}
-                <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+                <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4">
                   <div className="flex items-center gap-3">
                     <div className="w-11 h-11 rounded-2xl bg-[#0D1B2A] flex items-center justify-center p-1.5 shadow-sm">
                       <Image
@@ -175,13 +175,13 @@ export default function HeroSection() {
                   </p>
                   
                   {/* Google Account */}
-                  <div className="p-3 rounded-2xl border border-blue-100 bg-[#F0F9FF] flex items-center justify-between">
-                    <div className="flex items-center gap-3">
+                  <div className="p-3 rounded-2xl border border-blue-100 bg-[#F0F9FF] flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex min-w-0 flex-1 items-center gap-3">
                       <div className="w-8 h-8 rounded-xl bg-white border border-blue-200 flex items-center justify-center text-xs font-black text-[#1EA0FF] shadow-2xs">
                         G
                       </div>
                       <div>
-                        <p className="text-xs font-bold text-slate-900">Google Workspace (Work)</p>
+                        <p className="break-words text-xs font-bold text-slate-900">Google Workspace (Work)</p>
                         <p className="text-[11px] text-slate-500">2 priority emails drafted &bull; Calendar synced</p>
                       </div>
                     </div>
@@ -191,13 +191,13 @@ export default function HeroSection() {
                   </div>
 
                   {/* Microsoft Account */}
-                  <div className="p-3 rounded-2xl border border-blue-100 bg-[#F0F9FF] flex items-center justify-between">
-                    <div className="flex items-center gap-3">
+                  <div className="p-3 rounded-2xl border border-blue-100 bg-[#F0F9FF] flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex min-w-0 flex-1 items-center gap-3">
                       <div className="w-8 h-8 rounded-xl bg-white border border-blue-200 flex items-center justify-center text-xs font-black text-[#0088EE] shadow-2xs">
                         O
                       </div>
                       <div>
-                        <p className="text-xs font-bold text-slate-900">Microsoft Outlook (Executive)</p>
+                        <p className="break-words text-xs font-bold text-slate-900">Microsoft Outlook (Executive)</p>
                         <p className="text-[11px] text-slate-500">1 urgent reply ready &bull; Exchange synced</p>
                       </div>
                     </div>
@@ -215,7 +215,7 @@ export default function HeroSection() {
                       Zero Conflicts
                     </span>
                   </div>
-                  <div className="flex items-center justify-between text-xs font-medium text-slate-800 bg-white p-2.5 rounded-xl border border-slate-100">
+                  <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-medium text-slate-800 bg-white p-2.5 rounded-xl border border-slate-100">
                     <div className="flex items-center gap-2">
                       <span className="w-2 h-2 rounded-full bg-[#1EA0FF]" />
                       <span>Deep Work Focus Block</span>
@@ -225,7 +225,7 @@ export default function HeroSection() {
                 </div>
 
                 {/* Bottom Trust Badge */}
-                <div className="pt-2 flex items-center justify-between text-[11px] text-slate-500 border-t border-slate-100">
+                <div className="pt-2 flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-500 border-t border-slate-100">
                   <span className="flex items-center gap-1.5 font-medium">
                     <Lock size={12} className="text-[#1EA0FF]" /> Strict SOC II Type II Rules
                   </span>

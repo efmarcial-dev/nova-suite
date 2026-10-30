@@ -683,13 +683,13 @@ export default function CalendarPage() {
   return (
     <div className="space-y-5">
       {/* Top Banner: Connection Status Bar */}
-      <div className="bg-white rounded-2xl border border-[--border] p-4 flex flex-col gap-3 shadow-xs">
+      <div className="bg-white rounded-2xl border border-[--border] p-3 sm:p-4 flex flex-col gap-3 shadow-xs">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
+          <div className="flex min-w-0 items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-[--background] border border-[--border] flex items-center justify-center shrink-0">
               {activeProvider.icon}
             </div>
-            <div>
+            <div className="min-w-0">
               <div className="flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-emerald-500" />
                 <h2 className="text-sm font-bold text-[--foreground]">
@@ -717,7 +717,7 @@ export default function CalendarPage() {
                   setTargetAddEventGrantId(grantId === 'all' ? nylasGrants[0]?.grant_id || '' : grantId);
                   void handleSyncCalendar(grantId);
                 }}
-                className="px-2.5 py-1.5 rounded-xl border border-[--border] bg-[--background] text-xs font-medium text-[--foreground] outline-none focus:ring-2 focus:ring-[#1EA0FF]"
+                className="min-h-10 max-w-full px-2.5 py-1.5 rounded-xl border border-[--border] bg-[--background] text-xs font-medium text-[--foreground] outline-none focus:ring-2 focus:ring-[#1EA0FF]"
               >
                 <option value="all">🌐 All Accounts (Unified)</option>
                 {nylasGrants.map((g) => (
@@ -805,9 +805,9 @@ export default function CalendarPage() {
       {/* Main Schedule View */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         {/* Left Column: Interactive Agenda Timeline (Spans 2) */}
-        <div className="lg:col-span-2 bg-white rounded-2xl border border-[--border] p-5 shadow-xs space-y-4">
+        <div className="min-w-0 lg:col-span-2 bg-white rounded-2xl border border-[--border] p-3 sm:p-5 shadow-xs space-y-4">
           {/* Header Controls */}
-          <div className="flex items-center justify-between border-b border-[--border] pb-3">
+          <div className="flex flex-col gap-3 border-b border-[--border] pb-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h2 className="text-base font-bold text-[--foreground] flex items-center gap-2">
                 <CalendarIcon size={16} className="text-[#1EA0FF]" />
@@ -818,11 +818,11 @@ export default function CalendarPage() {
               </p>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 self-start">
               <div className="flex items-center bg-[--background] p-1 rounded-xl border border-[--border] text-xs">
                 <button
                   onClick={() => setViewMode('day')}
-                  className={`px-3 py-1 rounded-lg font-medium transition-all ${
+                  className={`min-h-10 px-3 rounded-lg font-medium transition-all ${
                     viewMode === 'day' ? 'bg-white text-[#1EA0FF] shadow-xs border border-[--border]' : 'text-[--muted-foreground]'
                   }`}
                 >
@@ -830,7 +830,7 @@ export default function CalendarPage() {
                 </button>
                 <button
                   onClick={() => setViewMode('week')}
-                  className={`px-3 py-1 rounded-lg font-medium transition-all ${
+                  className={`min-h-10 px-3 rounded-lg font-medium transition-all ${
                     viewMode === 'week' ? 'bg-white text-[#1EA0FF] shadow-xs border border-[--border]' : 'text-[--muted-foreground]'
                   }`}
                 >

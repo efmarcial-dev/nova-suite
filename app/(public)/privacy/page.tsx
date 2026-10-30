@@ -11,8 +11,8 @@ export default function PrivacyPolicyPage() {
   const lastUpdated = 'October 19, 2026';
 
   return (
-    <div className="min-h-screen bg-slate-50/50 py-24 px-6 lg:px-20 text-slate-800">
-      <div className="max-w-4xl mx-auto bg-white rounded-3xl border border-slate-200/80 p-8 sm:p-14 shadow-xs">
+    <div className="min-h-screen bg-slate-50/50 px-4 py-12 text-slate-800 sm:px-6 sm:py-16 lg:px-20 lg:py-24">
+      <div className="max-w-4xl mx-auto bg-white rounded-3xl border border-slate-200/80 p-5 sm:p-8 lg:p-14 shadow-xs">
         
         {/* Header */}
         <div className="border-b border-slate-100 pb-8 mb-10">

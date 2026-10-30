@@ -28,10 +28,12 @@ export default function TaskBoard({
   view,
   statusFilter = 'all',
   priorityFilter = 'all',
+  searchQuery = '',
 }: {
   view: 'table' | 'list' | 'matrix';
   statusFilter?: 'all' | 'pending';
   priorityFilter?: 'all' | 'high' | 'important';
+  searchQuery?: string;
 }) {
   const { tasks: cacheTasks, isLoading } = useCachedTasks();
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -56,6 +58,8 @@ export default function TaskBoard({
   const dedupedTasks = useMemo(() => deduplicateTasks(tasks), [tasks]);
 
   const visibleTasks = dedupedTasks.filter((task) => {
+    const needle = searchQuery.trim().toLocaleLowerCase();
+    if (needle && !`${task.title || ''} ${task.description || ''}`.toLocaleLowerCase().includes(needle)) return false;
     if (statusFilter === 'pending' && task.status === 'done') return false;
     if (priorityFilter === 'high' && !['high', 'critical'].includes(task.priority?.toLowerCase() || '')) return false;
     if (priorityFilter === 'important') {
@@ -156,7 +160,7 @@ export default function TaskBoard({
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-4 gap-4 p-4">
+      <div className="grid grid-cols-1 gap-3 p-3 sm:grid-cols-2 sm:gap-4 sm:p-4 xl:grid-cols-4">
         {[1, 2, 3, 4].map((col) => (
           <div key={col} className="bg-slate-50/60 rounded-2xl p-4 min-h-[400px] border border-[--border] space-y-3">
             <div className="skeleton h-5 w-24 rounded-lg" />
@@ -223,7 +227,7 @@ export default function TaskBoard({
           onDragStart={handleDragStart}
           onDragEnd={handleDragEnd}
         >
-          <div className="grid grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4 sm:gap-4">
             <TaskColumn
               id="todo"
               title="To Do"

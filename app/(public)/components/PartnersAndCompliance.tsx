@@ -80,7 +80,7 @@ export default function PartnersAndCompliance() {
         </motion.div>
 
         {/* 3 Core Highlight Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           {capabilities.map((item, i) => {
             const Icon = item.icon;
             return (

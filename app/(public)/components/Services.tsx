@@ -9,7 +9,7 @@ export default function ServiceSection() {
     const router = useRouter();
 
     return (
-        <section className="relative py-32 px-6 lg:px-20">
+        <section className="relative py-16 px-4 sm:py-20 sm:px-6 lg:py-32 lg:px-20">
         <div className="max-w-[1400px] mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -29,7 +29,7 @@ export default function ServiceSection() {
             
           </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-8">
             <ServiceCard
               icon={<Brain size={32} />}
               title="AI & Automation"

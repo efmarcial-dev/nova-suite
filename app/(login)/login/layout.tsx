@@ -6,26 +6,25 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
   return (
     // Optional: custom branding or background
 
-    <div className="min-h-screen flex flex-col bg-gray-50">
-      {/* Top-left logo */}
-      <Link href="/" className="absolute top-6 left-6 flex items-center space-x-2.5">
-        <Image
-          src="/images/foxly_mascot_transparent.png"
-          alt="Foxly"
-          width={38}
-          height={38}
-          className="object-contain"
-        />
-        <div className="flex flex-col">
-          <span className="text-2xl font-black text-gray-900 tracking-tight lowercase">foxly</span>
-          <span className="text-[10px] text-gray-400 font-semibold tracking-tight -mt-1">Your life. In flow.</span>
-        </div>
-      </Link>
-
-      {/* Main content area */}
-      <div className="flex-grow flex items-center justify-center h-full">
-        <div className="w-full max-w-md p-6">{children}</div>
-      </div>
+    <div className="flex min-h-screen flex-col overflow-x-clip bg-gray-50">
+      <header className="w-full px-4 pt-4 sm:px-6 sm:pt-6">
+        <Link href="/" className="inline-flex items-center gap-2.5">
+          <Image
+            src="/images/foxly_mascot_transparent.png"
+            alt="Foxly"
+            width={38}
+            height={38}
+            className="object-contain"
+          />
+          <div className="flex flex-col">
+            <span className="text-2xl font-black tracking-tight text-gray-900 lowercase">foxly</span>
+            <span className="-mt-1 text-[10px] font-semibold tracking-tight text-gray-400">Your life. In flow.</span>
+          </div>
+        </Link>
+      </header>
+      <main className="flex flex-1 items-center justify-center px-4 py-8 sm:px-6 sm:py-12">
+        <div className="w-full max-w-md">{children}</div>
+      </main>
     </div>
   );
 }

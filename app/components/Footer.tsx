@@ -4,7 +4,7 @@ import Link from 'next/link';
 export default function Footer() {
   return (
     <footer className="w-full py-12 px-6 border-t border-slate-100 bg-white">
-      <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
+      <div className="max-w-6xl mx-auto flex flex-col lg:flex-row items-center justify-between gap-6">
         {/* Brand & Tagline */}
         <div className="flex items-center space-x-3">
           <Image
@@ -43,7 +43,7 @@ export default function Footer() {
         </div>
 
         {/* Copyright */}
-        <p className="text-xs text-slate-400 text-center md:text-right">
+        <p className="text-xs text-slate-400 text-center lg:text-right">
           &copy; {new Date().getFullYear()} Foxly. All rights reserved.
         </p>
       </div>

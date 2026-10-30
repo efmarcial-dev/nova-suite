@@ -201,3 +201,38 @@ export async function getAnalyticsRecord(id: string) {
     const db = await initNovaCache();
     return await db.get('analytics', id);
 }
+
+export async function getCachedEmailInbox(key: string) {
+    const db = await initNovaCache();
+    return await db.get('emailInboxes', key);
+}
+
+export async function saveCachedEmailInbox(record: {
+    key: string;
+    userId: string;
+    cachedAt: number;
+    [key: string]: any;
+}) {
+    const db = await initNovaCache();
+    await db.put('emailInboxes', record);
+}
+
+export async function deleteCachedEmailInbox(key: string) {
+    const db = await initNovaCache();
+    await db.delete('emailInboxes', key);
+}
+
+export async function clearCachedEmailInboxes(userId?: string) {
+    const db = await initNovaCache();
+    if (!userId) {
+        await db.clear('emailInboxes');
+        return;
+    }
+
+    const records = await db.getAll('emailInboxes');
+    const tx = db.transaction('emailInboxes', 'readwrite');
+    for (const record of records) {
+        if (record.userId === String(userId)) await tx.store.delete(record.key);
+    }
+    await tx.done;
+}

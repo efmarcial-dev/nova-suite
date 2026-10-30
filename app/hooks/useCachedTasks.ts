@@ -3,14 +3,16 @@
 import { useEffect, useRef, useState } from "react";
 import {
     getCachedTasksWithMetadata,
-    replaceTasksInCache,
-    saveTasksToCache,
     updateTaskInCache,
     deleteTaskInCache,
 } from "../lib/cache/NovaCacheHelpers";
-import { fetchTasksAPI } from "../lib/api/tasks";
 import { areIdsEqual, deduplicateTasks } from "../lib/utils/deduplicate";
-import { isDemoTask } from "../lib/constants/starterWorkspace";
+import {
+    deleteTaskForSession,
+    ensureTasksForSession,
+    updateTaskForSession,
+    upsertTaskForSession,
+} from "../lib/cache/dashboardDataSession";
 
 export function useCachedTasks() {
     const [tasks, setTasks] = useState<any[]>([]);
@@ -22,7 +24,12 @@ export function useCachedTasks() {
         let isMounted = true;
 
         async function load() {
-            const { tasks: cached } = await getCachedTasksWithMetadata();
+            let cached: any[] = [];
+            try {
+                ({ tasks: cached } = await getCachedTasksWithMetadata());
+            } catch (cacheError) {
+                console.warn('Could not read the local task cache; loading from the API.', cacheError);
+            }
 
             if (isMounted && cached.length > 0) {
                 const dedupedCached = deduplicateTasks(cached);
@@ -32,26 +39,11 @@ export function useCachedTasks() {
             }
 
             try {
-                // Render cached tasks quickly, then reconcile with Django on each
-                // mount so deleted or out-of-date local records cannot be edited.
+                // DashboardDataWarmup shares one server refresh across all routes.
                 const versionAtFetchStart = taskChangeVersion.current;
-                let fresh = await fetchTasksAPI();
-
-                // If user has explicitly removed demo tasks, filter out any demo tasks
-                if (typeof window !== 'undefined' && localStorage.getItem('nova_demo_tasks_cleared') === 'true') {
-                    fresh = fresh.filter((task) => !isDemoTask(task));
-                }
-
-                const withTimestamps = fresh.map((task) => ({
-                    ...task,
-                    lastUpdated: Date.now(),
-                }));
-
-                const dedupedFresh = deduplicateTasks(withTimestamps);
+                const dedupedFresh = deduplicateTasks(await ensureTasksForSession());
 
                 if (taskChangeVersion.current !== versionAtFetchStart) return;
-                await replaceTasksInCache(dedupedFresh);
-
                 if (isMounted) {
                     setTasks(dedupedFresh);
                     setFromCache(false);
@@ -142,7 +134,10 @@ export function useCachedTasks() {
             return [task, ...prev];
         });
 
-        await updateTaskInCache(task);
+        upsertTaskForSession(task);
+        void updateTaskInCache(task).catch((error) => {
+            console.warn('Task was saved to Django, but the local cache could not be updated.', error);
+        });
     };
 
     // Update existing task in memory and cache
@@ -154,13 +149,19 @@ export function useCachedTasks() {
         setTasks((prev) =>
             prev.map((t) => (areIdsEqual(t.id, normalized.id) ? { ...t, ...normalized } : t))
         );
-        await updateTaskInCache(normalized);
+        updateTaskForSession(normalized);
+        await updateTaskInCache(normalized).catch((error) => {
+            console.warn('Task was updated, but the local cache could not be updated.', error);
+        });
     };
 
     // Delete task from cache
     const deleteTaskFromCache = async (taskId: number | string) => {
         setTasks((prev) => prev.filter((task) => !areIdsEqual(task.id, taskId)));
-        await deleteTaskInCache(taskId);
+        deleteTaskForSession(taskId);
+        await deleteTaskInCache(taskId).catch((error) => {
+            console.warn('Task was deleted, but the local cache could not be updated.', error);
+        });
     };
 
     return {

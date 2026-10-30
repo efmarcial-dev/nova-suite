@@ -18,6 +18,8 @@ import {
   NylasGrant,
   NylasStatus,
 } from '@/app/lib/api/nylas';
+import { clearCachedEmailInboxes } from '@/app/lib/cache/NovaCacheHelpers';
+import { clearEmailInboxSession } from '@/app/lib/cache/emailInboxSession';
 import {
   User,
   Mail,
@@ -168,6 +170,8 @@ function SettingsContent() {
     }
 
     if (nylas === 'connected' || connected === 'nylas' || connected === 'email' || connected === 'calendar') {
+      clearEmailInboxSession();
+      void clearCachedEmailInboxes().catch(() => undefined);
       setActiveTab('email');
       const provName = provider ? provider.toUpperCase() : 'your account';
       setConnectSuccessMessage(
@@ -353,6 +357,8 @@ function SettingsContent() {
     try {
       const ok = await disconnectNylasGrantAPI(grantId);
       if (ok) {
+        clearEmailInboxSession();
+        await clearCachedEmailInboxes().catch(() => undefined);
         setNylasGrants((prev) => prev.filter((g) => g.grant_id !== grantId));
         setNylasStatus(await fetchNylasStatusAPI());
         setIntegrationError('');
@@ -409,7 +415,7 @@ function SettingsContent() {
   const initials = `${firstName?.[0] || 'U'}${lastName?.[0] || ''}`.toUpperCase();
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6 py-2">
+    <div className="mx-auto max-w-4xl space-y-4 py-1 sm:space-y-6 sm:py-2">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
@@ -445,7 +451,7 @@ function SettingsContent() {
       )}
 
       {/* Navigation Tabs */}
-      <div className="flex items-center gap-1 bg-[--background] p-1 rounded-xl border border-[--border] w-fit flex-wrap">
+      <div role="tablist" aria-label="Settings sections" className="flex max-w-full items-center gap-1 overflow-x-auto bg-[--background] p-1 rounded-xl border border-[--border] w-fit">
         {[
           { id: 'profile' as const, label: 'Profile & Account', icon: User },
           { id: 'billing' as const, label: 'Subscription & Plans', icon: CreditCard },
@@ -458,8 +464,10 @@ function SettingsContent() {
           return (
             <button
               key={tab.id}
+              role="tab"
+              aria-selected={isActive}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all ${
+              className={`flex shrink-0 items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all ${
                 isActive
                   ? 'bg-white text-[#1EA0FF] shadow-xs border border-[--border]'
                   : 'text-[--muted-foreground] hover:text-[--foreground]'
@@ -474,7 +482,7 @@ function SettingsContent() {
 
       {/* TAB 1: PROFILE & ACCOUNT */}
       {activeTab === 'profile' && (
-        <div className="bg-white rounded-2xl border border-[--border] p-6 shadow-xs space-y-6">
+        <div className="bg-white rounded-2xl border border-[--border] p-4 shadow-xs space-y-5 sm:p-6 sm:space-y-6">
           <div className="flex items-center gap-4 pb-6 border-b border-[--border]">
             <div className="w-16 h-16 rounded-2xl gradient-brand text-white flex items-center justify-center text-xl font-bold shadow-md shadow-blue-500/10">
               {initials}

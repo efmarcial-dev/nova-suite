@@ -1,13 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:news="http://www.google.com/schemas/sitemap-news/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml" xmlns:mobile="http://www.google.com/schemas/sitemap-mobile/1.0" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1" xmlns:video="http://www.google.com/schemas/sitemap-video/1.1">
-<url><loc>https://novadev.solutions</loc><lastmod>2026-10-21T21:53:36.090Z</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
-<url><loc>https://novadev.solutions/about</loc><lastmod>2026-10-21T21:53:36.091Z</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
-<url><loc>https://novadev.solutions/contact</loc><lastmod>2026-10-21T21:53:36.091Z</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
-<url><loc>https://novadev.solutions/debug-cache</loc><lastmod>2026-10-21T21:53:36.091Z</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
-<url><loc>https://novadev.solutions/login</loc><lastmod>2026-10-21T21:53:36.091Z</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
-<url><loc>https://novadev.solutions/logout</loc><lastmod>2026-10-21T21:53:36.091Z</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
-<url><loc>https://novadev.solutions/onboarding</loc><lastmod>2026-10-21T21:53:36.091Z</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
-<url><loc>https://novadev.solutions/privacy</loc><lastmod>2026-10-21T21:53:36.091Z</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
-<url><loc>https://novadev.solutions/services</loc><lastmod>2026-10-21T21:53:36.091Z</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
-<url><loc>https://novadev.solutions/terms</loc><lastmod>2026-10-21T21:53:36.091Z</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+<url><loc>https://novadev.solutions</loc><lastmod>2026-10-30T00:01:43.662Z</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+<url><loc>https://novadev.solutions/about</loc><lastmod>2026-10-30T00:01:43.671Z</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+<url><loc>https://novadev.solutions/contact</loc><lastmod>2026-10-30T00:01:43.671Z</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+<url><loc>https://novadev.solutions/dashboard</loc><lastmod>2026-10-30T00:01:43.671Z</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+<url><loc>https://novadev.solutions/dashboard/calendar</loc><lastmod>2026-10-30T00:01:43.671Z</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+<url><loc>https://novadev.solutions/dashboard/chat</loc><lastmod>2026-10-30T00:01:43.671Z</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+<url><loc>https://novadev.solutions/dashboard/help</loc><lastmod>2026-10-30T00:01:43.672Z</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+<url><loc>https://novadev.solutions/dashboard/inbox</loc><lastmod>2026-10-30T00:01:43.672Z</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+<url><loc>https://novadev.solutions/dashboard/projects</loc><lastmod>2026-10-30T00:01:43.672Z</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+<url><loc>https://novadev.solutions/dashboard/settings</loc><lastmod>2026-10-30T00:01:43.672Z</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+<url><loc>https://novadev.solutions/dashboard/tasks</loc><lastmod>2026-10-30T00:01:43.672Z</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+<url><loc>https://novadev.solutions/debug-cache</loc><lastmod>2026-10-30T00:01:43.672Z</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+<url><loc>https://novadev.solutions/login</loc><lastmod>2026-10-30T00:01:43.672Z</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+<url><loc>https://novadev.solutions/logout</loc><lastmod>2026-10-30T00:01:43.672Z</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+<url><loc>https://novadev.solutions/onboarding</loc><lastmod>2026-10-30T00:01:43.672Z</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+<url><loc>https://novadev.solutions/privacy</loc><lastmod>2026-10-30T00:01:43.672Z</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+<url><loc>https://novadev.solutions/services</loc><lastmod>2026-10-30T00:01:43.672Z</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+<url><loc>https://novadev.solutions/terms</loc><lastmod>2026-10-30T00:01:43.672Z</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
 </urlset>

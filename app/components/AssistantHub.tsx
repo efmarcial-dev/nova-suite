@@ -13,6 +13,11 @@ import {
   X,
 } from 'lucide-react';
 import { useCachedUser } from '../hooks/useCachedUser';
+import {
+  getCachedEmailInbox,
+  saveCachedEmailInbox,
+} from '@/app/lib/cache/NovaCacheHelpers';
+import { getEmailInboxForSession, saveEmailInboxForSession } from '@/app/lib/cache/emailInboxSession';
 import { fetchMessagesAPI } from '@/app/lib/api/messages';
 import {
   analyzeEmailMessagesAPI,
@@ -43,12 +48,54 @@ interface MessageItem {
   provider?: string;
 }
 
+interface CachedInboxRecord {
+  key: string;
+  userId: string;
+  cachedAt: number;
+  emails: EmailMessageItem[];
+  messages: MessageItem[];
+  signatures: Record<string, string>;
+  emailGrants: NylasGrant[];
+  calendarGrants: NylasGrant[];
+  connectedEmailProvider: EmailProviderStatus | null;
+  analysisComplete: boolean;
+}
+
+const EMAIL_INBOX_CACHE_TTL_MS = 60_000;
+
+function makeInboxCacheKey(userId: string, grantId: string, query: string) {
+  return `email-inbox:v1:${encodeURIComponent(userId)}:${encodeURIComponent(grantId)}:${encodeURIComponent(query.trim().toLocaleLowerCase())}`;
+}
+
+async function emailAnalysisSignature(email: EmailMessageItem): Promise<string> {
+  const content = String(email.content || email.snippet || '')
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 6000);
+  const serialized = JSON.stringify({
+    analysis_version: 2,
+    id: email.id,
+    sender: String(email.sender || '').slice(0, 500),
+    recipient: String(email.recipient || '').slice(0, 500),
+    subject: String(email.subject || '').slice(0, 1000),
+    content,
+    timestamp: String(email.timestamp || '').slice(0, 100),
+  });
+
+  if (typeof window !== 'undefined' && window.crypto?.subtle) {
+    const digest = await window.crypto.subtle.digest('SHA-256', new TextEncoder().encode(serialized));
+    return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, '0')).join('');
+  }
+  return serialized;
+}
+
 const channelConfig = {
   email: { label: 'Executive Emails', icon: Mail, color: 'text-violet-600', bg: 'bg-violet-50 border-violet-200 text-violet-700' },
   system: { label: 'System Directives', icon: Zap, color: 'text-amber-600', bg: 'bg-amber-50 border-amber-200 text-amber-700' },
 };
 
-export default function AssistantHub({ className = '' }: { className?: string }) {
+export default function AssistantHub({ className = '', compact = false }: { className?: string; compact?: boolean }) {
   const { user } = useCachedUser();
   const currentUser = user?.[0];
 
@@ -70,50 +117,129 @@ export default function AssistantHub({ className = '' }: { className?: string })
   const [aiAnalysisComplete, setAiAnalysisComplete] = useState(false);
   const [aiError, setAiError] = useState('');
   const [emailFilter, setEmailFilter] = useState<'all' | 'important' | 'high'>('all');
+  const [activeEmailQuery, setActiveEmailQuery] = useState('');
+  const [searchMessageId, setSearchMessageId] = useState('');
   const aiAnalysisInFlight = useRef(false);
+  const hydratedUserId = useRef('');
 
   const filteredMessages = messages.filter((message) => {
+    if (searchMessageId && message.id !== searchMessageId) return false;
     if (emailFilter === 'all') return true;
     if (message.channel !== 'email') return false;
     if (emailFilter === 'important') return ['urgent', 'high'].includes(message.aiInsight?.priority || '');
     return message.aiInsight?.priority === 'high';
   });
+  const visibleMessages = compact ? filteredMessages.slice(0, 3) : filteredMessages;
 
-  // Load email providers and live inbox messages
-  const hydrateMessages = async (grantIdOverride = selectedGrantId) => {
+  const analyzeVisibleEmails = async (
+    provider: string,
+    emails: EmailMessageItem[],
+  ): Promise<Record<string, EmailInsight> | null> => {
+    if (emails.length === 0) return {};
+    if (aiAnalysisInFlight.current) return null;
+    aiAnalysisInFlight.current = true;
+    setIsAnalyzingAI(true);
+    setAiProgress(0);
+    setAiAnalysisComplete(false);
+    setAiError('');
+    try {
+      const insights = await analyzeEmailMessagesAPI(provider, emails);
+      setAiProgress(100);
+      setAiAnalysisComplete(true);
+      return insights;
+    } catch (error) {
+      console.warn('Could not analyze inbox emails:', error);
+      setAiProgress(0);
+      setAiAnalysisComplete(false);
+      setAiError(error instanceof Error ? error.message : 'AI analysis is temporarily unavailable.');
+      return null;
+    } finally {
+      aiAnalysisInFlight.current = false;
+      setIsAnalyzingAI(false);
+    }
+  };
+
+  const hydrateMessages = async (
+    grantIdOverride = selectedGrantId,
+    options: { forceRefresh?: boolean; searchQuery?: string } = {},
+  ) => {
+    const forceRefresh = options.forceRefresh === true;
+    const searchQuery = options.searchQuery ?? activeEmailQuery;
+    const userId = String(currentUser?.id ?? currentUser?.email ?? '');
+    const cacheKey = userId ? makeInboxCacheKey(userId, grantIdOverride, searchQuery) : '';
+
+    setActiveEmailQuery(searchQuery);
     setIsRefreshing(true);
     setAiError('');
     setAiProgress(0);
     setAiAnalysisComplete(false);
+
     try {
+      const sessionCached = cacheKey ? getEmailInboxForSession(cacheKey) as CachedInboxRecord | undefined : undefined;
+      const cached = sessionCached || (cacheKey
+        ? await getCachedEmailInbox(cacheKey).catch((error) => {
+            console.warn('Could not read the local inbox cache; loading live messages.', error);
+            return undefined;
+          }) as CachedInboxRecord | undefined
+        : undefined);
+      const cacheAge = cached ? Date.now() - cached.cachedAt : Number.POSITIVE_INFINITY;
+      const hasFreshCache = Boolean(cached && cacheAge < EMAIL_INBOX_CACHE_TTL_MS);
+
+      if (cached) {
+        setInboxEmails(cached.emails || []);
+        setMessages(cached.messages || []);
+        setNylasGrants(cached.emailGrants || []);
+        setCalendarGrants(cached.calendarGrants || []);
+        setConnectedEmailProvider(cached.connectedEmailProvider || null);
+        setAiAnalysisComplete(cached.analysisComplete === true);
+      }
+
+      // Fresh inboxes include the email list and its AI insights, so opening the
+      // dashboard again during the TTL makes no provider, message, or analysis calls.
+      if (cached && !forceRefresh && (sessionCached || hasFreshCache)) {
+        saveEmailInboxForSession(cached);
+        setProviderError('');
+        setProviderReconnectRequired(false);
+        setIsRefreshing(false);
+        return;
+      }
+
       const [providers, grants] = await Promise.all([
         fetchEmailProvidersAPI().catch(() => []),
         fetchNylasGrantsAPI().catch(() => []),
       ]);
       const activeGrants = grants.filter((g) => g.is_connected !== false);
       const emailGrants = activeGrants.filter((g) => g.scope?.includes('email'));
+      const calendarAccounts = activeGrants.filter((g) => g.scope?.includes('calendar'));
       setNylasGrants(emailGrants);
-      setCalendarGrants(activeGrants.filter((g) => g.scope?.includes('calendar')));
+      setCalendarGrants(calendarAccounts);
 
       const connected = emailGrants.length > 0 ? ({
         provider: 'nylas',
         email: emailGrants[0].email,
         is_connected: true,
-        connected_at: activeGrants[0].connected_at,
+        connected_at: emailGrants[0].connected_at,
       } as any) : (providers.find((p) => p.is_connected) || null);
-
       setConnectedEmailProvider(connected);
 
       let remoteEmails: EmailMessageItem[] = [];
-
       if (emailGrants.length > 0) {
         const grantIdParam = grantIdOverride === 'all' ? undefined : grantIdOverride;
-        remoteEmails = await fetchEmailMessagesAPI('nylas', '', 25, grantIdParam);
+        remoteEmails = await fetchEmailMessagesAPI('nylas', searchQuery, 25, grantIdParam, {
+          forceRefresh: forceRefresh || (cached !== undefined && !hasFreshCache),
+        });
       } else if (connected) {
-        remoteEmails = await fetchEmailMessagesAPI(connected.provider, '', 25);
+        remoteEmails = await fetchEmailMessagesAPI(connected.provider, searchQuery, 25, undefined, {
+          forceRefresh: forceRefresh || (cached !== undefined && !hasFreshCache),
+        });
       }
       setInboxEmails(remoteEmails);
 
+      const previousMessages = cached?.messages || [];
+      const previousEmailById = new Map(previousMessages.filter((message) => message.channel === 'email').map((message) => [message.id, message]));
+      const signatures = Object.fromEntries(await Promise.all(
+        remoteEmails.map(async (email) => [email.id, await emailAnalysisSignature(email)] as const),
+      ));
       const liveEmailItems: MessageItem[] = remoteEmails.map((item) => ({
         id: item.id,
         channel: 'email',
@@ -128,17 +254,62 @@ export default function AssistantHub({ className = '' }: { className?: string })
         status: item.status === 'read' ? 'resolved' : 'delivered',
         account_email: item.account_email,
         provider: item.provider,
+        aiInsight: cached?.signatures?.[item.id] === signatures[item.id]
+          ? previousEmailById.get(item.id)?.aiInsight
+          : undefined,
       }));
 
-      // Also fetch any assistant system messages
       const remoteDirectives = await fetchMessagesAPI();
-      const combined = [...liveEmailItems, ...(Array.isArray(remoteDirectives) ? remoteDirectives : [])];
+      let combined: MessageItem[] = [...liveEmailItems, ...(Array.isArray(remoteDirectives) ? remoteDirectives : [])];
       setMessages(combined);
       setProviderError('');
       setProviderReconnectRequired(false);
-      const inboundEmails = remoteEmails.filter((item) => item.direction === 'inbound');
-      if (connected && inboundEmails.length > 0) {
-        void analyzeVisibleEmails(connected.provider, inboundEmails);
+
+      const emailsToAnalyze = remoteEmails.filter((email) => {
+        if (email.direction !== 'inbound') return false;
+        const unchanged = cached?.signatures?.[email.id] === signatures[email.id];
+        const hasSavedInsight = Boolean(unchanged && previousEmailById.get(email.id)?.aiInsight);
+        return !hasSavedInsight;
+      });
+
+      let analysisComplete = true;
+      if (connected && emailsToAnalyze.length > 0) {
+        const insights = await analyzeVisibleEmails(connected.provider, emailsToAnalyze);
+        analysisComplete = insights !== null;
+        if (insights) {
+          combined = combined.map((message) => ({
+            ...message,
+            aiInsight: insights[message.id] || message.aiInsight,
+          }));
+          setMessages(combined);
+        }
+      }
+      if (emailsToAnalyze.length === 0) {
+        setAiAnalysisComplete(true);
+      }
+
+      // Keep only the short preview needed for the feed and content signatures;
+      // do not persist full email bodies in browser storage.
+      if (cacheKey && analysisComplete) {
+        const cachedEmails = remoteEmails.map((email) => ({
+          ...email,
+          content: String(email.snippet || email.content || '').slice(0, 1200),
+          snippet: String(email.snippet || '').slice(0, 1200),
+        }));
+        const inboxRecord: CachedInboxRecord = {
+          key: cacheKey,
+          userId,
+          cachedAt: Date.now(),
+          emails: cachedEmails,
+          messages: combined,
+          signatures,
+          emailGrants,
+          calendarGrants: calendarAccounts,
+          connectedEmailProvider: connected,
+          analysisComplete: true,
+        };
+        saveEmailInboxForSession(inboxRecord);
+        void saveCachedEmailInbox(inboxRecord).catch((error) => console.warn('Could not save the local inbox cache.', error));
       }
     } catch (e) {
       console.warn('Could not hydrate live email messages:', e);
@@ -149,35 +320,15 @@ export default function AssistantHub({ className = '' }: { className?: string })
     }
   };
 
-  const analyzeVisibleEmails = async (provider: string, emails: EmailMessageItem[]) => {
-    if (aiAnalysisInFlight.current) return;
-    aiAnalysisInFlight.current = true;
-    setIsAnalyzingAI(true);
-    setAiProgress(0);
-    setAiAnalysisComplete(false);
-    setAiError('');
-    try {
-      const insights = await analyzeEmailMessagesAPI(provider, emails);
-      setMessages((current) => current.map((message) => ({
-        ...message,
-        aiInsight: insights[message.id] || message.aiInsight,
-      })));
-      setAiProgress(100);
-      setAiAnalysisComplete(true);
-    } catch (error) {
-      console.warn('Could not analyze inbox emails:', error);
-      setAiProgress(0);
-      setAiAnalysisComplete(false);
-      setAiError(error instanceof Error ? error.message : 'AI analysis is temporarily unavailable.');
-    } finally {
-      aiAnalysisInFlight.current = false;
-      setIsAnalyzingAI(false);
-    }
-  };
-
   useEffect(() => {
-    hydrateMessages();
-  }, [currentUser]);
+    const userId = String(currentUser?.id ?? currentUser?.email ?? '');
+    if (!userId || hydratedUserId.current === userId) return;
+    hydratedUserId.current = userId;
+    const params = new URLSearchParams(window.location.search);
+    const searchQuery = params.get('search') || '';
+    setSearchMessageId(params.get('message_id') || '');
+    void hydrateMessages('all', { searchQuery });
+  }, [currentUser?.id, currentUser?.email]);
 
   useEffect(() => {
     if (!isAnalyzingAI) return;
@@ -229,7 +380,7 @@ export default function AssistantHub({ className = '' }: { className?: string })
     setActionError('');
     try {
       await decideEmailActionAPI({ action_id: actionId, decision, ...(grantId ? { grant_id: grantId } : {}) });
-      await hydrateMessages();
+      await hydrateMessages(selectedGrantId, { forceRefresh: true });
     } catch (error) {
       setActionError(error instanceof Error ? error.message : 'Could not apply this action.');
     } finally {
@@ -238,14 +389,14 @@ export default function AssistantHub({ className = '' }: { className?: string })
   };
 
   const handleRefreshFeed = () => {
-    hydrateMessages();
+    void hydrateMessages(selectedGrantId, { forceRefresh: true });
   };
 
   return (
-    <div className={`bg-white rounded-2xl shadow-sm border border-[--border] p-5 flex flex-col gap-5 ${className}`}>
+    <div className={`bg-white rounded-2xl shadow-sm border border-[--border] p-4 sm:p-5 flex flex-col gap-4 sm:gap-5 ${className}`}>
       {/* 2. Executive Email & Assistant Stream */}
       <div className="space-y-3">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
             <h2 className="text-base font-semibold text-[--foreground] flex items-center gap-2">
               <Mail size={16} className="text-[#1EA0FF]" />
@@ -402,7 +553,7 @@ export default function AssistantHub({ className = '' }: { className?: string })
             Inbox loaded, but AI analysis could not finish. {aiError}
           </p>
         )}
-        <div className="space-y-2.5 max-h-[300px] overflow-y-auto pr-1">
+        <div className={`space-y-2.5 ${compact ? 'max-h-[320px] overflow-y-auto' : 'max-h-none'} pr-1`}>
           {!connectedEmailProvider ? (
             <div className="py-7 px-5 text-center bg-gray-50/70 border border-dashed border-[--border] rounded-2xl flex flex-col items-center justify-center space-y-3">
               <div className="w-10 h-10 rounded-xl bg-[#F0F9FF] border border-[#BFE7FF] text-[#1EA0FF] flex items-center justify-center">
@@ -444,8 +595,8 @@ export default function AssistantHub({ className = '' }: { className?: string })
             <div className="py-10 text-center text-xs text-[--muted-foreground]">
             {emailFilter === 'all' ? 'No messages found.' : 'No emails match this priority filter yet.'}
             </div>
-          ) : (
-            filteredMessages.map((msg) => {
+        ) : (
+            visibleMessages.map((msg) => {
               const ch = channelConfig[msg.channel] || channelConfig.system;
               const Icon = ch.icon;
               const priority = msg.aiInsight?.priority;
@@ -611,6 +762,16 @@ export default function AssistantHub({ className = '' }: { className?: string })
             })
           )}
         </div>
+        {compact && (
+          <Link
+            href="/dashboard/inbox"
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-[#BFE7FF] bg-[#F0F9FF] px-4 text-sm font-semibold text-[#0088EE] transition hover:bg-[#E8F6FF]"
+          >
+            {filteredMessages.length > visibleMessages.length
+              ? `View all ${filteredMessages.length} inbox items`
+              : 'Open inbox'} <span aria-hidden="true">→</span>
+          </Link>
+        )}
       </div>
 
       {actionError && <p role="alert" className="text-xs text-rose-700">{actionError}</p>}

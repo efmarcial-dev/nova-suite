@@ -20,7 +20,7 @@ export function CTASection({ title, description, primaryButton, secondaryButton 
       <div className="absolute inset-0 bg-gradient-to-br from-[#F0F9FF] via-white to-white pointer-events-none" />
 
       {/* Content */}
-      <div className="relative px-8 lg:px-16 py-16 lg:py-20 text-center space-y-6">
+      <div className="relative px-5 py-10 sm:px-8 sm:py-14 lg:px-16 lg:py-20 text-center space-y-6">
         <motion.h2
           initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -52,7 +52,7 @@ export function CTASection({ title, description, primaryButton, secondaryButton 
             <button
               type="button"
               onClick={primaryButton.onClick}
-              className="px-8 py-4 rounded-xl bg-[#1EA0FF] hover:bg-[#0088EE] text-white font-bold text-base shadow-lg shadow-blue-500/25 transition-all transform hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
+              className="w-full sm:w-auto px-6 sm:px-8 py-4 rounded-xl bg-[#1EA0FF] hover:bg-[#0088EE] text-white font-bold text-base shadow-lg shadow-blue-500/25 transition-all transform hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
             >
               {primaryButton.text}
             </button>
@@ -61,7 +61,7 @@ export function CTASection({ title, description, primaryButton, secondaryButton 
             <button
               type="button"
               onClick={secondaryButton.onClick}
-              className="px-7 py-4 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-800 font-semibold text-sm transition shadow-2xs cursor-pointer"
+              className="w-full sm:w-auto px-6 sm:px-7 py-4 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-800 font-semibold text-sm transition shadow-2xs cursor-pointer"
             >
               {secondaryButton.text}
             </button>

@@ -135,13 +135,7 @@ export default function ServicesPage() {
   return (
     <div className="">
       {/* Hero Section */}
-      <section ref={vantaRef} className="relative py-32 px-6 lg:px-20 overflow-hidden"
-        style={{
-                    height: '90vh',
-                    minHeight: '400px',  // Ensures it's never too small
-                    maxHeight: '900px'   // Ensures it's never too large
-                    }}
-      >
+      <section ref={vantaRef} className="relative min-h-[34rem] overflow-hidden px-4 py-16 sm:min-h-[38rem] sm:px-6 sm:py-20 lg:min-h-[70vh] lg:px-20 lg:py-24">
         
 
         <div className="relative z-10 max-w-[1400px] mx-auto text-center">
@@ -159,7 +153,7 @@ export default function ServicesPage() {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="text-4xl md:text-6xl lg:text-7xl mb-8 max-w-5xl mx-auto leading-tight"
+            className="text-[clamp(2rem,7vw,3rem)] sm:text-5xl lg:text-7xl mb-6 sm:mb-8 max-w-5xl mx-auto leading-tight"
           >
             Enterprise Solutions Built for Scale
           </motion.h1>
@@ -168,7 +162,7 @@ export default function ServicesPage() {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="text-xl text-gray-600 max-w-3xl mx-auto"
+            className="text-base sm:text-lg lg:text-xl text-gray-600 max-w-3xl mx-auto"
           >
             From AI-powered automation to custom enterprise software, we deliver cutting-edge solutions that drive measurable business results.
           </motion.p>
@@ -183,9 +177,9 @@ export default function ServicesPage() {
       
 
       {/* AI & Automation */}
-      <section id="ai" className="relative py-32 px-6 lg:px-20 bg-white">
+      <section id="ai" className="relative py-16 px-4 sm:py-20 sm:px-6 lg:py-32 lg:px-20 bg-white">
         <div className="max-w-[1400px] mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-center">
             <motion.div
               initial={{ opacity: 0, x: -40 }}
               whileInView={{ opacity: 1, x: 0 }}
@@ -241,9 +235,9 @@ export default function ServicesPage() {
       </section>
 
       {/* Custom Software & IT Systems */}
-      <section id="software" className="relative py-32 px-6 lg:px-20">
+      <section id="software" className="relative py-16 px-4 sm:py-20 sm:px-6 lg:py-32 lg:px-20">
         <div className="max-w-[1400px] mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-center">
             <motion.div
               initial={{ opacity: 0, x: -40 }}
               whileInView={{ opacity: 1, x: 0 }}
@@ -300,9 +294,9 @@ export default function ServicesPage() {
       </section>
 
       {/* Web Development */}
-      <section id="web" className="relative py-32 px-6 lg:px-20 bg-white">
+      <section id="web" className="relative py-16 px-4 sm:py-20 sm:px-6 lg:py-32 lg:px-20 bg-white">
         <div className="max-w-[1400px] mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-center">
             <motion.div
               initial={{ opacity: 0, x: -40 }}
               whileInView={{ opacity: 1, x: 0 }}
@@ -354,7 +348,7 @@ export default function ServicesPage() {
       </section>
 
       {/* Pricing */}
-      <section id="pricing" className="relative py-32 px-6 lg:px-20">
+      <section id="pricing" className="relative py-16 px-4 sm:py-20 sm:px-6 lg:py-32 lg:px-20">
         <div className="max-w-[1400px] mx-auto">
           <motion.div
           
@@ -376,7 +370,7 @@ export default function ServicesPage() {
       </section>
 
       {/* How We Work */}
-      <section id="process" className="relative py-32 px-6 lg:px-20 bg-white">
+      <section id="process" className="relative py-16 px-4 sm:py-20 sm:px-6 lg:py-32 lg:px-20 bg-white">
         <div className="max-w-[1400px] mx-auto">
           <motion.div
           
@@ -418,7 +412,7 @@ export default function ServicesPage() {
       </section>
 
       {/* Technologies */}
-      <section className="relative py-32 px-6 lg:px-20">
+      <section className="relative py-16 px-4 sm:py-20 sm:px-6 lg:py-32 lg:px-20">
         <div className="max-w-[1400px] mx-auto text-center">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -453,7 +447,7 @@ export default function ServicesPage() {
       </section>
 
       {/* FAQ */}
-      <section className="relative py-32 px-6 lg:px-20 bg-white">
+      <section className="relative py-16 px-4 sm:py-20 sm:px-6 lg:py-32 lg:px-20 bg-white">
         <div className="max-w-[1000px] mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -476,7 +470,7 @@ export default function ServicesPage() {
       </section>
 
       {/* CTA */}
-      <section className="py-32 px-6 lg:px-20">
+      <section className="py-16 px-4 sm:py-20 sm:px-6 lg:py-32 lg:px-20">
         <div className="max-w-[1200px] mx-auto">
           <CTASection
             title="Ready to Build Something Amazing?"

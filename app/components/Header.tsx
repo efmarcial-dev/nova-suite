@@ -1,11 +1,28 @@
 'use client';
 
-import { Bell, Search, UserCircle, Sparkles } from 'lucide-react'
+import { Bell, Search, Sparkles } from 'lucide-react'
+import Image from 'next/image';
+import { usePathname } from 'next/navigation';
 import { useCachedUser } from '../hooks/useCachedUser';
+import GlobalSearch from './GlobalSearch';
 
 export default function Header() {
   const { user, isLoading } = useCachedUser();
   const currentUser = user[0];
+  const pathname = usePathname();
+  const pageTitle = pathname.startsWith('/dashboard/inbox')
+    ? 'Inbox'
+    : pathname.startsWith('/dashboard/tasks')
+      ? 'Tasks'
+      : pathname.startsWith('/dashboard/calendar')
+        ? 'Calendar'
+        : pathname.startsWith('/dashboard/projects')
+          ? 'Projects'
+          : pathname.startsWith('/dashboard/settings')
+            ? 'Settings'
+            : pathname.startsWith('/dashboard/help')
+              ? 'Help'
+              : 'Today';
 
   const hour = new Date().getHours();
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
@@ -19,9 +36,16 @@ export default function Header() {
   };
 
   return (
-    <div className="flex items-center justify-between px-5 py-3 bg-white rounded-2xl shadow-sm border border-[--border]">
+    <div className="flex min-h-14 items-center justify-between gap-3 px-3 sm:px-5 py-2.5 sm:py-3 bg-white rounded-2xl shadow-sm border border-transparent lg:border-[--border]">
       {/* Greeting + Search */}
       <div className="flex items-center gap-4 flex-1 min-w-0">
+        <div className="flex min-w-0 items-center gap-2 lg:hidden">
+          <Image src="/images/foxly_mascot_transparent.png" alt="Foxly" width={28} height={28} className="h-7 w-7 shrink-0 object-contain" />
+          <div className="min-w-0">
+            <p className="truncate text-sm font-bold text-slate-900">{pageTitle}</p>
+            <p className="truncate text-[10px] font-medium text-slate-400">Foxly workspace</p>
+          </div>
+        </div>
         <div className="hidden lg:block">
           {isLoading ? (
             <div className="skeleton h-5 w-44" />
@@ -35,29 +59,25 @@ export default function Header() {
           )}
         </div>
 
-        {/* Search */}
-        <div className="relative flex-1 max-w-sm">
-          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[--muted-foreground] pointer-events-none" />
-          <input
-            type="text"
-            id="header-search"
-            placeholder="Search…"
-            className="w-full pl-9 pr-12 py-2 text-sm bg-[--background] border border-[--border] rounded-xl outline-none focus:ring-2 focus:ring-[#1EA0FF]/40 focus:border-[#1EA0FF] transition-all placeholder:text-[--muted-foreground]"
-          />
-          <kbd className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-[--muted-foreground] bg-[--muted] px-1.5 py-0.5 rounded font-mono border border-[--border]">
-            ⌘K
-          </kbd>
-        </div>
+        <GlobalSearch />
       </div>
 
       {/* Right side */}
-      <div className="flex items-center gap-3 ml-4">
+      <div className="flex items-center gap-1.5 sm:gap-3 sm:ml-4">
+        <button
+          type="button"
+          onClick={() => window.dispatchEvent(new Event('nova:open-search'))}
+          aria-label="Search tasks, projects, and emails"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-[--muted-foreground] hover:bg-[--muted] md:hidden"
+        >
+          <Search size={18} />
+        </button>
         {/* Replay Tour Button */}
         <button
           type="button"
           onClick={handleLaunchTour}
           title="Product Tour & AI Guide"
-          className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-[#1EA0FF] bg-blue-50 hover:bg-blue-100 border border-blue-200/80 rounded-xl transition-all shadow-2xs"
+          className="hidden xl:flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-[#1EA0FF] bg-blue-50 hover:bg-blue-100 border border-blue-200/80 rounded-xl transition-all shadow-2xs"
         >
           <Sparkles size={14} className="text-[#1EA0FF] animate-pulse" />
           <span>Product Tour</span>
@@ -66,7 +86,8 @@ export default function Header() {
         {/* Bell */}
         <button
           id="header-notifications"
-          className="relative w-9 h-9 flex items-center justify-center rounded-xl hover:bg-[--muted] transition-colors"
+          aria-label="Notifications"
+          className="relative w-10 h-10 flex shrink-0 items-center justify-center rounded-xl hover:bg-[--muted] transition-colors"
         >
           <Bell size={17} className="text-[--muted-foreground]" />
           <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[#1EA0FF] border-2 border-white" />
@@ -74,7 +95,7 @@ export default function Header() {
 
         {/* Avatar */}
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-full gradient-brand flex items-center justify-center text-white text-xs font-bold cursor-pointer">
+          <div className="w-9 h-9 rounded-full gradient-brand flex items-center justify-center text-white text-xs font-bold cursor-pointer">
             {initials}
           </div>
           <div className="text-right hidden sm:block">

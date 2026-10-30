@@ -100,9 +100,9 @@ export default function ContactPage() {
   ];
 
   return (
-    <div className="min-h-screen pt-20">
+    <div className="min-h-screen">
       {/* Hero */}
-      <section className="relative py-32 px-6 lg:px-20 overflow-hidden">
+      <section className="relative overflow-hidden px-4 py-16 sm:px-6 sm:py-20 lg:px-20 lg:py-28">
         <GeometricShape variant="circle" size={400} className="absolute top-0 -right-40" />
         <GeometricShape variant="square" size={300} className="absolute bottom-0 -left-40" delay={2} />
 
@@ -121,7 +121,7 @@ export default function ContactPage() {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="mb-8"
+            className="mb-6 sm:mb-8 text-3xl sm:text-4xl lg:text-5xl"
           >
             Let's Build Something Amazing Together
           </motion.h1>
@@ -130,7 +130,7 @@ export default function ContactPage() {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="text-xl text-[#DCE1EB] max-w-3xl mx-auto"
+            className="text-base sm:text-lg lg:text-xl text-slate-600 max-w-3xl mx-auto"
           >
             Ready to transform your business with cutting-edge technology? We're here to help. Schedule a free consultation today.
           </motion.p>
@@ -138,9 +138,9 @@ export default function ContactPage() {
       </section>
 
       {/* Contact Info Cards */}
-      <section className="px-6 lg:px-20 pb-20">
+      <section className="px-4 pb-16 sm:px-6 sm:pb-20 lg:px-20">
         <div className="max-w-[1400px] mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-6">
             {contactInfo.map((info, index) => (
               <motion.div
                 key={index}
@@ -148,7 +148,7 @@ export default function ContactPage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3 + index * 0.1 }}
                 whileHover={{ y: -5 }}
-                className="relative p-6 rounded-xl bg-gradient-to-br from-white/5 to-transparent border border-[#4E7BFF]/10 hover:border-[#4E7BFF]/30 transition-all"
+                className="relative min-w-0 p-5 sm:p-6 rounded-xl bg-gradient-to-br from-white/5 to-transparent border border-[#4E7BFF]/10 hover:border-[#4E7BFF]/30 transition-all"
               >
                 <div className="inline-flex p-3 rounded-lg bg-[#4E7BFF]/10 text-[#4E7BFF] mb-4">
                   {info.icon}
@@ -159,12 +159,12 @@ export default function ContactPage() {
                     href={info.link}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-[#A9B3C9] hover:text-[#4E7BFF] transition-colors"
+                    className="break-words text-slate-600 hover:text-[#4E7BFF] transition-colors"
                   >
                     {info.detail}
                   </a>
                 ) : (
-                  <p className="text-[#A9B3C9]">{info.detail}</p>
+                  <p className="break-words text-slate-600">{info.detail}</p>
                 )}
               </motion.div>
             ))}
@@ -173,7 +173,7 @@ export default function ContactPage() {
       </section>
 
       {/* Form Section */}
-      <section className="relative px-6 lg:px-20 pb-32">
+      <section className="relative px-4 pb-20 sm:px-6 sm:pb-24 lg:px-20 lg:pb-32">
         <div className="max-w-[1000px] mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 40 }}
@@ -219,7 +219,7 @@ export default function ContactPage() {
             </div>
 
             {/* Content */}
-            <div className="relative p-8 lg:p-12">
+            <div className="relative p-5 sm:p-8 lg:p-12">
               {!isSubmitted ? (
                 <>
                   <h2 className="mb-8 text-center">Send Us a Message</h2>
@@ -321,7 +321,7 @@ export default function ContactPage() {
       </section>
 
       {/* Bottom CTA */}
-      <section className="px-6 lg:px-20 pb-32">
+      <section className="px-4 pb-20 sm:px-6 sm:pb-24 lg:px-20 lg:pb-32">
         <div className="max-w-[1400px] mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 40 }}

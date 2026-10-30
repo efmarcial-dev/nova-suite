@@ -47,10 +47,10 @@ export default function AboutPage(){
     <>
         <div className="min-h-screen">
       {/* Hero */}
-      <section className="relative pt-20 flex items-center justify-center overflow-hidden">
+      <section className="relative flex items-center justify-center overflow-hidden pt-12 sm:pt-16">
         
         <ParticleField />
-        <div className="flex-1 flex flex-col items-center mx-auto justify-center text-center px-6 lg:px-20 relative z-10">
+        <div className="relative z-10 mx-auto flex flex-1 flex-col items-center justify-center px-4 text-center sm:px-6 lg:px-20">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
@@ -65,7 +65,7 @@ export default function AboutPage(){
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="text-4xl md:text-6xl lg:text-7xl mb-8 max-w-5xl mx-auto leading-tight"
+            className="mb-6 max-w-5xl mx-auto text-[clamp(2rem,8vw,3rem)] leading-tight sm:mb-8 sm:text-5xl lg:text-7xl"
           >
             Transforming Businesses Through Technology
           </motion.h1>
@@ -74,7 +74,7 @@ export default function AboutPage(){
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="text-xl text-gray-700 max-w-3xl mx-auto mb-12"
+            className="mb-8 max-w-3xl mx-auto text-base text-gray-700 sm:mb-12 sm:text-lg lg:text-xl"
           >
             We're a team of engineers, designers, and strategists passionate about building technology solutions that drive real business value.
           </motion.p>
@@ -83,7 +83,7 @@ export default function AboutPage(){
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-4xl mx-auto"
+            className="grid grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-8 max-w-4xl mx-auto"
           >
             {[
               { value: '500+', label: 'Projects Delivered' },
@@ -107,14 +107,14 @@ export default function AboutPage(){
       </section>
 
       {/* Mission & Vision */}
-      <section className="relative py-32 px-6 lg:px-20 bg-white">
+      <section className="relative overflow-x-clip py-16 px-4 sm:py-20 sm:px-6 lg:py-32 lg:px-20 bg-white">
         <div className="max-w-[1400px] mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
             <motion.div
               initial={{ opacity: 0, x: -40 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
-              className="relative p-10 rounded-2xl bg-gradient-to-br from-white/5 to-transparent border border-gray-200 shadow-md"
+              className="relative p-6 sm:p-8 lg:p-10 rounded-2xl bg-gradient-to-br from-white/5 to-transparent border border-gray-200 shadow-md"
             >
               <div className="inline-flex p-4 rounded-xl bg-[#1EA0FF]/10 text-[#1EA0FF] mb-6">
                 <Target size={32} />
@@ -130,7 +130,7 @@ export default function AboutPage(){
               initial={{ opacity: 0, x: 40 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
-              className="relative p-10 rounded-2xl bg-gradient-to-br from-white/5 to-transparent border border-gray-200 shadow-lg"
+              className="relative p-6 sm:p-8 lg:p-10 rounded-2xl bg-gradient-to-br from-white/5 to-transparent border border-gray-200 shadow-lg"
             >
               <div className="inline-flex p-4 rounded-xl bg-[#1EA0FF]/10 text-[#1EA0FF] mb-6">
                 <Eye size={32} />
@@ -196,7 +196,7 @@ export default function AboutPage(){
       </section>
 
       {/* Our Approach / Values */}
-      <section className="relative py-32 px-6 lg:px-20 bg-white">
+      <section className="relative py-16 px-4 sm:py-20 sm:px-6 lg:py-32 lg:px-20 bg-white">
         <div className="max-w-[1400px] mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -242,7 +242,7 @@ export default function AboutPage(){
       </section>
 
       {/* Founder Spotlight */}
-      <section className="relative py-32 px-6 lg:px-20">
+      <section className="relative py-16 px-4 sm:py-20 sm:px-6 lg:py-32 lg:px-20">
         <div className="max-w-[1200px] mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 40 }}
@@ -293,7 +293,7 @@ export default function AboutPage(){
       </section>
 
       {/* CTA */}
-      <section className="py-32 px-6 lg:px-20">
+      <section className="py-16 px-4 sm:py-20 sm:px-6 lg:py-32 lg:px-20">
         <div className="max-w-[1200px] mx-auto">
           <CTASection
             title="Join Us on This Journey"

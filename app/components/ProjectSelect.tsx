@@ -36,36 +36,42 @@ export default function ProjectSelect({
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button variant="outline" role="combobox" className="w-full justify-start p-2 min-h-[42px] border-gray-300">
-          {selectedProject ? (
-            <Badge className="flex items-center gap-1 px-2 py-1 rounded-full text-sm bg-purple-100 text-purple-700">
-              {selectedProject.projectName}
-              <X
-                className="ml-1 h-3 w-3 cursor-pointer"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setSelectedProjectId(null);
-                }}
-              />
-            </Badge>
-          ) : (
-            "Select a project"
-          )}
-           {!selectedProject && onAddProject && (
-            <button
-              type="button"
-              className="absolute right-2 top-1/2  p-1 rounded-full bg-gray-100 hover:bg-gray-200 transition"
-              onClick={(e) => {
-                e.stopPropagation();
-                onAddProject();
-              }}
-            >
-              <Plus className="w-4 h-4 text-gray-600" />
-            </button>
-          )}
-        </Button>
-      </PopoverTrigger>
+      <div className="relative w-full">
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            role="combobox"
+            aria-expanded={open}
+            className="w-full justify-start p-2 pr-10 min-h-[42px] border-gray-300"
+          >
+            {selectedProject ? (
+              <Badge className="flex items-center gap-1 px-2 py-1 rounded-full text-sm bg-purple-100 text-purple-700">
+                {selectedProject.projectName}
+                <X
+                  className="ml-1 h-3 w-3 cursor-pointer"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedProjectId(null);
+                  }}
+                />
+              </Badge>
+            ) : (
+              "Select a project"
+            )}
+          </Button>
+        </PopoverTrigger>
+        {!selectedProject && onAddProject && (
+          <button
+            type="button"
+            aria-label="Create a new project"
+            title="Create a new project"
+            className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-full bg-gray-100 hover:bg-gray-200 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1EA0FF]"
+            onClick={onAddProject}
+          >
+            <Plus className="w-4 h-4 text-gray-600" />
+          </button>
+        )}
+      </div>
       <PopoverContent className="w-full p-0">
         <Command>
           <CommandInput placeholder="Search projects..." />

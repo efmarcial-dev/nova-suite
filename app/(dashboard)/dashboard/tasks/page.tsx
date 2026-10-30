@@ -13,16 +13,18 @@ import { clearDemoTasksAPI } from "@/app/lib/api/tasks";
 import { replaceTasksInCache } from "@/app/lib/cache/NovaCacheHelpers";
 import { emitTaskChangeEvent } from "@/app/lib/events/novaEvents";
 import { isDemoTask } from "@/app/lib/constants/starterWorkspace";
-import { Trash2, CheckCircle2, Loader2 } from "lucide-react";
+import { Trash2, CheckCircle2, Loader2, SlidersHorizontal } from "lucide-react";
 
 
 export default function TasksPage() {
 
-  const [view, setView] = useState<'table' | 'list' | 'matrix'>('table');
+  const [view, setView] = useState<'table' | 'list' | 'matrix'>('list');
 
   const [showNewTask, setShowNewTask] = useState(false);
+  const [showTaskControls, setShowTaskControls] = useState(false);
   const [hasPills, setHasPills] = useState(false);
   const [pendingOnly, setPendingOnly] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const [priorityFilter, setPriorityFilter] = useState<'all' | 'high' | 'important'>('all');
   const [isRemovingDemo, setIsRemovingDemo] = useState(false);
   const [demoRemovedSuccess, setDemoRemovedSuccess] = useState(false);
@@ -53,16 +55,27 @@ export default function TasksPage() {
   };
 
   useEffect(() => {
-    setPendingOnly(new URLSearchParams(window.location.search).get('filter') === 'pending');
+    const params = new URLSearchParams(window.location.search);
+    setPendingOnly(params.get('filter') === 'pending');
+    setSearchQuery(params.get('search') || '');
   }, []);
 
   
   return (
-    <div className="p-1 space-y-2">
+    <div className="p-0.5 sm:p-1 space-y-3 sm:space-y-4">
       {/* Header row */}
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-semibold text-[--foreground]">Tasks</h1>
-        <div className="flex items-center gap-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center justify-between gap-3">
+          <h1 className="text-2xl font-semibold text-[--foreground]">Tasks</h1>
+          <button
+            type="button"
+            onClick={() => setShowNewTask(true)}
+            className="inline-flex min-h-10 items-center gap-2 rounded-xl gradient-brand px-3.5 text-sm font-semibold text-white shadow-md shadow-blue-500/20 sm:hidden"
+          >
+            + New
+          </button>
+        </div>
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           {hasDemoTasks && (
             <button
               type="button"
@@ -90,33 +103,76 @@ export default function TasksPage() {
             </button>
           )}
 
-          <ViewToggle view={view} setView={setView} />
+          <div className="hidden sm:block">
+            <ViewToggle view={view} setView={setView} />
+          </div>
           <label className="sr-only" htmlFor="task-priority-filter">Filter tasks by priority</label>
           <select
             id="task-priority-filter"
             value={priorityFilter}
             onChange={(event) => setPriorityFilter(event.target.value as typeof priorityFilter)}
-            className="rounded-xl border border-[--border] bg-white px-3 py-2 text-sm text-[--foreground] outline-none focus:ring-2 focus:ring-[#1EA0FF]"
+            className="hidden rounded-xl border border-[--border] bg-white px-3 py-2 text-sm text-[--foreground] outline-none focus:ring-2 focus:ring-[#1EA0FF] sm:block"
           >
             <option value="all">All priorities</option>
             <option value="high">High priority</option>
             <option value="important">Important tasks</option>
           </select>
+
+          <button
+            type="button"
+            onClick={() => setShowTaskControls(true)}
+            className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-[--border] bg-white px-3 text-sm font-semibold text-slate-700 sm:hidden"
+          >
+            <SlidersHorizontal size={16} /> View &amp; filter
+          </button>
           
           <button
             onClick={() => setShowNewTask(true)}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl gradient-brand text-white text-sm font-medium hover:opacity-90 transition-opacity shadow-md shadow-blue-500/20">
+            className="hidden items-center gap-2 px-4 py-2 rounded-xl gradient-brand text-white text-sm font-medium hover:opacity-90 transition-opacity shadow-md shadow-blue-500/20 sm:flex">
             + Create Task
           </button>
         </div>
       </div>
 
       {/* Tasks View */}
-      {view === 'table' && <TasksBoard view="table" statusFilter={pendingOnly ? 'pending' : 'all'} priorityFilter={priorityFilter} />}
-      {view === 'list' && <TasksBoard view="list" statusFilter={pendingOnly ? 'pending' : 'all'} priorityFilter={priorityFilter} />}
-      {view == 'matrix' && <TaskBoard view="matrix" statusFilter={pendingOnly ? 'pending' : 'all'} priorityFilter={priorityFilter} />}
+      {view === 'table' && <TasksBoard view="table" statusFilter={pendingOnly ? 'pending' : 'all'} priorityFilter={priorityFilter} searchQuery={searchQuery} />}
+      {view === 'list' && <TasksBoard view="list" statusFilter={pendingOnly ? 'pending' : 'all'} priorityFilter={priorityFilter} searchQuery={searchQuery} />}
+      {view == 'matrix' && <TaskBoard view="matrix" statusFilter={pendingOnly ? 'pending' : 'all'} priorityFilter={priorityFilter} searchQuery={searchQuery} />}
 
       {/* New Task Modal */}
+      <ModalPanel isOpen={showTaskControls} onClose={() => setShowTaskControls(false)}>
+        <div className="space-y-5">
+          <div>
+            <h2 className="text-xl font-semibold text-slate-900">View &amp; filter tasks</h2>
+            <p className="mt-1 text-sm text-slate-500">Choose a task layout and narrow the list by priority.</p>
+          </div>
+          <div className="space-y-2">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">View</p>
+            <ViewToggle view={view} setView={setView} />
+          </div>
+          <div className="space-y-2">
+            <label className="block text-xs font-semibold uppercase tracking-wide text-slate-600" htmlFor="mobile-task-priority-filter">Priority</label>
+            <select
+              id="mobile-task-priority-filter"
+              value={priorityFilter}
+              onChange={(event) => setPriorityFilter(event.target.value as typeof priorityFilter)}
+              className="min-h-11 w-full rounded-xl border border-[--border] bg-white px-3 text-sm text-[--foreground] outline-none focus:ring-2 focus:ring-[#1EA0FF]"
+            >
+              <option value="all">All priorities</option>
+              <option value="high">High priority</option>
+              <option value="important">Important tasks</option>
+            </select>
+          </div>
+          <button
+            type="button"
+            onClick={() => setShowTaskControls(false)}
+            className="min-h-11 w-full rounded-xl gradient-brand px-4 text-sm font-semibold text-white"
+          >
+            Show tasks
+          </button>
+        </div>
+      </ModalPanel>
+
       <ModalPanel isOpen={showNewTask} onClose={() => setShowNewTask(false)} hasPills={hasPills}>
         <h2 className="text-xl font-semibold mb-4">Create New Task</h2>
         {/* Here you would include your form or component to create a new task */}

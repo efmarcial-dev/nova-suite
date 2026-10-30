@@ -39,7 +39,7 @@ export default function NavBar() {
         </Link>
 
         {/* Desktop Product Navigation */}
-        <div className="hidden md:flex items-center space-x-8">
+        <div className="hidden lg:flex items-center space-x-8">
           {navLinks.map((link) => (
             <a
               key={link.name}
@@ -52,7 +52,7 @@ export default function NavBar() {
         </div>
 
         {/* Desktop Auth CTAs */}
-        <div className="hidden md:flex items-center space-x-4">
+        <div className="hidden lg:flex items-center space-x-4">
           <Link
             href="/login"
             className="text-sm font-semibold text-slate-700 hover:text-[#1EA0FF] transition-colors px-3 py-2"
@@ -70,7 +70,8 @@ export default function NavBar() {
 
         {/* Mobile Menu Button */}
         <button
-          className="md:hidden flex flex-col justify-center space-y-1.5 z-20 p-2 focus:outline-none"
+          className="lg:hidden flex flex-col justify-center space-y-1.5 z-20 p-2 focus:outline-none"
+          aria-expanded={menuOpen}
           onClick={() => setMenuOpen(!menuOpen)}
           aria-label="Toggle Menu"
         >
@@ -94,7 +95,7 @@ export default function NavBar() {
 
       {/* Mobile Drawer */}
       <div
-        className={`md:hidden absolute left-0 top-full w-full bg-white border-b border-slate-200 px-6 shadow-xl overflow-hidden transition-all duration-300 ${
+        className={`lg:hidden absolute left-0 top-full w-full bg-white border-b border-slate-200 px-6 shadow-xl overflow-hidden transition-all duration-300 ${
           menuOpen ? 'max-h-[400px] py-6' : 'max-h-0 py-0'
         }`}
       >

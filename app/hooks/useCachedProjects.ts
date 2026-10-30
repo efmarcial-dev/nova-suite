@@ -3,15 +3,15 @@
 import { useEffect, useState } from "react";
 import {
     getCachedProjectsWithMetadata,
-    replaceProjectsInCache,
     saveProjectsToCache,
     updateProjectInCache,
 } from "../lib/cache/NovaCacheHelpers";
-import { fetchProjectsAPI } from "../lib/api/projects";
 import { areIdsEqual, deduplicateProjects } from "../lib/utils/deduplicate";
-import { isDemoProject } from "../lib/constants/starterWorkspace";
-
-const CACHE_EXPIRY_MS = 1000 * 60 * 5;
+import {
+    ensureProjectsForSession,
+    updateProjectForSession,
+    upsertProjectForSession,
+} from "../lib/cache/dashboardDataSession";
 
 export function useCachedProjects() {
     const [projects, setProjects] = useState<any[]>([]);
@@ -22,9 +22,12 @@ export function useCachedProjects() {
         let isMounted = true;
 
         async function load() {
-            const { projects: cached, last_updated } = await getCachedProjectsWithMetadata();
-            const now = Date.now();
-            const isStale = now - last_updated > CACHE_EXPIRY_MS;
+            let cached: any[] = [];
+            try {
+                ({ projects: cached } = await getCachedProjectsWithMetadata());
+            } catch (cacheError) {
+                console.warn('Could not read the local project cache; loading from the API.', cacheError);
+            }
 
             if (isMounted && cached.length > 0) {
                 const dedupedCached = deduplicateProjects(cached);
@@ -33,33 +36,16 @@ export function useCachedProjects() {
                 setIsLoading(false);
             }
 
-            if (cached.length === 0 || isStale) {
-                try {
-                    let fresh = await fetchProjectsAPI();
-
-                    // If user has explicitly removed demo projects, filter out any demo projects
-                    if (typeof window !== 'undefined' && localStorage.getItem('nova_demo_projects_cleared') === 'true') {
-                        fresh = fresh.filter((project) => !isDemoProject(project));
-                    }
-
-                    const withTimestamps = fresh.map((project) => ({
-                        ...project,
-                        last_updated: Date.now(),
-                    }));
-
-                    const dedupedFresh = deduplicateProjects(withTimestamps);
-
-                    // Replace in cache so stale/duplicate records are cleanly replaced
-                    await replaceProjectsInCache(dedupedFresh);
-
-                    if (isMounted) {
-                        setProjects(dedupedFresh);
-                        setFromCache(false);
-                        setIsLoading(false);
-                    }
-                } catch (error) {
-                    console.log('Error refreshing projects from API:', error);
+            try {
+                const fresh = deduplicateProjects(await ensureProjectsForSession());
+                if (isMounted) {
+                    setProjects(fresh);
+                    setFromCache(false);
                 }
+            } catch (error) {
+                console.log('Error refreshing projects from API:', error);
+            } finally {
+                if (isMounted) setIsLoading(false);
             }
         }
 
@@ -137,7 +123,10 @@ export function useCachedProjects() {
             return [...prev, proj];
         });
 
-        await updateProjectInCache(proj);
+        upsertProjectForSession(proj);
+        void updateProjectInCache(proj).catch((error) => {
+            console.warn('Project was saved to Django, but the local cache could not be updated.', error);
+        });
     };
 
     // Update existing project in cache
@@ -149,7 +138,10 @@ export function useCachedProjects() {
         setProjects((prev) =>
             prev.map((p) => (areIdsEqual(p.id, normalized.id) ? { ...p, ...normalized } : p))
         );
-        await updateProjectInCache(normalized);
+        updateProjectForSession(normalized);
+        await updateProjectInCache(normalized).catch((error) => {
+            console.warn('Project was updated, but the local cache could not be updated.', error);
+        });
     };
 
     return {

@@ -113,7 +113,8 @@ export async function fetchEmailMessagesAPI(
   provider: string = 'nylas',
   query: string = '',
   maxResults: number = 25,
-  grantId?: string
+  grantId?: string,
+  options: { forceRefresh?: boolean } = {},
 ): Promise<EmailMessageItem[]> {
   try {
     const params = new URLSearchParams({
@@ -123,6 +124,9 @@ export async function fetchEmailMessagesAPI(
     });
     if (grantId) {
       params.set('grant_id', grantId);
+    }
+    if (options.forceRefresh) {
+      params.set('force_refresh', '1');
     }
 
     const res = await fetch(`/api/email/messages/?${params.toString()}`, {

@@ -14,7 +14,7 @@ export default function StatsCards({projects, tasks}: StatProps) {
   const inProgressTasks = tasks.filter((t) => t.status === 'in_progress').length;
 
   return (
-    <div className="grid grid-cols-4 gap-4 col-span-4">
+    <div className="col-span-1 grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4 md:col-span-2 xl:col-span-4">
       <StatCard
         title="Total Projects"
         value={projects.length}

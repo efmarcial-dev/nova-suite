@@ -27,6 +27,7 @@ type FilterType = 'all' | 'in_progress' | 'completed' | 'planning';
 export default function ProjectsPage() {
   const { projects, isProjectLoading, updateProject, addProjectToCache } = useCachedProjects();
   const [filter, setFilter] = useState<FilterType>('all');
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Edit modal state
   const [editingProject, setEditingProject] = useState<any | null>(null);
@@ -78,8 +79,10 @@ export default function ProjectsPage() {
   };
 
   useEffect(() => {
-    const status = new URLSearchParams(window.location.search).get("status");
+    const params = new URLSearchParams(window.location.search);
+    const status = params.get("status");
     if (status === "completed") setFilter("completed");
+    setSearchQuery(params.get('search') || '');
   }, []);
 
   const openEditModal = (p: any) => {
@@ -160,12 +163,12 @@ export default function ProjectsPage() {
 
   const dedupedProjects = useMemo(() => deduplicateProjects(projects), [projects]);
 
-  const visibleProjects = filter === 'all'
-    ? dedupedProjects
-    : dedupedProjects.filter((p) => {
-        const key = p.status?.toLowerCase().replace(/\s+/g, '_') ?? '';
-        return key === filter;
-      });
+  const visibleProjects = dedupedProjects.filter((project) => {
+    const statusMatches = filter === 'all' || (project.status?.toLowerCase().replace(/\s+/g, '_') ?? '') === filter;
+    const needle = searchQuery.trim().toLocaleLowerCase();
+    const searchMatches = !needle || `${project.title || project.projectName || ''} ${project.description || ''}`.toLocaleLowerCase().includes(needle);
+    return statusMatches && searchMatches;
+  });
 
   const tabs: { label: string; value: FilterType }[] = [
     { label: 'All', value: 'all' },
@@ -175,16 +178,16 @@ export default function ProjectsPage() {
   ];
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4 sm:space-y-5">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-[--foreground]">Projects</h1>
           <p className="text-sm text-[--muted-foreground] mt-0.5">
             {projects.length} project{projects.length !== 1 ? 's' : ''} total • Click any card to edit details and status
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           {hasDemoProjects && (
             <button
               type="button"
@@ -222,7 +225,7 @@ export default function ProjectsPage() {
       </div>
 
       {/* Filter tabs */}
-      <div className="flex items-center gap-1 bg-[--background] rounded-xl p-1 border border-[--border] w-fit">
+      <div className="flex max-w-full items-center gap-1 overflow-x-auto bg-[--background] rounded-xl p-1 border border-[--border] w-fit">
         {tabs.map((tab) => (
           <button
             key={tab.value}
