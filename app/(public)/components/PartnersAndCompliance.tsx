@@ -45,8 +45,8 @@ const capabilities = [
     border: 'border-orange-100',
   },
   {
-    title: 'Strict SOC II Compliance Rules',
-    desc: 'Engineered following rigorous SOC II compliance rules. End-to-end TLS 1.3 encryption, tenant-isolated data partitions, and zero data selling or unauthorized AI model training.',
+    title: 'Security & privacy controls',
+    desc: 'OAuth account connections, tenant-isolated workspaces, and a commitment not to sell your data or use it to train public AI models. Foxly does not claim an independent SOC 2 audit or report.',
     icon: ShieldCheck,
     color: 'text-emerald-600',
     bg: 'bg-emerald-50',
@@ -68,14 +68,14 @@ export default function PartnersAndCompliance() {
         >
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-50 border border-blue-200 text-[#1EA0FF] text-xs font-bold uppercase tracking-wider">
             <ShieldCheck size={14} className="text-[#1EA0FF]" />
-            Enterprise Trust &amp; Multi-Provider Infrastructure
+            Security &amp; Connected Accounts
           </div>
           <h2 className="text-3xl md:text-5xl font-extrabold text-[#0D1B2A] tracking-tight">
-            Universal Provider Sync &bull; Built to Strict SOC II Rules
+            Keep your work connected and your data private
           </h2>
           <p className="text-slate-600 text-base md:text-lg max-w-3xl mx-auto leading-relaxed">
             Foxly connects multiple calendars and inboxes across Google and Microsoft Outlook into one unified workspace,
-            backed by world-class infrastructure and rigorous compliance standards.
+            backed by connected account controls and privacy practices. Foxly does not claim an independent SOC 2 audit or report.
           </p>
         </motion.div>
 
@@ -126,7 +126,7 @@ export default function PartnersAndCompliance() {
               </div>
               <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 border border-white/15 text-xs font-semibold text-slate-300">
                 <Lock size={13} className="text-[#1EA0FF]" />
-                <span>Strict SOC II Security Controls</span>
+                <span>OAuth access · Isolated workspaces</span>
               </div>
             </div>
 

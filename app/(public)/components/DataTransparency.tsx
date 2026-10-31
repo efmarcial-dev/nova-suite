@@ -53,7 +53,7 @@ const dataPoints = [
 ];
 
 const guarantees = [
-  'Strict SOC II compliance rules: isolated per-tenant workspaces and zero cross-tenant access',
+  'Tenant-isolated workspaces with access separated by account',
   'Multi-provider support: connect multiple Google (Gmail & Google Calendar) and Microsoft (Outlook & Exchange) accounts',
   'Nylas Auth OAuth 2.0 integration — Foxly never sees or stores your Google or Microsoft password',
   'Backed by enterprise cloud partners: Vercel edge deployment, Supabase real-time sync, and Firestore document caching',
@@ -87,6 +87,9 @@ export default function DataTransparency() {
             When you connect your Google or Microsoft account, Foxly requests
             specific permissions to power your executive workspace. Here is a complete,
             plain-language breakdown.
+          </p>
+          <p className="text-sm text-slate-500 max-w-2xl mx-auto">
+            These describe Foxly’s security controls and privacy practices. Foxly does not claim an independent SOC 2 audit or report.
           </p>
         </motion.div>
 

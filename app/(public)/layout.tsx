@@ -12,7 +12,7 @@ config.autoAddCss = false;
 
 export const metadata: Metadata = {
   title: "foxly · Your life. In flow. | AI Executive Assistant & Smart OS",
-  description: "Foxly is your AI executive assistant with multiple Google & Outlook inboxes, multi-calendar sync, smart task scoring, and strict SOC II compliance. 3-day free trial.",
+  description: "Foxly helps you decide what deserves your attention across inbox, calendar, and tasks. Try Foxly free for 3 days, then choose annual access for $60 per year.",
   verification: {
     google: "bUwM0nGN1XOLiYGx9iTCNlNYfCCWJofBLwj9_nzKHoY",
   },

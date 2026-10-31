@@ -23,9 +23,9 @@ const reasons = [
   },
   {
     icon: ShieldCheck,
-    title: 'Strict SOC II Compliance & Enterprise Cloud',
+    title: 'Privacy controls you can understand',
     description:
-      'Your workspace adheres to strict SOC II compliance rules. Backed by Nylas Auth, Vercel, Supabase, and Firestore. Disconnect any provider anytime. We never sell your data or use it to train public AI models.',
+      'OAuth connections keep Foxly from seeing your account password. Workspaces are isolated by tenant, and your data is not used to train public AI models. Foxly does not claim an independent SOC 2 audit or report.',
   },
 ];
 

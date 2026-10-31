@@ -18,17 +18,17 @@ export default function Home() {
       {/* Hero Section */}
       <HeroSection />
 
-      {/* Multi-Provider & Compliance Banner */}
-      <PartnersAndCompliance />
+      {/* The main benefit: a clear set of next steps */}
+      <FeatureSection />
 
       {/* How It Works (3-step visual guide) */}
       <HowItWorks />
 
-      {/* Core Platform Capabilities */}
-      <FeatureSection />
-
       {/* Why Executives & Founders Choose Foxly */}
       <WhySection />
+
+      {/* Connected accounts and security controls */}
+      <PartnersAndCompliance />
 
       {/* Strict Security, OAuth Scopes & Data Transparency */}
       <DataTransparency />
@@ -40,10 +40,10 @@ export default function Home() {
       <section className="py-24 px-6 lg:px-12 bg-slate-50 border-t border-slate-100">
         <div className="max-w-5xl mx-auto">
           <CTASection
-            title="Start your 3-day free trial today"
-            description="Connect multiple Google and Outlook inboxes, sync your calendars, and experience an intelligent, unified executive workspace. Unlimited usage, no credit card required."
+            title="Find your next best move"
+            description="Start with a 3-day free trial, then choose the founding customer annual offer at $60 for 12 months of access. No card required to start and no automatic charge at the end of the trial."
             primaryButton={{
-              text: 'Start 3-Day Free Trial →',
+              text: 'Start your 3-day free trial →',
               onClick: () => router.push('/register'),
             }}
             secondaryButton={{

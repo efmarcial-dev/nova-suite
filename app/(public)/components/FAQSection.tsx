@@ -13,7 +13,7 @@ const faqs: FAQItem[] = [
   {
     question: 'How does the 3-day free trial work?',
     answer:
-      'You get full, unlimited access to every Foxly feature for 3 days — including multiple connected Google & Outlook inboxes, multi-calendar intelligence, 0–100 task prioritization, and 1-click reply drafting. No credit card is required to sign up. You start using Foxly immediately upon registration.',
+      'You get 3 days of access with no credit card required. At the end of the trial, access pauses unless you choose a paid plan. The trial does not automatically charge you.',
   },
   {
     question: 'Can I connect both Google and Microsoft Outlook accounts?',
@@ -28,12 +28,12 @@ const faqs: FAQItem[] = [
   {
     question: 'How secure is my data and who has access to it?',
     answer:
-      'Foxly follows strict SOC II compliance standards. Your credentials are handled via secure OAuth 2.0 (powered by Nylas Auth) — Foxly never sees or stores your Google or Microsoft password. All communication is encrypted with TLS 1.3 in transit and AES-256 at rest. Your data is isolated per tenant and is never used to train public AI models.',
+      'Foxly uses OAuth 2.0 to connect Google and Microsoft accounts, so Foxly does not see or store your account password. Workspaces are isolated by tenant, and your data is not used to train public AI models. These are security controls; Foxly does not claim an independent SOC 2 audit or report.',
   },
   {
     question: 'What happens when my 3-day trial ends?',
     answer:
-      'When your trial ends, you can unlock Foxly Founder Lifetime Access for a single one-time payment of $49 USD. There are no monthly subscriptions or recurring fees — you pay once and keep access for the life of Foxly. If you choose not to subscribe, your workspace remains safely archived.',
+      'You can choose the founding customer annual plan for $60 USD, paid upfront for 12 months of access. It does not renew automatically; you will need to make another purchase to continue after the year ends. You are not charged automatically when the free trial ends.',
   },
   {
     question: 'Can I disconnect my email or calendar accounts at any time?',
